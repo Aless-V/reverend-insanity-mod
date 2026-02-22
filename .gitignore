@@ -23,6 +23,10 @@ runs/
 蛊真人.txt
 蛊真人_utf8.txt
 
+# AI context (local only)
+AGENT.md
+CLAUDE.md
+
 # OS
 .DS_Store
 Thumbs.db
