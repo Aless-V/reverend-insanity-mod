@@ -1,10 +1,13 @@
-# Build output
+# Build
 build/
 bin/
 out/
 
-# Gradle
+# Gradle wrapper
 .gradle/
+gradle/
+gradlew
+gradlew.bat
 
 # IDE
 .eclipse/
@@ -16,17 +19,17 @@ out/
 # Runtime
 runs/
 
+# Scripts & docs (local only)
+*.py
+scripts/
+docs/
+
 # Tool configs
 .serena/
 
-# Novel source text (copyrighted, too large)
+# Novel text
 蛊真人.txt
 蛊真人_utf8.txt
-
-# Local
-.local/
-AGENT.md
-CLAUDE.md
 
 # OS
 .DS_Store
