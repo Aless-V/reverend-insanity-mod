@@ -247,6 +247,8 @@ public class VenerableEntity extends Monster {
     private int hongLianRageTicks = 0;
 
     private int kuangManAwakenTicks = 0;
+    private int kuangManActiveForm = 0;
+    private int kuangManFormTicks = 0;
 
     private boolean juYangImmortalUsed = false;
     private int juYangDrainTicks = 0;
@@ -351,6 +353,8 @@ public class VenerableEntity extends Monster {
         this.hongLianCicadaUsed = false;
         this.hongLianRageTicks = 0;
         this.kuangManAwakenTicks = 0;
+        this.kuangManActiveForm = 0;
+        this.kuangManFormTicks = 0;
         this.juYangImmortalUsed = false;
         this.juYangDrainTicks = 0;
         this.absoluteInvulTicks = 0;
@@ -635,6 +639,13 @@ public class VenerableEntity extends Monster {
             this.kuangManAwakenTicks--;
             if (this.tickCount % 20 == 0) {
                 selfDamagePercent(0.02f);
+            }
+        }
+        if (this.kuangManFormTicks > 0) {
+            this.kuangManFormTicks--;
+            if (this.kuangManFormTicks <= 0) {
+                this.kuangManActiveForm = 0;
+                resetKuangmanFormBuffs();
             }
         }
         if (this.juYangDrainTicks > 0) {
@@ -1718,41 +1729,81 @@ public class VenerableEntity extends Monster {
         modifyTerrain(target.position(), DaoPath.SPACE, 4);
     }
 
+    private void applyKuangmanFormBonus(LivingEntity target, float baseDamage) {
+        switch (this.kuangManActiveForm) {
+            case 1 -> castAreaScaled(target.position(), 4.0, 2000.0f, VfxType.ENERGY_BEAM, 0xFFFF4400, 1.5f, 15);
+            case 2 -> castSingleScaled(target, baseDamage * 0.5f, VfxType.SLASH_ARC, 0xFFFF6600, 1.2f, 10);
+            case 3 -> knockbackTargets(target.position(), 4.0, 1.5, 0.6);
+            case 4 -> addRoot(target, 40);
+            case 5 -> healPercent(0.01f);
+            default -> {
+            }
+        }
+    }
+
+    private void resetKuangmanFormBuffs() {
+        applyTimedModifier(Attributes.ATTACK_DAMAGE, "venerable_kuangman_form_attack", 0.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 1);
+        applyTimedModifier(Attributes.MOVEMENT_SPEED, "venerable_kuangman_form_speed", 0.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 1);
+        applyTimedModifier(Attributes.ARMOR, "venerable_kuangman_form_armor", 0.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 1);
+        applyTimedModifier(Attributes.KNOCKBACK_RESISTANCE, "venerable_kuangman_form_knockback", 0.0, AttributeModifier.Operation.ADD_VALUE, 1);
+    }
+
     private void moveKuangmanSavageSlam(LivingEntity target) {
         castAreaScaled(this.position(), 8.0, 5400.0f, VfxType.IMPACT_BURST, 0xFFCC0000, 2.4f, 30);
         modifyTerrain(target.position(), DaoPath.STRENGTH, 3);
+        applyKuangmanFormBonus(target, 5400.0f);
     }
 
     private void moveKuangmanDragonForm(LivingEntity target) {
-        castAreaScaled(target.position(), 8.0, 4320.0f, VfxType.ENERGY_BEAM, 0xFFCC0000, 2.0f, 26);
-        spawnCenterVfx(VfxType.BEAST_PHANTOM, 0xFFCC0000, 1.8f, 22);
+        resetKuangmanFormBuffs();
+        this.kuangManActiveForm = 1;
+        this.kuangManFormTicks = 200;
+        applyTimedModifier(Attributes.ATTACK_DAMAGE, "venerable_kuangman_form_attack", 0.80, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+        applyTimedModifier(Attributes.MOVEMENT_SPEED, "venerable_kuangman_form_speed", 0.30, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+        spawnCenterVfx(VfxType.BEAST_PHANTOM, 0xFFFF0000, 2.8f, 30);
+        playHostileSound(SoundEvents.ENDER_DRAGON_GROWL, 1.4f, 0.9f);
     }
 
     private void moveKuangmanTigerForm(LivingEntity target) {
-        castSingleScaled(target, 2000.0f, VfxType.BEAST_PHANTOM, 0xFFCC0000, 1.2f, 12);
-        castSingleScaled(target, 2000.0f, VfxType.BEAST_PHANTOM, 0xFFCC0000, 1.2f, 12);
-        castSingleScaled(target, 2000.0f, VfxType.SLASH_ARC, 0xFFCC0000, 1.3f, 12);
+        resetKuangmanFormBuffs();
+        this.kuangManActiveForm = 2;
+        this.kuangManFormTicks = 200;
+        applyTimedModifier(Attributes.MOVEMENT_SPEED, "venerable_kuangman_form_speed", 0.60, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+        applyTimedModifier(Attributes.ATTACK_DAMAGE, "venerable_kuangman_form_attack", 0.40, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+        spawnCenterVfx(VfxType.BEAST_PHANTOM, 0xFFFF6600, 2.4f, 25);
     }
 
     private void moveKuangmanEagleForm(LivingEntity target) {
-        castSingleScaled(target, 4000.0f, VfxType.BEAST_PHANTOM, 0xFFCC0000, 1.6f, 22);
-        knockbackTargets(target.position(), 4.0, 1.6, 0.5);
+        resetKuangmanFormBuffs();
+        this.kuangManActiveForm = 3;
+        this.kuangManFormTicks = 200;
+        applyTimedModifier(Attributes.MOVEMENT_SPEED, "venerable_kuangman_form_speed", 1.00, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+        applyTimedModifier(Attributes.KNOCKBACK_RESISTANCE, "venerable_kuangman_form_knockback", 1.0, AttributeModifier.Operation.ADD_VALUE, 200);
+        spawnCenterVfx(VfxType.BEAST_PHANTOM, 0xFFFFCC00, 2.2f, 25);
     }
 
     private void moveKuangmanSnakeForm(LivingEntity target) {
-        addRoot(target, 60);
-        castSingleScaled(target, 6000.0f, VfxType.BEAST_PHANTOM, 0xFFCC0000, 1.8f, 24);
+        resetKuangmanFormBuffs();
+        this.kuangManActiveForm = 4;
+        this.kuangManFormTicks = 200;
+        this.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 200, 0));
+        spawnCenterVfx(VfxType.BEAST_PHANTOM, 0xFF00CC00, 2.0f, 25);
     }
 
     private void moveKuangmanBearForm(LivingEntity target) {
-        applyTimedModifier(Attributes.ARMOR, "venerable_kuangman_bear_armor", 0.50, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 100);
-        spawnCenterVfx(VfxType.BEAST_PHANTOM, 0xFFCC0000, 1.9f, 24);
+        resetKuangmanFormBuffs();
+        this.kuangManActiveForm = 5;
+        this.kuangManFormTicks = 200;
+        applyTimedModifier(Attributes.ARMOR, "venerable_kuangman_form_armor", 2.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+        applyTimedModifier(Attributes.KNOCKBACK_RESISTANCE, "venerable_kuangman_form_knockback", 0.5, AttributeModifier.Operation.ADD_VALUE, 200);
+        spawnCenterVfx(VfxType.BEAST_PHANTOM, 0xFF884400, 2.6f, 30);
     }
 
     private void moveKuangmanSavagePower(LivingEntity target) {
         applyTimedModifier(Attributes.ATTACK_DAMAGE, "venerable_kuangman_power_atk", 1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
         applyTimedModifier(Attributes.MOVEMENT_SPEED, "venerable_kuangman_power_speed", 0.50, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
         spawnCenterVfx(VfxType.BEAST_PHANTOM, 0xFFCC0000, 2.2f, 30);
+        applyKuangmanFormBonus(target, 1.0f);
     }
 
     private void moveKuangmanHeavenFlip(LivingEntity target) {
@@ -1760,11 +1811,13 @@ public class VenerableEntity extends Monster {
         target.hurtMarked = true;
         castSingleScaled(target, 8000.0f, VfxType.IMPACT_BURST, 0xFFCC0000, 2.0f, 28);
         modifyTerrain(target.position(), DaoPath.STRENGTH, 3);
+        applyKuangmanFormBonus(target, 8000.0f);
     }
 
     private void moveKuangmanBreakAllLaws(LivingEntity target) {
         target.removeAllEffects();
         castSingleScaled(target, 4000.0f, VfxType.PULSE_WAVE, 0xFFCC0000, 1.8f, 24);
+        applyKuangmanFormBonus(target, 4000.0f);
     }
 
     private void moveKuangmanBeastSummon(LivingEntity target) {
@@ -1777,6 +1830,7 @@ public class VenerableEntity extends Monster {
     private void moveKuangmanTenThousandBeasts(LivingEntity target) {
         castAreaScaled(this.position(), 10.0, 10800.0f, VfxType.BEAST_PHANTOM, 0xFFCC0000, 3.0f, 42);
         modifyTerrain(this.position(), DaoPath.STRENGTH, 5);
+        applyKuangmanFormBonus(target, 10800.0f);
     }
 
     private void moveKuangmanUndyingBody(LivingEntity target) {
@@ -1791,32 +1845,38 @@ public class VenerableEntity extends Monster {
         this.push(dir.x * 1.6, 0.1, dir.z * 1.6);
         castSingleScaled(target, 4800.0f, VfxType.IMPACT_BURST, 0xFFCC0000, 1.8f, 22);
         knockbackTargets(target.position(), 3.0, 1.2, 0.3);
+        applyKuangmanFormBonus(target, 4800.0f);
     }
 
     private void moveKuangmanSplitEarth(LivingEntity target) {
         castAreaScaled(this.position(), 8.0, 7200.0f, VfxType.SLASH_ARC, 0xFFCC0000, 2.3f, 28);
         modifyTerrain(target.position(), DaoPath.STRENGTH, 4);
+        applyKuangmanFormBonus(target, 7200.0f);
     }
 
     private void moveKuangmanThousandFall(LivingEntity target) {
         castAreaScaled(this.position(), 4.0, 2880.0f, VfxType.IMPACT_BURST, 0xFFCC0000, 1.6f, 20);
         castAreaScaled(this.position(), 8.0, 1800.0f, VfxType.IMPACT_BURST, 0xFFCC0000, 1.8f, 20);
+        applyKuangmanFormBonus(target, 2880.0f);
     }
 
     private void moveKuangmanSavageTornado(LivingEntity target) {
         addAreaEffect(this.position(), 6.0, 0.08f, 80, true, 1, 0, false, false,
             VfxType.TORNADO, 0xFFCC0000, 2.2f, null, 0);
         knockbackTargets(this.position(), 6.0, 1.0, 0.2);
+        applyKuangmanFormBonus(target, 1.0f);
     }
 
     private void moveKuangmanDevourHeal(LivingEntity target) {
         castSingleScaled(target, 1.0f, VfxType.BEAST_PHANTOM, 0xFFCC0000, 1.2f, 18);
         healPercent(0.03f);
+        applyKuangmanFormBonus(target, 1.0f);
     }
 
     private void moveKuangmanGiantApeFist(LivingEntity target) {
         castAreaScaled(this.position(), 12.0, 9000.0f, VfxType.IMPACT_BURST, 0xFFCC0000, 2.8f, 36);
         knockbackTargets(this.position(), 12.0, 1.4, 0.4);
+        applyKuangmanFormBonus(target, 9000.0f);
     }
 
     private void moveKuangmanShockStomp(LivingEntity target) {
@@ -1824,6 +1884,7 @@ public class VenerableEntity extends Monster {
         for (LivingEntity living : getEnemies(this.position(), 6.0)) {
             living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 80, 4));
         }
+        applyKuangmanFormBonus(target, 1080.0f);
     }
 
     private void moveKuangmanBloodAwakening(LivingEntity target) {
@@ -1838,28 +1899,31 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveJuyangGoldenStrike(LivingEntity target) {
-        castSingleScaled(target, 4000.0f, VfxType.ENERGY_BEAM, 0xFFFF8800, 1.6f, 20);
+        selfDamagePercent(0.02f);
+        castSingleScaled(target, 2800.0f, VfxType.ENERGY_BEAM, 0xFFFF8800, 1.6f, 20);
         if (this.random.nextFloat() < 0.15f) {
-            castSingleScaled(target, 4000.0f, VfxType.GLOW_BURST, 0xFFFF8800, 1.7f, 20);
+            castSingleScaled(target, 2800.0f, VfxType.GLOW_BURST, 0xFFFF8800, 1.7f, 20);
         }
     }
 
     private void moveJuyangBloodSacrifice(LivingEntity target) {
         selfDamagePercent(0.10f);
-        castSingleScaled(target, 8000.0f, VfxType.BLOOD_RAIN, 0xFFFF8800, 2.0f, 24);
+        castSingleScaled(target, 5600.0f, VfxType.BLOOD_RAIN, 0xFFFF8800, 2.0f, 24);
         healPercent(0.10f);
     }
 
     private void moveJuyangSunWill(LivingEntity target) {
-        castAreaScaled(this.position(), 8.0, 4320.0f, VfxType.GLOW_BURST, 0xFFFF8800, 2.2f, 28);
+        selfDamagePercent(0.02f);
+        castAreaScaled(this.position(), 8.0, 3024.0f, VfxType.GLOW_BURST, 0xFFFF8800, 2.2f, 28);
         for (LivingEntity living : getEnemies(this.position(), 8.0)) {
             living.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 60, 0));
         }
     }
 
     private void moveJuyangSolarJudgment(LivingEntity target) {
+        selfDamagePercent(0.02f);
         for (int i = 0; i < 6; i++) {
-            castSingleScaled(target, 2000.0f, VfxType.ENERGY_BEAM, 0xFFFF8800, 1.2f, 12);
+            castSingleScaled(target, 1400.0f, VfxType.ENERGY_BEAM, 0xFFFF8800, 1.2f, 12);
         }
     }
 
@@ -1882,13 +1946,14 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveJuyangSunBurst(LivingEntity target) {
-        castAreaScaled(this.position(), 6.0, 5400.0f, VfxType.GLOW_BURST, 0xFFFF8800, 2.2f, 28);
+        selfDamagePercent(0.02f);
+        castAreaScaled(this.position(), 6.0, 3780.0f, VfxType.GLOW_BURST, 0xFFFF8800, 2.2f, 28);
         modifyTerrain(this.position(), DaoPath.FIRE, 3);
     }
 
     private void moveJuyangFortuneShift(LivingEntity target) {
         transferDebuffsToTarget(target);
-        castSingleScaled(target, 2000.0f, VfxType.GLOW_BURST, 0xFFFF8800, 1.4f, 18);
+        castSingleScaled(target, 1400.0f, VfxType.GLOW_BURST, 0xFFFF8800, 1.4f, 18);
     }
 
     private void moveJuyangBloodTide(LivingEntity target) {
@@ -1898,7 +1963,8 @@ public class VenerableEntity extends Monster {
 
     private void moveJuyangSunSpear(LivingEntity target) {
         if (this.distanceTo(target) <= 20.0f) {
-            hurtScaled(target, 3000.0f, true);
+            selfDamagePercent(0.02f);
+            hurtScaled(target, 2100.0f, true);
             spawnVfx(VfxType.ENERGY_BEAM, target.getX(), target.getY() + 1.0, target.getZ(),
                 target.getX() - getX(), target.getEyeY() - getEyeY(), target.getZ() - getZ(), 0xFFFF8800, 1.8f, 24);
         }
@@ -1908,7 +1974,7 @@ public class VenerableEntity extends Monster {
     private void moveJuyangFortuneSteal(LivingEntity target) {
         double stolenArmor = Math.max(0.0, target.getAttributeValue(Attributes.ARMOR) * 0.20);
         applyTimedModifier(Attributes.ARMOR, "venerable_juyang_steal_armor", stolenArmor, AttributeModifier.Operation.ADD_VALUE, 200);
-        castSingleScaled(target, 1.0f, VfxType.GLOW_BURST, 0xFFFF8800, 1.3f, 16);
+        castSingleScaled(target, 0.7f, VfxType.GLOW_BURST, 0xFFFF8800, 1.3f, 16);
     }
 
     private void moveJuyangBloodBoil(LivingEntity target) {
@@ -1919,16 +1985,18 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveJuyangSunFall(LivingEntity target) {
-        castAreaScaled(target.position(), 12.0, 7200.0f, VfxType.SKY_STRIKE, 0xFFFF8800, 2.8f, 36);
-        castAreaScaled(target.position(), 12.0, 1800.0f, VfxType.GLOW_BURST, 0xFFFF8800, 2.4f, 28);
+        selfDamagePercent(0.02f);
+        castAreaScaled(target.position(), 12.0, 5040.0f, VfxType.SKY_STRIKE, 0xFFFF8800, 2.8f, 36);
+        castAreaScaled(target.position(), 12.0, 1260.0f, VfxType.GLOW_BURST, 0xFFFF8800, 2.4f, 28);
         modifyTerrain(target.position(), DaoPath.FIRE, 3);
     }
 
     private void moveJuyangFateHand(LivingEntity target) {
+        selfDamagePercent(0.02f);
         if (target.getHealth() < target.getMaxHealth() * 0.10f && this.random.nextFloat() < 0.30f) {
-            castSingleScaled(target, 12000.0f, VfxType.GLOW_BURST, 0xFFFF8800, 2.2f, 30);
+            castSingleScaled(target, 8400.0f, VfxType.GLOW_BURST, 0xFFFF8800, 2.2f, 30);
         } else {
-            castSingleScaled(target, 2000.0f, VfxType.GLOW_BURST, 0xFFFF8800, 1.3f, 16);
+            castSingleScaled(target, 1400.0f, VfxType.GLOW_BURST, 0xFFFF8800, 1.3f, 16);
         }
     }
 
@@ -1951,12 +2019,14 @@ public class VenerableEntity extends Monster {
             this.juYangDrainTicks = 100;
             spawnCenterVfx(VfxType.GLOW_BURST, 0xFFFF8800, 2.6f, 36);
         } else {
-            castSingleScaled(target, 1.0f, VfxType.GLOW_BURST, 0xFFFF8800, 1.2f, 14);
+            selfDamagePercent(0.02f);
+            castSingleScaled(target, 0.7f, VfxType.GLOW_BURST, 0xFFFF8800, 1.2f, 14);
         }
     }
 
     private void moveXingxiuStarProjection(LivingEntity target) {
         castSingleScaled(target, 4800.0f, VfxType.STAR_RAIN, 0xFF77BBFF, 1.6f, 20);
+        target.addEffect(new MobEffectInstance(MobEffects.GLOWING, 100, 0));
     }
 
     private void moveXingxiuStarNeedle(LivingEntity target) {
@@ -2040,13 +2110,14 @@ public class VenerableEntity extends Monster {
     private void moveXingxiuStarGravity(LivingEntity target) {
         addAreaEffect(target.position(), 8.0, 0.05f, 60, true, 2, 0, true, false,
             VfxType.BLACK_HOLE, 0xFF77BBFF, 2.0f, DaoPath.STAR, 3);
+        target.push(0.0, -0.5, 0.0);
+        target.hurtMarked = true;
     }
 
     private void moveXingxiuStarPressure(LivingEntity target) {
         castAreaScaled(this.position(), 8.0, 1800.0f, VfxType.STAR_RAIN, 0xFF77BBFF, 2.0f, 24);
         for (LivingEntity living : getEnemies(this.position(), 8.0)) {
-            living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 80, 1));
-            living.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 80, 1));
+            living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 100, 3));
         }
     }
 
@@ -2075,7 +2146,7 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveLetuEarthBarrier(LivingEntity target) {
-        applyTimedModifier(Attributes.ARMOR, "venerable_letu_barrier", 2.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+        applyTimedModifier(Attributes.ARMOR, "venerable_letu_barrier", 1.50, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
         spawnCenterVfx(VfxType.EARTH_PILLAR, 0xFFC8A86E, 2.2f, 28);
     }
 
@@ -2119,6 +2190,14 @@ public class VenerableEntity extends Monster {
     private void moveLetuHeavenMercy(LivingEntity target) {
         if (this.getHealth() < this.getMaxHealth() * 0.20f) {
             this.mercyTicks = 100;
+            if (this.level() instanceof ServerLevel sl) {
+                for (UUID id : this.summonIds) {
+                    Entity entity = sl.getEntity(id);
+                    if (entity instanceof LivingEntity living && living.isAlive()) {
+                        living.heal((float) (living.getMaxHealth() * 0.05f));
+                    }
+                }
+            }
             spawnCenterVfx(VfxType.HEAL_SPIRAL, 0xFFC8A86E, 2.2f, 30);
         } else {
             castSingleScaled(target, 1.0f, VfxType.SKY_STRIKE, 0xFFC8A86E, 1.2f, 14);
@@ -2206,7 +2285,7 @@ public class VenerableEntity extends Monster {
 
     private void moveYuanshiQiBarrier(LivingEntity target) {
         clearProjectiles(8.0);
-        applyTimedModifier(Attributes.ARMOR, "venerable_yuanshi_qi_barrier", 0.30, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+        applyTimedModifier(Attributes.ARMOR, "venerable_yuanshi_qi_barrier", 1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 160);
         spawnCenterVfx(VfxType.QI_STORM, 0xFFFFD700, 2.2f, 28);
     }
 
@@ -2214,6 +2293,7 @@ public class VenerableEntity extends Monster {
         for (LivingEntity living : getEnemies(this.position(), 8.0)) {
             living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 80, 1));
         }
+        target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 80, 1));
         spawnCenterVfx(VfxType.QI_STORM, 0xFFFFD700, 1.8f, 22);
     }
 
@@ -2238,6 +2318,7 @@ public class VenerableEntity extends Monster {
 
     private void moveYuanshiQiGuard(LivingEntity target) {
         applyTimedModifier(Attributes.ARMOR, "venerable_yuanshi_qi_guard_armor", 0.30, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+        healPercent(0.02f);
         spawnCenterVfx(VfxType.QI_STORM, 0xFFFFD700, 2.0f, 26);
     }
 
@@ -2397,6 +2478,7 @@ public class VenerableEntity extends Monster {
     private void moveYuanlianVineWhip(LivingEntity target) {
         castSingleScaled(target, 3200.0f, VfxType.VINE_CAGE, 0xFF33CC33, 1.4f, 18);
         target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 1));
+        knockbackTargets(target.position(), 3.0, 1.0, 0.3);
     }
 
     private void moveYuanlianVineBind(LivingEntity target) {
@@ -2423,7 +2505,8 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveYuanlianRegeneration(LivingEntity target) {
-        healPercent(this.currentPhase == 1 ? 0.03f : (this.currentPhase == 2 ? 0.05f : 0.08f));
+        healPercent(0.08f);
+        applyTimedModifier(Attributes.MAX_HEALTH, "venerable_yuanlian_regen_max_health", 0.20, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
         spawnCenterVfx(VfxType.HEAL_SPIRAL, 0xFF33CC33, 1.8f, 22);
     }
 
@@ -2509,6 +2592,8 @@ public class VenerableEntity extends Monster {
         tag.putBoolean("JuYangImmortalUsed", this.juYangImmortalUsed);
         tag.putInt("JuYangDrainTicks", this.juYangDrainTicks);
         tag.putInt("KuangManAwakenTicks", this.kuangManAwakenTicks);
+        tag.putInt("KuangManActiveForm", this.kuangManActiveForm);
+        tag.putInt("KuangManFormTicks", this.kuangManFormTicks);
         tag.putInt("HongLianFreezeTicks", this.hongLianFreezeTicks);
         tag.putInt("HongLianRageTicks", this.hongLianRageTicks);
         tag.putInt("MercyTicks", this.mercyTicks);
@@ -2534,6 +2619,8 @@ public class VenerableEntity extends Monster {
         this.juYangImmortalUsed = tag.getBoolean("JuYangImmortalUsed");
         this.juYangDrainTicks = Math.max(0, tag.getInt("JuYangDrainTicks"));
         this.kuangManAwakenTicks = Math.max(0, tag.getInt("KuangManAwakenTicks"));
+        this.kuangManActiveForm = tag.getInt("KuangManActiveForm");
+        this.kuangManFormTicks = Math.max(0, tag.getInt("KuangManFormTicks"));
         this.hongLianFreezeTicks = Math.max(0, tag.getInt("HongLianFreezeTicks"));
         this.hongLianRageTicks = Math.max(0, tag.getInt("HongLianRageTicks"));
         this.mercyTicks = Math.max(0, tag.getInt("MercyTicks"));
