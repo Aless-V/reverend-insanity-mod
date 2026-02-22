@@ -258,6 +258,8 @@ public class VenerableEntity extends Monster {
     private float recentDamagePercent = 0.0f;
     private int recentDamageTicks = 0;
     private UUID recentAttacker = null;
+    private boolean xingXiuPredictActive = false;
+    private float hongLianSavedHealth = 0.0f;
 
     public VenerableEntity(EntityType<? extends Monster> type, Level level) {
         super(type, level);
@@ -357,6 +359,8 @@ public class VenerableEntity extends Monster {
         this.recentDamagePercent = 0.0f;
         this.recentDamageTicks = 0;
         this.recentAttacker = null;
+        this.xingXiuPredictActive = false;
+        this.hongLianSavedHealth = 0.0f;
     }
 
     private void initializeCombatAI() {
@@ -657,18 +661,23 @@ public class VenerableEntity extends Monster {
     }
 
     private void tickPassives() {
+        if (this.venerableType == VenerableType.HONG_LIAN && this.tickCount % 40 == 0) {
+            this.hongLianSavedHealth = this.getHealth();
+        }
         if (this.venerableType == VenerableType.WU_JI || this.venerableType == VenerableType.YUAN_SHI) {
             for (LivingEntity living : getEnemies(this.position(), 8.0)) {
                 living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 30, 1));
             }
         }
-        if (this.venerableType == VenerableType.YUAN_LIAN) {
-            this.yuanLianRegenTicker++;
-            if (this.yuanLianRegenTicker >= 60) {
-                this.yuanLianRegenTicker = 0;
-                float phaseRegen = this.currentPhase == 1 ? 0.03f : (this.currentPhase == 2 ? 0.05f : 0.08f);
-                healPercent(phaseRegen);
-                spawnVfx(VfxType.HEAL_SPIRAL, getX(), getY() + 1.0, getZ(), 0.0, 1.0, 0.0, 0xFF33CC33, 2.2f, 30);
+        if (this.tickCount % 100 == 0) {
+            switch (this.venerableType) {
+                case JU_YANG -> healPercent(0.005f);
+                case LE_TU -> healPercent(0.003f);
+                case YUAN_LIAN -> {
+                    this.yuanLianRegenTicker++;
+                    healPercent(0.01f);
+                }
+                default -> {}
             }
         }
     }
@@ -1104,6 +1113,11 @@ public class VenerableEntity extends Monster {
             target.getX() - getX(), target.getEyeY() - getEyeY(), target.getZ() - getZ(), color, scale, ticks);
     }
 
+    private void castAreaScaled(Vec3 center, double radius, float scaleDamage, VfxType vfxType, int color, float scale, int ticks) {
+        hurtAreaScaled(center, radius, scaleDamage, false);
+        spawnVfx(vfxType, center.x, center.y + 1.0, center.z, 0.0, 1.0, 0.0, color, scale, ticks);
+    }
+
     private void castAreaPercent(Vec3 center, double radius, float percent, VfxType vfxType, int color, float scale, int ticks) {
         hurtAreaPercent(center, radius, percent, true);
         spawnVfx(vfxType, center.x, center.y + 1.0, center.z, 0.0, 1.0, 0.0, color, scale, ticks);
@@ -1139,27 +1153,75 @@ public class VenerableEntity extends Monster {
         this.recentDamageTicks = 100;
 
         float adjusted = amount;
+
         if (this.wujiShieldTicks > 0) {
             adjusted *= 0.5f;
         }
+
+        switch (this.venerableType) {
+            case WU_JI -> adjusted *= 0.65f;
+            case YOU_HUN -> {
+                if (this.random.nextFloat() < 0.20f) {
+                    if (source.getEntity() instanceof LivingEntity attacker) {
+                        hurtScaled(attacker, 300.0f, true);
+                        spawnVfx(VfxType.SOUL_VORTEX, attacker.getX(), attacker.getY() + 1.0, attacker.getZ(),
+                            0.0, 1.0, 0.0, 0xFF330066, 1.2f, 15);
+                    }
+                    return false;
+                }
+            }
+            case DAO_TIAN -> {
+                if (this.random.nextFloat() < 0.15f) {
+                    if (source.getEntity() instanceof LivingEntity attacker) {
+                        stealOneBuff(attacker);
+                        spawnVfx(VfxType.SPATIAL_TEAR, getX(), getY() + 1.0, getZ(),
+                            0.0, 1.0, 0.0, 0xFF444444, 1.0f, 12);
+                    }
+                    return false;
+                }
+            }
+            case KUANG_MAN -> {
+                adjusted *= 0.75f;
+                if (source.getEntity() instanceof LivingEntity attacker && attacker.distanceTo(this) < 8.0) {
+                    hurtScaled(attacker, 500.0f, false);
+                    spawnVfx(VfxType.IMPACT_BURST, attacker.getX(), attacker.getY() + 1.0, attacker.getZ(),
+                        0.0, 1.0, 0.0, 0xFFCC0000, 1.0f, 10);
+                }
+            }
+            case JU_YANG -> {
+                if (this.random.nextFloat() < 0.15f) {
+                    spawnVfx(VfxType.GLOW_BURST, getX(), getY() + 1.0, getZ(),
+                        0.0, 1.0, 0.0, 0xFFFF8800, 0.8f, 10);
+                    return false;
+                }
+            }
+            case XING_XIU -> {
+                if (this.xingXiuPredictActive) {
+                    adjusted *= 0.70f;
+                    this.xingXiuPredictActive = false;
+                }
+                this.xingXiuPredictActive = true;
+            }
+            case LE_TU -> adjusted *= 0.60f;
+            case YUAN_SHI -> {
+                adjusted *= 0.80f;
+                applyTimedModifier(Attributes.ATTACK_DAMAGE, "venerable_yuanshi_qi_absorb",
+                    this.venerableType.attackDamage * 0.10, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+            }
+            case HONG_LIAN -> {
+                if (this.random.nextFloat() < 0.20f && this.hongLianSavedHealth > 0.0f) {
+                    this.setHealth(Math.max(this.getHealth(), this.hongLianSavedHealth));
+                    spawnVfx(VfxType.TIME_DISTORTION, getX(), getY() + 1.0, getZ(),
+                        0.0, 1.0, 0.0, 0xFFFF0033, 1.5f, 20);
+                    return false;
+                }
+            }
+            case YUAN_LIAN -> adjusted *= 0.85f;
+            default -> {}
+        }
+
         if (this.venerableType == VenerableType.KUANG_MAN && this.getHealth() < this.getMaxHealth() * 0.30f) {
             adjusted *= 0.5f;
-        }
-
-        if (this.venerableType == VenerableType.JU_YANG && this.random.nextFloat() < 0.15f) {
-            if (source.getEntity() instanceof LivingEntity attacker) {
-                float reflectPercent = Math.max(0.01f, Math.min(0.08f, (amount / Math.max(1.0f, this.getMaxHealth())) * 0.2f));
-                hurtPercent(attacker, reflectPercent, true);
-            }
-            return false;
-        }
-
-        if (this.venerableType == VenerableType.XING_XIU && this.random.nextFloat() < 0.25f) {
-            if (source.getEntity() instanceof LivingEntity attacker) {
-                hurtPercent(attacker, 0.08f, true);
-                spawnVfx(VfxType.STAR_RAIN, attacker.getX(), attacker.getY() + 1.0, attacker.getZ(), 0.0, 1.0, 0.0, 0xFF77BBFF, 1.4f, 20);
-            }
-            return false;
         }
 
         if (!this.level().isClientSide() && adjusted >= this.getHealth()) {
@@ -1172,6 +1234,7 @@ public class VenerableEntity extends Monster {
     }
 
     private boolean tryPreventDeath() {
+
         if (this.venerableType == VenerableType.HONG_LIAN && !this.hongLianCicadaUsed) {
             this.hongLianCicadaUsed = true;
             this.setHealth(this.getMaxHealth());
@@ -1250,28 +1313,42 @@ public class VenerableEntity extends Monster {
         }
     }
 
+    private void stealOneBuff(LivingEntity target) {
+        List<MobEffectInstance> beneficial = new ArrayList<>();
+        for (MobEffectInstance effect : target.getActiveEffects()) {
+            if (effect.getEffect().value().isBeneficial()) {
+                beneficial.add(effect);
+            }
+        }
+        if (!beneficial.isEmpty()) {
+            MobEffectInstance stolen = beneficial.get(this.random.nextInt(beneficial.size()));
+            target.removeEffect(stolen.getEffect());
+            this.addEffect(new MobEffectInstance(stolen.getEffect(), stolen.getDuration(), stolen.getAmplifier()));
+        }
+    }
+
     private void moveWujiLawChisel(LivingEntity target) {
-        castSinglePercent(target, 0.20f, VfxType.LAW_CHAINS, 0xFFF0F0FF, 1.6f, 24);
+        castSingleScaled(target, 8000.0f, VfxType.LAW_CHAINS, 0xFFF0F0FF, 1.6f, 24);
         playHostileSound(SoundEvents.ANVIL_LAND, 1.4f, 0.7f);
     }
 
     private void moveWujiMadnessWave(LivingEntity target) {
-        castAreaPercent(this.position(), 8.0, 0.03f, VfxType.RIPPLE, 0xFFF0F0FF, 2.0f, 25);
+        castAreaScaled(this.position(), 8.0, 1080.0f, VfxType.RIPPLE, 0xFFF0F0FF, 2.0f, 25);
         this.wujiMadnessStacks++;
         if (this.wujiMadnessStacks >= 3) {
             this.wujiMadnessStacks = 0;
-            castSinglePercent(target, 0.15f, VfxType.RIPPLE, 0xFFF0F0FF, 2.2f, 25);
+            castSingleScaled(target, 6000.0f, VfxType.RIPPLE, 0xFFF0F0FF, 2.2f, 25);
         }
     }
 
     private void moveWujiOrderBarrage(LivingEntity target) {
         for (int i = 0; i < 5; i++) {
-            castSinglePercent(target, 0.05f, VfxType.PULSE_WAVE, 0xFFF0F0FF, 1.2f, 14);
+            castSingleScaled(target, 2000.0f, VfxType.PULSE_WAVE, 0xFFF0F0FF, 1.2f, 14);
         }
     }
 
     private void moveWujiAbsoluteLaw(LivingEntity target) {
-        castAreaPercent(this.position(), 16.0, 0.20f, VfxType.LAW_CHAINS, 0xFFF0F0FF, 2.6f, 35);
+        castAreaScaled(this.position(), 16.0, 7200.0f, VfxType.LAW_CHAINS, 0xFFF0F0FF, 2.6f, 35);
         for (LivingEntity living : getEnemies(this.position(), 16.0)) {
             addRoot(living, 60);
         }
@@ -1284,7 +1361,7 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveWujiAllLawsOne(LivingEntity target) {
-        castSinglePercent(target, 0.30f, VfxType.PULSE_WAVE, 0xFFF0F0FF, 2.0f, 30);
+        castSingleScaled(target, 12000.0f, VfxType.PULSE_WAVE, 0xFFF0F0FF, 2.0f, 30);
         target.removeAllEffects();
     }
 
@@ -1295,12 +1372,12 @@ public class VenerableEntity extends Monster {
 
     private void moveWujiLawChainDrag(LivingEntity target) {
         target.teleportTo(this.getX(), this.getY(), this.getZ());
-        castSinglePercent(target, 0.08f, VfxType.LAW_CHAINS, 0xFFF0F0FF, 1.5f, 20);
+        castSingleScaled(target, 3200.0f, VfxType.LAW_CHAINS, 0xFFF0F0FF, 1.5f, 20);
     }
 
     private void moveWujiOrderJudgment(LivingEntity target) {
         for (int i = 0; i < 3; i++) {
-            castSinglePercent(target, 0.08f, VfxType.SLASH_ARC, 0xFFF0F0FF, 1.3f, 12);
+            castSingleScaled(target, 3200.0f, VfxType.SLASH_ARC, 0xFFF0F0FF, 1.3f, 12);
         }
         knockbackTargets(target.position(), 3.0, 1.1, 0.2);
     }
@@ -1311,7 +1388,7 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveWujiMyriadLawOrigin(LivingEntity target) {
-        castAreaPercent(this.position(), 12.0, 0.35f, VfxType.LAW_CHAINS, 0xFFF0F0FF, 3.0f, 45);
+        castAreaScaled(this.position(), 12.0, 12600.0f, VfxType.LAW_CHAINS, 0xFFF0F0FF, 3.0f, 45);
         for (LivingEntity living : getEnemies(this.position(), 12.0)) {
             living.removeAllEffects();
         }
@@ -1321,36 +1398,41 @@ public class VenerableEntity extends Monster {
     private void moveWujiLawTrial(LivingEntity target) {
         float hpRatio = target.getHealth() / Math.max(1.0f, target.getMaxHealth());
         float pct = Math.max(0.02f, Math.min(0.20f, hpRatio * 0.20f));
-        castSinglePercent(target, pct, VfxType.ENERGY_BEAM, 0xFFF0F0FF, 1.8f, 24);
+        castSingleScaled(target, target.getHealth() < target.getMaxHealth() * 0.30f ? 12000.0f : 3800.0f, VfxType.ENERGY_BEAM, 0xFFF0F0FF, 1.8f, 24);
     }
 
     private void moveWujiWorldEnd(LivingEntity target) {
         selfDamagePercent(0.05f);
-        castAreaPercent(this.position(), 18.0, 0.25f, VfxType.SKY_STRIKE, 0xFFF0F0FF, 3.0f, 40);
+        castAreaScaled(this.position(), 18.0, 9000.0f, VfxType.SKY_STRIKE, 0xFFF0F0FF, 3.0f, 40);
         modifyTerrain(this.position(), DaoPath.RULE, 6);
     }
 
     private void moveWujiOrderSpear(LivingEntity target) {
-        lineStrike(target, 16.0, 0.15f, VfxType.ENERGY_BEAM, 0xFFF0F0FF);
+        if (this.distanceTo(target) <= 18.0f) {
+            hurtScaled(target, 4600.0f, true);
+            spawnVfx(VfxType.ENERGY_BEAM, target.getX(), target.getY() + 1.0, target.getZ(),
+                target.getX() - getX(), target.getEyeY() - getEyeY(), target.getZ() - getZ(), 0xFFF0F0FF, 1.8f, 24);
+        }
         spawnVfx(VfxType.LAW_CHAINS, target.getX(), target.getY() + 1.0, target.getZ(), 0.0, 1.0, 0.0, 0xFFF0F0FF, 1.5f, 22);
         this.level().playSound(null, blockPosition(), SoundEvents.TRIDENT_THROW.value(), SoundSource.HOSTILE, 1.4f, 0.7f);
     }
 
     private void moveWujiBoundlessCross(LivingEntity target) {
-        castAreaPercent(this.position(), 8.0, 0.15f, VfxType.SLASH_ARC, 0xFFF0F0FF, 2.2f, 30);
+        castAreaScaled(this.position(), 8.0, 5400.0f, VfxType.SLASH_ARC, 0xFFF0F0FF, 2.2f, 30);
         knockbackTargets(this.position(), 8.0, 1.2, 0.2);
     }
 
     private void moveWujiLawReflect(LivingEntity target) {
-        float pct = Math.max(0.02f, Math.min(0.30f, this.recentDamagePercent * 2.0f));
-        castSinglePercent(target, pct, VfxType.DOME_FIELD, 0xFFF0F0FF, 1.8f, 24);
+        float scale = Math.max(1000.0f, Math.min(7000.0f, this.recentDamagePercent * 30000.0f));
+        castSingleScaled(target, scale, VfxType.DOME_FIELD, 0xFFF0F0FF, 1.8f, 24);
+        clearProjectiles(8.0);
     }
 
     private void moveWujiForbiddenSeal(LivingEntity target) {
         target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 200, 2));
         target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 200, 2));
         target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 120, 1));
-        castSinglePercent(target, 0.06f, VfxType.LAW_CHAINS, 0xFFF0F0FF, 1.6f, 24);
+        castSingleScaled(target, 2400.0f, VfxType.LAW_CHAINS, 0xFFF0F0FF, 1.6f, 24);
     }
 
     private void moveWujiPressureAura(LivingEntity target) {
@@ -1383,21 +1465,21 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveWujiProveByForce(LivingEntity target) {
-        castSinglePercent(target, 0.40f, VfxType.ENERGY_BEAM, 0xFFF0F0FF, 2.6f, 45);
+        castSingleScaled(target, 16000.0f, VfxType.ENERGY_BEAM, 0xFFF0F0FF, 2.6f, 45);
         spawnVfx(VfxType.LAW_CHAINS, target.getX(), target.getY() + 1.0, target.getZ(), 0.0, 1.0, 0.0, 0xFFF0F0FF, 2.0f, 40);
     }
 
     private void moveYouhunSoulStrike(LivingEntity target) {
-        castSinglePercent(target, 0.15f, VfxType.SOUL_VORTEX, 0xFF330066, 1.6f, 22);
+        castSingleScaled(target, 6000.0f, VfxType.SOUL_VORTEX, 0xFF330066, 1.6f, 22);
     }
 
     private void moveYouhunSoulReap(LivingEntity target) {
-        castAreaPercent(this.position(), 8.0, 0.08f, VfxType.SOUL_VORTEX, 0xFF330066, 2.2f, 30);
+        castAreaScaled(this.position(), 8.0, 2880.0f, VfxType.SOUL_VORTEX, 0xFF330066, 2.2f, 30);
         healPercent(0.08f);
     }
 
     private void moveYouhunSoulDevourUltimate(LivingEntity target) {
-        castAreaPercent(this.position(), 10.0, 0.25f, VfxType.SOUL_VORTEX, 0xFF330066, 2.8f, 38);
+        castAreaScaled(this.position(), 10.0, 9000.0f, VfxType.SOUL_VORTEX, 0xFF330066, 2.8f, 38);
     }
 
     private void moveYouhunSoulSplit(LivingEntity target) {
@@ -1417,7 +1499,7 @@ public class VenerableEntity extends Monster {
         target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 100, 0));
         target.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 100, 0));
         target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 100, 2));
-        castSinglePercent(target, 0.25f, VfxType.SOUL_VORTEX, 0xFF330066, 2.0f, 28);
+        castSingleScaled(target, 10000.0f, VfxType.SOUL_VORTEX, 0xFF330066, 2.0f, 28);
     }
 
     private void moveYouhunShadowClone(LivingEntity target) {
@@ -1433,7 +1515,7 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveYouhunSoulGaze(LivingEntity target) {
-        castSinglePercent(target, 0.08f, VfxType.SOUL_VORTEX, 0xFF330066, 1.7f, 22);
+        castSingleScaled(target, 3200.0f, VfxType.SOUL_VORTEX, 0xFF330066, 1.7f, 22);
         target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 80, 4));
     }
 
@@ -1444,23 +1526,23 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveYouhunSoulTruth(LivingEntity target) {
-        castSinglePercent(target, 0.30f, VfxType.SOUL_VORTEX, 0xFF330066, 2.3f, 30);
+        castSingleScaled(target, 12000.0f, VfxType.SOUL_VORTEX, 0xFF330066, 2.3f, 30);
         spawnVfx(VfxType.SHADOW_FADE, target.getX(), target.getY() + 1.0, target.getZ(), 0.0, 1.0, 0.0, 0xFF330066, 1.4f, 20);
     }
 
     private void moveYouhunShadowEscape(LivingEntity target) {
         teleportBehind(target, 1.2);
         this.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, 40, 0));
-        castSinglePercent(target, 0.10f, VfxType.SHADOW_FADE, 0xFF330066, 1.6f, 22);
+        castSingleScaled(target, 4000.0f, VfxType.SHADOW_FADE, 0xFF330066, 1.6f, 22);
     }
 
     private void moveYouhunDreamCage(LivingEntity target) {
         addRoot(target, 80);
-        castSinglePercent(target, 0.12f, VfxType.SOUL_VORTEX, 0xFF330066, 1.8f, 26);
+        castSingleScaled(target, 4800.0f, VfxType.SOUL_VORTEX, 0xFF330066, 1.8f, 26);
     }
 
     private void moveYouhunMentalCrush(LivingEntity target) {
-        castAreaPercent(this.position(), 16.0, 0.05f, VfxType.SOUL_VORTEX, 0xFF330066, 2.4f, 28);
+        castAreaScaled(this.position(), 16.0, 1800.0f, VfxType.SOUL_VORTEX, 0xFF330066, 2.4f, 28);
         modifyTerrain(this.position(), DaoPath.SOUL, 5);
         for (LivingEntity living : getEnemies(this.position(), 16.0)) {
             living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 80, 1));
@@ -1469,7 +1551,7 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveYouhunSoulPuppet(LivingEntity target) {
-        castSinglePercent(target, 0.05f, VfxType.SHADOW_FADE, 0xFF330066, 1.6f, 22);
+        castSingleScaled(target, 2000.0f, VfxType.SHADOW_FADE, 0xFF330066, 1.6f, 22);
         if (target instanceof Mob mob) {
             mob.setTarget(this);
         }
@@ -1480,7 +1562,7 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveYouhunAbsorbSoul(LivingEntity target) {
-        castSinglePercent(target, 0.12f, VfxType.SOUL_VORTEX, 0xFF330066, 1.8f, 24);
+        castSingleScaled(target, 4800.0f, VfxType.SOUL_VORTEX, 0xFF330066, 1.8f, 24);
         healPercent(0.12f);
     }
 
@@ -1491,7 +1573,7 @@ public class VenerableEntity extends Monster {
 
     private void moveYouhunDreamButterfly(LivingEntity target) {
         target.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 60, 1));
-        castSinglePercent(target, 0.06f, VfxType.SHADOW_FADE, 0xFF330066, 1.6f, 22);
+        castSingleScaled(target, 2400.0f, VfxType.SHADOW_FADE, 0xFF330066, 1.6f, 22);
     }
 
     private void moveYouhunNightOfGhosts(LivingEntity target) {
@@ -1509,7 +1591,7 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveDaotianSpaceCut(LivingEntity target) {
-        castSinglePercent(target, 0.12f, VfxType.SPATIAL_TEAR, 0xFF444444, 1.7f, 22);
+        castSingleScaled(target, 4800.0f, VfxType.SPATIAL_TEAR, 0xFF444444, 1.7f, 22);
     }
 
     private void moveDaotianFormlessHand(LivingEntity target) {
@@ -1528,8 +1610,8 @@ public class VenerableEntity extends Monster {
 
     private void moveDaotianSpaceFold(LivingEntity target) {
         teleportBehind(target, 1.0);
-        castSinglePercent(target, 0.10f, VfxType.SPATIAL_TEAR, 0xFF444444, 1.6f, 20);
-        castSinglePercent(target, 0.10f, VfxType.SPATIAL_TEAR, 0xFF444444, 1.6f, 20);
+        castSingleScaled(target, 4000.0f, VfxType.SPATIAL_TEAR, 0xFF444444, 1.6f, 20);
+        castSingleScaled(target, 4000.0f, VfxType.SPATIAL_TEAR, 0xFF444444, 1.6f, 20);
     }
 
     private void moveDaotianStealTime(LivingEntity target) {
@@ -1547,7 +1629,7 @@ public class VenerableEntity extends Monster {
         if (target instanceof ServerPlayer serverPlayer) {
             summonFormlessHands(serverPlayer, 8, 5);
         }
-        castAreaPercent(this.position(), 10.0, 0.10f, VfxType.SPATIAL_TEAR, 0xFF444444, 3.0f, 36);
+        castAreaScaled(this.position(), 10.0, 3600.0f, VfxType.SPATIAL_TEAR, 0xFF444444, 3.0f, 36);
     }
 
     private void moveDaotianSpaceSwap(LivingEntity target) {
@@ -1555,7 +1637,7 @@ public class VenerableEntity extends Monster {
         Vec3 targetPos = target.position();
         this.teleportTo(targetPos.x, targetPos.y, targetPos.z);
         target.teleportTo(selfPos.x, selfPos.y, selfPos.z);
-        castSinglePercent(target, 0.08f, VfxType.SPATIAL_TEAR, 0xFF444444, 1.6f, 20);
+        castSingleScaled(target, 3200.0f, VfxType.SPATIAL_TEAR, 0xFF444444, 1.6f, 20);
     }
 
     private void moveDaotianStealPower(LivingEntity target) {
@@ -1566,14 +1648,17 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveDaotianVoidStep(LivingEntity target) {
-        dashStrike(target, 0.05f, VfxType.SPATIAL_TEAR, 0xFF444444);
-        dashStrike(target, 0.05f, VfxType.SPATIAL_TEAR, 0xFF444444);
-        dashStrike(target, 0.05f, VfxType.SPATIAL_TEAR, 0xFF444444);
+        teleportBehind(target, 1.2);
+        castSingleScaled(target, 1800.0f, VfxType.SPATIAL_TEAR, 0xFF444444, 1.4f, 16);
+        teleportBehind(target, 1.2);
+        castSingleScaled(target, 2200.0f, VfxType.SPATIAL_TEAR, 0xFF444444, 1.5f, 18);
+        teleportBehind(target, 1.2);
+        castSingleScaled(target, 2600.0f, VfxType.SPATIAL_TEAR, 0xFF444444, 1.6f, 20);
     }
 
     private void moveDaotianSpaceRift(LivingEntity target) {
         Vec3 pos = target.position();
-        castAreaPercent(pos, 5.0, 0.15f, VfxType.SPATIAL_TEAR, 0xFF444444, 2.2f, 28);
+        castAreaScaled(pos, 5.0, 5400.0f, VfxType.SPATIAL_TEAR, 0xFF444444, 2.2f, 28);
         modifyTerrain(pos, DaoPath.SPACE, 3);
     }
 
@@ -1582,7 +1667,7 @@ public class VenerableEntity extends Monster {
             MobEffectInstance pick = target.getActiveEffects().iterator().next();
             target.removeEffect(pick.getEffect());
         }
-        castSinglePercent(target, 0.08f, VfxType.SHADOW_FADE, 0xFF444444, 1.5f, 20);
+        castSingleScaled(target, 3200.0f, VfxType.SHADOW_FADE, 0xFF444444, 1.5f, 20);
     }
 
     private void moveDaotianNoGapDomain(LivingEntity target) {
@@ -1612,7 +1697,7 @@ public class VenerableEntity extends Monster {
         Vec3 exile = target.position().add(dir.scale(30.0));
         target.teleportTo(exile.x, exile.y, exile.z);
         modifyTerrain(exile, DaoPath.SPACE, 3);
-        castSinglePercent(target, 0.08f, VfxType.SPATIAL_TEAR, 0xFF444444, 1.7f, 20);
+        castSingleScaled(target, 3200.0f, VfxType.SPATIAL_TEAR, 0xFF444444, 1.7f, 20);
     }
 
     private void moveDaotianSameRealmClone(LivingEntity target) {
@@ -1621,42 +1706,42 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveDaotianCopyArt(LivingEntity target) {
-        castSinglePercent(target, 0.12f, VfxType.SPATIAL_TEAR, 0xFF444444, 1.8f, 24);
-        castSinglePercent(target, 0.08f, VfxType.SPATIAL_TEAR, 0xFF444444, 1.5f, 20);
+        castSingleScaled(target, 4800.0f, VfxType.SPATIAL_TEAR, 0xFF444444, 1.8f, 24);
+        castSingleScaled(target, 3200.0f, VfxType.SPATIAL_TEAR, 0xFF444444, 1.5f, 20);
     }
 
     private void moveDaotianFormlessFist(LivingEntity target) {
         if (target instanceof ServerPlayer serverPlayer) {
             summonFormlessHands(serverPlayer, 5, 5);
         }
-        castSinglePercent(target, 0.20f, VfxType.SPATIAL_TEAR, 0xFF444444, 2.2f, 28);
+        castSingleScaled(target, 8000.0f, VfxType.SPATIAL_TEAR, 0xFF444444, 2.2f, 28);
         modifyTerrain(target.position(), DaoPath.SPACE, 4);
     }
 
     private void moveKuangmanSavageSlam(LivingEntity target) {
-        castAreaPercent(this.position(), 8.0, 0.15f, VfxType.IMPACT_BURST, 0xFFCC0000, 2.4f, 30);
+        castAreaScaled(this.position(), 8.0, 5400.0f, VfxType.IMPACT_BURST, 0xFFCC0000, 2.4f, 30);
         modifyTerrain(target.position(), DaoPath.STRENGTH, 3);
     }
 
     private void moveKuangmanDragonForm(LivingEntity target) {
-        castAreaPercent(target.position(), 8.0, 0.12f, VfxType.ENERGY_BEAM, 0xFFCC0000, 2.0f, 26);
+        castAreaScaled(target.position(), 8.0, 4320.0f, VfxType.ENERGY_BEAM, 0xFFCC0000, 2.0f, 26);
         spawnCenterVfx(VfxType.BEAST_PHANTOM, 0xFFCC0000, 1.8f, 22);
     }
 
     private void moveKuangmanTigerForm(LivingEntity target) {
-        castSinglePercent(target, 0.05f, VfxType.BEAST_PHANTOM, 0xFFCC0000, 1.2f, 12);
-        castSinglePercent(target, 0.05f, VfxType.BEAST_PHANTOM, 0xFFCC0000, 1.2f, 12);
-        castSinglePercent(target, 0.05f, VfxType.SLASH_ARC, 0xFFCC0000, 1.3f, 12);
+        castSingleScaled(target, 2000.0f, VfxType.BEAST_PHANTOM, 0xFFCC0000, 1.2f, 12);
+        castSingleScaled(target, 2000.0f, VfxType.BEAST_PHANTOM, 0xFFCC0000, 1.2f, 12);
+        castSingleScaled(target, 2000.0f, VfxType.SLASH_ARC, 0xFFCC0000, 1.3f, 12);
     }
 
     private void moveKuangmanEagleForm(LivingEntity target) {
-        castSinglePercent(target, 0.10f, VfxType.BEAST_PHANTOM, 0xFFCC0000, 1.6f, 22);
+        castSingleScaled(target, 4000.0f, VfxType.BEAST_PHANTOM, 0xFFCC0000, 1.6f, 22);
         knockbackTargets(target.position(), 4.0, 1.6, 0.5);
     }
 
     private void moveKuangmanSnakeForm(LivingEntity target) {
         addRoot(target, 60);
-        castSinglePercent(target, 0.15f, VfxType.BEAST_PHANTOM, 0xFFCC0000, 1.8f, 24);
+        castSingleScaled(target, 6000.0f, VfxType.BEAST_PHANTOM, 0xFFCC0000, 1.8f, 24);
     }
 
     private void moveKuangmanBearForm(LivingEntity target) {
@@ -1673,13 +1758,13 @@ public class VenerableEntity extends Monster {
     private void moveKuangmanHeavenFlip(LivingEntity target) {
         target.push(0.0, 2.0, 0.0);
         target.hurtMarked = true;
-        castSinglePercent(target, 0.20f, VfxType.IMPACT_BURST, 0xFFCC0000, 2.0f, 28);
+        castSingleScaled(target, 8000.0f, VfxType.IMPACT_BURST, 0xFFCC0000, 2.0f, 28);
         modifyTerrain(target.position(), DaoPath.STRENGTH, 3);
     }
 
     private void moveKuangmanBreakAllLaws(LivingEntity target) {
         target.removeAllEffects();
-        castSinglePercent(target, 0.10f, VfxType.PULSE_WAVE, 0xFFCC0000, 1.8f, 24);
+        castSingleScaled(target, 4000.0f, VfxType.PULSE_WAVE, 0xFFCC0000, 1.8f, 24);
     }
 
     private void moveKuangmanBeastSummon(LivingEntity target) {
@@ -1690,7 +1775,7 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveKuangmanTenThousandBeasts(LivingEntity target) {
-        castAreaPercent(this.position(), 10.0, 0.30f, VfxType.BEAST_PHANTOM, 0xFFCC0000, 3.0f, 42);
+        castAreaScaled(this.position(), 10.0, 10800.0f, VfxType.BEAST_PHANTOM, 0xFFCC0000, 3.0f, 42);
         modifyTerrain(this.position(), DaoPath.STRENGTH, 5);
     }
 
@@ -1704,18 +1789,18 @@ public class VenerableEntity extends Monster {
     private void moveKuangmanCharge(LivingEntity target) {
         Vec3 dir = target.position().subtract(this.position()).normalize();
         this.push(dir.x * 1.6, 0.1, dir.z * 1.6);
-        castSinglePercent(target, 0.12f, VfxType.IMPACT_BURST, 0xFFCC0000, 1.8f, 22);
+        castSingleScaled(target, 4800.0f, VfxType.IMPACT_BURST, 0xFFCC0000, 1.8f, 22);
         knockbackTargets(target.position(), 3.0, 1.2, 0.3);
     }
 
     private void moveKuangmanSplitEarth(LivingEntity target) {
-        castAreaPercent(this.position(), 8.0, 0.20f, VfxType.SLASH_ARC, 0xFFCC0000, 2.3f, 28);
+        castAreaScaled(this.position(), 8.0, 7200.0f, VfxType.SLASH_ARC, 0xFFCC0000, 2.3f, 28);
         modifyTerrain(target.position(), DaoPath.STRENGTH, 4);
     }
 
     private void moveKuangmanThousandFall(LivingEntity target) {
-        castAreaPercent(this.position(), 4.0, 0.08f, VfxType.IMPACT_BURST, 0xFFCC0000, 1.6f, 20);
-        castAreaPercent(this.position(), 8.0, 0.05f, VfxType.IMPACT_BURST, 0xFFCC0000, 1.8f, 20);
+        castAreaScaled(this.position(), 4.0, 2880.0f, VfxType.IMPACT_BURST, 0xFFCC0000, 1.6f, 20);
+        castAreaScaled(this.position(), 8.0, 1800.0f, VfxType.IMPACT_BURST, 0xFFCC0000, 1.8f, 20);
     }
 
     private void moveKuangmanSavageTornado(LivingEntity target) {
@@ -1730,12 +1815,12 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveKuangmanGiantApeFist(LivingEntity target) {
-        castAreaPercent(this.position(), 12.0, 0.25f, VfxType.IMPACT_BURST, 0xFFCC0000, 2.8f, 36);
+        castAreaScaled(this.position(), 12.0, 9000.0f, VfxType.IMPACT_BURST, 0xFFCC0000, 2.8f, 36);
         knockbackTargets(this.position(), 12.0, 1.4, 0.4);
     }
 
     private void moveKuangmanShockStomp(LivingEntity target) {
-        castAreaPercent(this.position(), 6.0, 0.03f, VfxType.IMPACT_BURST, 0xFFCC0000, 1.8f, 20);
+        castAreaScaled(this.position(), 6.0, 1080.0f, VfxType.IMPACT_BURST, 0xFFCC0000, 1.8f, 20);
         for (LivingEntity living : getEnemies(this.position(), 6.0)) {
             living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 80, 4));
         }
@@ -1753,20 +1838,20 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveJuyangGoldenStrike(LivingEntity target) {
-        castSinglePercent(target, 0.10f, VfxType.ENERGY_BEAM, 0xFFFF8800, 1.6f, 20);
+        castSingleScaled(target, 4000.0f, VfxType.ENERGY_BEAM, 0xFFFF8800, 1.6f, 20);
         if (this.random.nextFloat() < 0.15f) {
-            castSinglePercent(target, 0.10f, VfxType.GLOW_BURST, 0xFFFF8800, 1.7f, 20);
+            castSingleScaled(target, 4000.0f, VfxType.GLOW_BURST, 0xFFFF8800, 1.7f, 20);
         }
     }
 
     private void moveJuyangBloodSacrifice(LivingEntity target) {
         selfDamagePercent(0.10f);
-        castSinglePercent(target, 0.20f, VfxType.BLOOD_RAIN, 0xFFFF8800, 2.0f, 24);
+        castSingleScaled(target, 8000.0f, VfxType.BLOOD_RAIN, 0xFFFF8800, 2.0f, 24);
         healPercent(0.10f);
     }
 
     private void moveJuyangSunWill(LivingEntity target) {
-        castAreaPercent(this.position(), 8.0, 0.12f, VfxType.GLOW_BURST, 0xFFFF8800, 2.2f, 28);
+        castAreaScaled(this.position(), 8.0, 4320.0f, VfxType.GLOW_BURST, 0xFFFF8800, 2.2f, 28);
         for (LivingEntity living : getEnemies(this.position(), 8.0)) {
             living.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 60, 0));
         }
@@ -1774,7 +1859,7 @@ public class VenerableEntity extends Monster {
 
     private void moveJuyangSolarJudgment(LivingEntity target) {
         for (int i = 0; i < 6; i++) {
-            castSinglePercent(target, 0.05f, VfxType.ENERGY_BEAM, 0xFFFF8800, 1.2f, 12);
+            castSingleScaled(target, 2000.0f, VfxType.ENERGY_BEAM, 0xFFFF8800, 1.2f, 12);
         }
     }
 
@@ -1797,13 +1882,13 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveJuyangSunBurst(LivingEntity target) {
-        castAreaPercent(this.position(), 6.0, 0.15f, VfxType.GLOW_BURST, 0xFFFF8800, 2.2f, 28);
+        castAreaScaled(this.position(), 6.0, 5400.0f, VfxType.GLOW_BURST, 0xFFFF8800, 2.2f, 28);
         modifyTerrain(this.position(), DaoPath.FIRE, 3);
     }
 
     private void moveJuyangFortuneShift(LivingEntity target) {
         transferDebuffsToTarget(target);
-        castSinglePercent(target, 0.05f, VfxType.GLOW_BURST, 0xFFFF8800, 1.4f, 18);
+        castSingleScaled(target, 2000.0f, VfxType.GLOW_BURST, 0xFFFF8800, 1.4f, 18);
     }
 
     private void moveJuyangBloodTide(LivingEntity target) {
@@ -1812,7 +1897,11 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveJuyangSunSpear(LivingEntity target) {
-        lineStrike(target, 16.0, 0.10f, VfxType.ENERGY_BEAM, 0xFFFF8800);
+        if (this.distanceTo(target) <= 20.0f) {
+            hurtScaled(target, 3000.0f, true);
+            spawnVfx(VfxType.ENERGY_BEAM, target.getX(), target.getY() + 1.0, target.getZ(),
+                target.getX() - getX(), target.getEyeY() - getEyeY(), target.getZ() - getZ(), 0xFFFF8800, 1.8f, 24);
+        }
         this.level().playSound(null, blockPosition(), SoundEvents.TRIDENT_THROW.value(), SoundSource.HOSTILE, 1.3f, 1.0f);
     }
 
@@ -1830,16 +1919,16 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveJuyangSunFall(LivingEntity target) {
-        castAreaPercent(target.position(), 12.0, 0.20f, VfxType.SKY_STRIKE, 0xFFFF8800, 2.8f, 36);
-        castAreaPercent(target.position(), 12.0, 0.05f, VfxType.GLOW_BURST, 0xFFFF8800, 2.4f, 28);
+        castAreaScaled(target.position(), 12.0, 7200.0f, VfxType.SKY_STRIKE, 0xFFFF8800, 2.8f, 36);
+        castAreaScaled(target.position(), 12.0, 1800.0f, VfxType.GLOW_BURST, 0xFFFF8800, 2.4f, 28);
         modifyTerrain(target.position(), DaoPath.FIRE, 3);
     }
 
     private void moveJuyangFateHand(LivingEntity target) {
         if (target.getHealth() < target.getMaxHealth() * 0.10f && this.random.nextFloat() < 0.30f) {
-            castSinglePercent(target, 0.30f, VfxType.GLOW_BURST, 0xFFFF8800, 2.2f, 30);
+            castSingleScaled(target, 12000.0f, VfxType.GLOW_BURST, 0xFFFF8800, 2.2f, 30);
         } else {
-            castSinglePercent(target, 0.05f, VfxType.GLOW_BURST, 0xFFFF8800, 1.3f, 16);
+            castSingleScaled(target, 2000.0f, VfxType.GLOW_BURST, 0xFFFF8800, 1.3f, 16);
         }
     }
 
@@ -1867,12 +1956,12 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveXingxiuStarProjection(LivingEntity target) {
-        castSinglePercent(target, 0.12f, VfxType.STAR_RAIN, 0xFF77BBFF, 1.6f, 20);
+        castSingleScaled(target, 4800.0f, VfxType.STAR_RAIN, 0xFF77BBFF, 1.6f, 20);
     }
 
     private void moveXingxiuStarNeedle(LivingEntity target) {
         addRoot(target, 60);
-        castSinglePercent(target, 0.08f, VfxType.STAR_RAIN, 0xFF77BBFF, 1.5f, 20);
+        castSingleScaled(target, 3200.0f, VfxType.STAR_RAIN, 0xFF77BBFF, 1.5f, 20);
     }
 
     private void moveXingxiuStarTrap(LivingEntity target) {
@@ -1882,14 +1971,14 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveXingxiuStarExtinction(LivingEntity target) {
-        castAreaPercent(target.position(), 12.0, 0.18f, VfxType.STAR_RAIN, 0xFF77BBFF, 2.5f, 34);
+        castAreaScaled(target.position(), 12.0, 6480.0f, VfxType.STAR_RAIN, 0xFF77BBFF, 2.5f, 34);
         modifyTerrain(target.position(), DaoPath.STAR, 4);
         spawnVfx(VfxType.SKY_STRIKE, target.getX(), target.getY() + 1.0, target.getZ(), 0.0, 1.0, 0.0, 0xFF77BBFF, 2.2f, 30);
     }
 
     private void moveXingxiuDestinyCalculation(LivingEntity target) {
         this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 80, 2));
-        castSinglePercent(target, 0.15f, VfxType.STAR_RAIN, 0xFF77BBFF, 1.8f, 24);
+        castSingleScaled(target, 6000.0f, VfxType.STAR_RAIN, 0xFF77BBFF, 1.8f, 24);
     }
 
     private void moveXingxiuStarCage(LivingEntity target) {
@@ -1906,9 +1995,9 @@ public class VenerableEntity extends Monster {
 
     private void moveXingxiuStarChain(LivingEntity target) {
         for (int i = 0; i < 5; i++) {
-            castSinglePercent(target, 0.03f, VfxType.STAR_RAIN, 0xFF77BBFF, 1.1f, 10);
+            castSingleScaled(target, 1200.0f, VfxType.STAR_RAIN, 0xFF77BBFF, 1.1f, 10);
         }
-        castSinglePercent(target, 0.10f, VfxType.STAR_RAIN, 0xFF77BBFF, 1.7f, 20);
+        castSingleScaled(target, 4000.0f, VfxType.STAR_RAIN, 0xFF77BBFF, 1.7f, 20);
     }
 
     private void moveXingxiuStarClone(LivingEntity target) {
@@ -1927,14 +2016,14 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveXingxiuMeteorFall(LivingEntity target) {
-        castAreaPercent(target.position(), 8.0, 0.15f, VfxType.STAR_RAIN, 0xFF77BBFF, 2.2f, 30);
+        castAreaScaled(target.position(), 8.0, 5400.0f, VfxType.STAR_RAIN, 0xFF77BBFF, 2.2f, 30);
         modifyTerrain(target.position(), DaoPath.STAR, 3);
         spawnVfx(VfxType.SKY_STRIKE, target.getX(), target.getY() + 1.0, target.getZ(), 0.0, 1.0, 0.0, 0xFF77BBFF, 2.2f, 28);
     }
 
     private void moveXingxiuStarEye(LivingEntity target) {
         addDamageMark(target, 120, 1.15f);
-        castSinglePercent(target, 0.08f, VfxType.STAR_RAIN, 0xFF77BBFF, 1.5f, 20);
+        castSingleScaled(target, 3200.0f, VfxType.STAR_RAIN, 0xFF77BBFF, 1.5f, 20);
     }
 
     private void moveXingxiuStarLock(LivingEntity target) {
@@ -1945,7 +2034,7 @@ public class VenerableEntity extends Monster {
 
     private void moveXingxiuPredictedCounter(LivingEntity target) {
         this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 80, 1));
-        castSinglePercent(target, 0.08f, VfxType.STAR_RAIN, 0xFF77BBFF, 1.4f, 18);
+        castSingleScaled(target, 3200.0f, VfxType.STAR_RAIN, 0xFF77BBFF, 1.4f, 18);
     }
 
     private void moveXingxiuStarGravity(LivingEntity target) {
@@ -1954,7 +2043,7 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveXingxiuStarPressure(LivingEntity target) {
-        castAreaPercent(this.position(), 8.0, 0.05f, VfxType.STAR_RAIN, 0xFF77BBFF, 2.0f, 24);
+        castAreaScaled(this.position(), 8.0, 1800.0f, VfxType.STAR_RAIN, 0xFF77BBFF, 2.0f, 24);
         for (LivingEntity living : getEnemies(this.position(), 8.0)) {
             living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 80, 1));
             living.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 80, 1));
@@ -1962,13 +2051,13 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveXingxiuStarEnd(LivingEntity target) {
-        castAreaPercent(this.position(), 20.0, 0.25f, VfxType.STAR_RAIN, 0xFF77BBFF, 3.0f, 40);
+        castAreaScaled(this.position(), 20.0, 9000.0f, VfxType.STAR_RAIN, 0xFF77BBFF, 3.0f, 40);
         modifyTerrain(this.position(), DaoPath.STAR, 6);
         spawnCenterVfx(VfxType.SKY_STRIKE, 0xFF77BBFF, 2.8f, 36);
     }
 
     private void moveLetuEarthSpikeArray(LivingEntity target) {
-        castAreaPercent(this.position(), 8.0, 0.08f, VfxType.EARTH_PILLAR, 0xFFC8A86E, 2.0f, 24);
+        castAreaScaled(this.position(), 8.0, 2880.0f, VfxType.EARTH_PILLAR, 0xFFC8A86E, 2.0f, 24);
         for (LivingEntity living : getEnemies(this.position(), 8.0)) {
             living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 80, 2));
         }
@@ -1976,7 +2065,7 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveLetuHeavenForce(LivingEntity target) {
-        castSinglePercent(target, 0.10f, VfxType.SKY_STRIKE, 0xFFC8A86E, 1.6f, 22);
+        castSingleScaled(target, 4000.0f, VfxType.SKY_STRIKE, 0xFFC8A86E, 1.6f, 22);
         knockbackTargets(target.position(), 3.0, 1.2, 0.4);
     }
 
@@ -1997,17 +2086,17 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveLetuAllToEarth(LivingEntity target) {
-        castAreaPercent(this.position(), 8.0, 0.20f, VfxType.EARTH_PILLAR, 0xFFC8A86E, 2.4f, 28);
+        castAreaScaled(this.position(), 8.0, 7200.0f, VfxType.EARTH_PILLAR, 0xFFC8A86E, 2.4f, 28);
         modifyTerrain(this.position(), DaoPath.EARTH, 4);
     }
 
     private void moveLetuEarthHeavenSplit(LivingEntity target) {
-        castAreaPercent(this.position(), 8.0, 0.15f, VfxType.SKY_STRIKE, 0xFFC8A86E, 2.3f, 28);
+        castAreaScaled(this.position(), 8.0, 5400.0f, VfxType.SKY_STRIKE, 0xFFC8A86E, 2.3f, 28);
         modifyTerrain(target.position(), DaoPath.EARTH, 3);
     }
 
     private void moveLetuHeavenPunish(LivingEntity target) {
-        castSinglePercent(target, 0.12f, VfxType.SKY_STRIKE, 0xFFC8A86E, 1.8f, 24);
+        castSingleScaled(target, 4800.0f, VfxType.SKY_STRIKE, 0xFFC8A86E, 1.8f, 24);
         spawnLightning(target.position());
         this.level().playSound(null, blockPosition(), SoundEvents.TRIDENT_THUNDER.value(), SoundSource.HOSTILE, 1.5f, 0.9f);
     }
@@ -2018,7 +2107,7 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveLetuHeavenPillar(LivingEntity target) {
-        castSinglePercent(target, 0.08f, VfxType.EARTH_PILLAR, 0xFFC8A86E, 1.6f, 22);
+        castSingleScaled(target, 3200.0f, VfxType.EARTH_PILLAR, 0xFFC8A86E, 1.6f, 22);
         knockbackTargets(target.position(), 4.0, 1.2, 0.3);
     }
 
@@ -2037,14 +2126,18 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveLetuEarthQuake(LivingEntity target) {
-        castAreaPercent(this.position(), 12.0, 0.10f, VfxType.IMPACT_BURST, 0xFFC8A86E, 2.4f, 30);
+        castAreaScaled(this.position(), 12.0, 3600.0f, VfxType.IMPACT_BURST, 0xFFC8A86E, 2.4f, 30);
         for (LivingEntity living : getEnemies(this.position(), 12.0)) {
             living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 20, 7));
         }
     }
 
     private void moveLetuHeavenJudgment(LivingEntity target) {
-        lineStrike(target, 16.0, 0.15f, VfxType.ENERGY_BEAM, 0xFFC8A86E);
+        if (this.distanceTo(target) <= 18.0f) {
+            hurtScaled(target, 5200.0f, true);
+            spawnVfx(VfxType.ENERGY_BEAM, target.getX(), target.getY() + 1.0, target.getZ(),
+                target.getX() - getX(), target.getEyeY() - getEyeY(), target.getZ() - getZ(), 0xFFC8A86E, 1.8f, 24);
+        }
         addRoot(target, 40);
     }
 
@@ -2074,32 +2167,32 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveLetuUnityOfHeavenEarth(LivingEntity target) {
-        castAreaPercent(this.position(), 12.0, 0.25f, VfxType.SKY_STRIKE, 0xFFC8A86E, 2.8f, 36);
+        castAreaScaled(this.position(), 12.0, 9000.0f, VfxType.SKY_STRIKE, 0xFFC8A86E, 2.8f, 36);
         modifyTerrain(this.position(), DaoPath.EARTH, 5);
     }
 
     private void moveYuanshiQiBlast(LivingEntity target) {
-        castSinglePercent(target, 0.10f, VfxType.QI_STORM, 0xFFFFD700, 1.6f, 20);
+        castSingleScaled(target, 4000.0f, VfxType.QI_STORM, 0xFFFFD700, 1.6f, 20);
         knockbackTargets(target.position(), 3.0, 1.0, 0.2);
     }
 
     private void moveYuanshiQiBarrage(LivingEntity target) {
         for (int i = 0; i < 8; i++) {
-            castSinglePercent(target, 0.02f, VfxType.QI_STORM, 0xFFFFD700, 1.0f, 8);
+            castSingleScaled(target, 800.0f, VfxType.QI_STORM, 0xFFFFD700, 1.0f, 8);
         }
     }
 
     private void moveYuanshiQiSuppress(LivingEntity target) {
-        castAreaPercent(this.position(), 8.0, 0.05f, VfxType.QI_STORM, 0xFFFFD700, 1.8f, 24);
+        castAreaScaled(this.position(), 8.0, 1800.0f, VfxType.QI_STORM, 0xFFFFD700, 1.8f, 24);
         for (LivingEntity living : getEnemies(this.position(), 8.0)) {
             living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 80, 2));
         }
     }
 
     private void moveYuanshiThreeQiCombo(LivingEntity target) {
-        castSinglePercent(target, 0.06f, VfxType.QI_STORM, 0xFFFFD700, 1.2f, 10);
-        castSinglePercent(target, 0.06f, VfxType.QI_STORM, 0xFFFFD700, 1.2f, 10);
-        castSinglePercent(target, 0.06f, VfxType.QI_STORM, 0xFFFFD700, 1.2f, 10);
+        castSingleScaled(target, 2400.0f, VfxType.QI_STORM, 0xFFFFD700, 1.2f, 10);
+        castSingleScaled(target, 2400.0f, VfxType.QI_STORM, 0xFFFFD700, 1.2f, 10);
+        castSingleScaled(target, 2400.0f, VfxType.QI_STORM, 0xFFFFD700, 1.2f, 10);
         knockbackTargets(target.position(), 3.0, 1.0, 0.3);
     }
 
@@ -2130,14 +2223,14 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveYuanshiYinyangStrike(LivingEntity target) {
-        castSinglePercent(target, 0.08f, VfxType.QI_STORM, 0xFFFFD700, 1.4f, 16);
+        castSingleScaled(target, 3200.0f, VfxType.QI_STORM, 0xFFFFD700, 1.4f, 16);
         target.setRemainingFireTicks(60);
         target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 1));
     }
 
     private void moveYuanshiFiveForbiddenLight(LivingEntity target) {
         for (int i = 0; i < 5; i++) {
-            castSinglePercent(target, 0.04f, VfxType.ENERGY_BEAM, 0xFFFFD700, 1.0f, 10);
+            castSingleScaled(target, 1600.0f, VfxType.ENERGY_BEAM, 0xFFFFD700, 1.0f, 10);
         }
         modifyTerrain(target.position(), DaoPath.RULE, 3);
         addRoot(target, 40);
@@ -2162,11 +2255,15 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveYuanshiQiPierce(LivingEntity target) {
-        lineStrike(target, 16.0, 0.12f, VfxType.ENERGY_BEAM, 0xFFFFD700);
+        if (this.distanceTo(target) <= 18.0f) {
+            hurtScaled(target, 2200.0f, true);
+            spawnVfx(VfxType.ENERGY_BEAM, target.getX(), target.getY() + 1.0, target.getZ(),
+                target.getX() - getX(), target.getEyeY() - getEyeY(), target.getZ() - getZ(), 0xFFFFD700, 1.7f, 22);
+        }
     }
 
     private void moveYuanshiAllQiAbsorb(LivingEntity target) {
-        castAreaPercent(this.position(), 8.0, 0.05f, VfxType.QI_STORM, 0xFFFFD700, 2.0f, 24);
+        castAreaScaled(this.position(), 8.0, 1800.0f, VfxType.QI_STORM, 0xFFFFD700, 2.0f, 24);
         healPercent(0.05f);
     }
 
@@ -2182,13 +2279,13 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveYuanshiOriginStrike(LivingEntity target) {
-        castSinglePercent(target, 0.30f, VfxType.QI_STORM, 0xFFFFD700, 2.6f, 36);
-        castAreaPercent(target.position(), 8.0, 0.15f, VfxType.SKY_STRIKE, 0xFFFFD700, 2.2f, 28);
+        castSingleScaled(target, 12000.0f, VfxType.QI_STORM, 0xFFFFD700, 2.6f, 36);
+        castAreaScaled(target.position(), 8.0, 5400.0f, VfxType.SKY_STRIKE, 0xFFFFD700, 2.2f, 28);
         modifyTerrain(target.position(), DaoPath.RULE, 4);
     }
 
     private void moveHonglianTimeBurst(LivingEntity target) {
-        castSinglePercent(target, 0.10f, VfxType.TIME_DISTORTION, 0xFFFF0033, 1.6f, 20);
+        castSingleScaled(target, 4000.0f, VfxType.TIME_DISTORTION, 0xFFFF0033, 1.6f, 20);
         applyTimedModifier(Attributes.MOVEMENT_SPEED, "venerable_honglian_burst_speed", 0.50, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 120);
     }
 
@@ -2227,7 +2324,7 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveHonglianRedLotusFire(LivingEntity target) {
-        castAreaPercent(this.position(), 8.0, 0.10f, VfxType.TIME_DISTORTION, 0xFFFF0033, 2.0f, 24);
+        castAreaScaled(this.position(), 8.0, 3600.0f, VfxType.TIME_DISTORTION, 0xFFFF0033, 2.0f, 24);
         addAreaEffect(this.position(), 8.0, 0.03f, 100, true, 1, 0, false, false,
             VfxType.TIME_DISTORTION, 0xFFFF0033, 1.8f, DaoPath.FIRE, 3);
     }
@@ -2235,11 +2332,11 @@ public class VenerableEntity extends Monster {
     private void moveHonglianTimeReversePosition(LivingEntity target) {
         Vec3 oldPos = getPositionAgo(target, 60);
         target.teleportTo(oldPos.x, oldPos.y, oldPos.z);
-        castSinglePercent(target, 0.08f, VfxType.TIME_DISTORTION, 0xFFFF0033, 1.5f, 20);
+        castSingleScaled(target, 3200.0f, VfxType.TIME_DISTORTION, 0xFFFF0033, 1.5f, 20);
     }
 
     private void moveHonglianSpaceFracture(LivingEntity target) {
-        castAreaPercent(target.position(), 6.0, 0.10f, VfxType.SPATIAL_TEAR, 0xFFFF0033, 2.0f, 24);
+        castAreaScaled(target.position(), 6.0, 3600.0f, VfxType.SPATIAL_TEAR, 0xFFFF0033, 2.0f, 24);
         modifyTerrain(target.position(), DaoPath.FIRE, 3);
         spawnVfx(VfxType.TIME_DISTORTION, target.getX(), target.getY() + 1.0, target.getZ(), 0.0, 1.0, 0.0, 0xFFFF0033, 1.6f, 20);
     }
@@ -2268,7 +2365,11 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveHonglianTimeSpear(LivingEntity target) {
-        lineStrike(target, 16.0, 0.12f, VfxType.ENERGY_BEAM, 0xFFFF0033);
+        if (this.distanceTo(target) <= 20.0f) {
+            hurtScaled(target, 2600.0f, true);
+            spawnVfx(VfxType.ENERGY_BEAM, target.getX(), target.getY() + 1.0, target.getZ(),
+                target.getX() - getX(), target.getEyeY() - getEyeY(), target.getZ() - getZ(), 0xFFFF0033, 1.8f, 24);
+        }
         spawnVfx(VfxType.TIME_DISTORTION, target.getX(), target.getY() + 1.0, target.getZ(), 0.0, 1.0, 0.0, 0xFFFF0033, 1.6f, 22);
     }
 
@@ -2283,35 +2384,35 @@ public class VenerableEntity extends Monster {
 
     private void moveHonglianCausalityReverse(LivingEntity target) {
         float pct = Math.max(0.02f, Math.min(0.30f, this.recentDamagePercent * 2.0f));
-        castSinglePercent(target, pct, VfxType.TIME_DISTORTION, 0xFFFF0033, 2.0f, 26);
+        castSingleScaled(target, 6400.0f, VfxType.TIME_DISTORTION, 0xFFFF0033, 2.0f, 26);
     }
 
     private void moveHonglianSpaceTimeCollapse(LivingEntity target) {
-        castAreaPercent(this.position(), 12.0, 0.25f, VfxType.TIME_DISTORTION, 0xFFFF0033, 3.0f, 42);
+        castAreaScaled(this.position(), 12.0, 9000.0f, VfxType.TIME_DISTORTION, 0xFFFF0033, 3.0f, 42);
         modifyTerrain(this.position(), DaoPath.TIME, 5);
         this.hongLianFreezeTicks = 100;
         spawnCenterVfx(VfxType.SPATIAL_TEAR, 0xFFFF0033, 2.8f, 38);
     }
 
     private void moveYuanlianVineWhip(LivingEntity target) {
-        castSinglePercent(target, 0.08f, VfxType.VINE_CAGE, 0xFF33CC33, 1.4f, 18);
+        castSingleScaled(target, 3200.0f, VfxType.VINE_CAGE, 0xFF33CC33, 1.4f, 18);
         target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 1));
     }
 
     private void moveYuanlianVineBind(LivingEntity target) {
         addRoot(target, 60);
-        castSinglePercent(target, 0.09f, VfxType.VINE_CAGE, 0xFF33CC33, 1.6f, 22);
+        castSingleScaled(target, 3600.0f, VfxType.VINE_CAGE, 0xFF33CC33, 1.6f, 22);
     }
 
     private void moveYuanlianSporeRain(LivingEntity target) {
-        castAreaPercent(this.position(), 8.0, 0.06f, VfxType.VINE_CAGE, 0xFF33CC33, 2.0f, 24);
+        castAreaScaled(this.position(), 8.0, 2160.0f, VfxType.VINE_CAGE, 0xFF33CC33, 2.0f, 24);
         addAreaEffect(this.position(), 8.0, 0.02f, 100, true, 1, 0, false, false,
             VfxType.VINE_CAGE, 0xFF33CC33, 1.8f, DaoPath.WOOD, 3);
     }
 
     private void moveYuanlianGenesisLotus(LivingEntity target) {
         healPercent(0.20f);
-        castAreaPercent(this.position(), 8.0, 0.10f, VfxType.HEAL_SPIRAL, 0xFF33CC33, 2.4f, 30);
+        castAreaScaled(this.position(), 8.0, 3600.0f, VfxType.HEAL_SPIRAL, 0xFF33CC33, 2.4f, 30);
         spawnCenterVfx(VfxType.VINE_CAGE, 0xFF33CC33, 2.0f, 24);
     }
 
@@ -2370,7 +2471,7 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveYuanlianVineBurst(LivingEntity target) {
-        castAreaPercent(this.position(), 6.0, 0.12f, VfxType.VINE_CAGE, 0xFF33CC33, 2.0f, 24);
+        castAreaScaled(this.position(), 6.0, 4320.0f, VfxType.VINE_CAGE, 0xFF33CC33, 2.0f, 24);
         knockbackTargets(this.position(), 6.0, 1.0, 0.3);
     }
 
@@ -2388,7 +2489,7 @@ public class VenerableEntity extends Monster {
     }
 
     private void moveYuanlianGenesisGrandLotus(LivingEntity target) {
-        castAreaPercent(this.position(), 12.0, 0.20f, VfxType.VINE_CAGE, 0xFF33CC33, 2.8f, 38);
+        castAreaScaled(this.position(), 12.0, 7200.0f, VfxType.VINE_CAGE, 0xFF33CC33, 2.8f, 38);
         healPercent(0.30f);
         modifyTerrain(this.position(), DaoPath.WOOD, 5);
         spawnCenterVfx(VfxType.HEAL_SPIRAL, 0xFF33CC33, 2.8f, 36);
@@ -2412,6 +2513,8 @@ public class VenerableEntity extends Monster {
         tag.putInt("HongLianRageTicks", this.hongLianRageTicks);
         tag.putInt("MercyTicks", this.mercyTicks);
         tag.putInt("AbsoluteInvulTicks", this.absoluteInvulTicks);
+        tag.putBoolean("XingXiuPredictActive", this.xingXiuPredictActive);
+        tag.putFloat("HongLianSavedHealth", this.hongLianSavedHealth);
         tag.put("CombatAI", this.combatAI.save());
     }
 
@@ -2435,6 +2538,8 @@ public class VenerableEntity extends Monster {
         this.hongLianRageTicks = Math.max(0, tag.getInt("HongLianRageTicks"));
         this.mercyTicks = Math.max(0, tag.getInt("MercyTicks"));
         this.absoluteInvulTicks = Math.max(0, tag.getInt("AbsoluteInvulTicks"));
+        this.xingXiuPredictActive = tag.getBoolean("XingXiuPredictActive");
+        this.hongLianSavedHealth = tag.getFloat("HongLianSavedHealth");
         if (tag.contains("CombatAI", Tag.TAG_COMPOUND)) {
             this.combatAI.load(tag.getCompound("CombatAI"));
         }
