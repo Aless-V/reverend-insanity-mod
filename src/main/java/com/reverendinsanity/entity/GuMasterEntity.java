@@ -198,7 +198,7 @@ public class GuMasterEntity extends Monster {
         selectGuEquipment(rank, primary);
         matchKillerMoves(rank);
 
-        if (rank == 3) {
+        if (rank >= 3) {
             initBossEvent();
         }
 
@@ -216,6 +216,11 @@ public class GuMasterEntity extends Monster {
             case 1 -> 2 + random.nextInt(2);
             case 2 -> 3 + random.nextInt(2);
             case 3 -> 4 + random.nextInt(3);
+            case 4 -> 5 + random.nextInt(3);
+            case 5 -> 6 + random.nextInt(4);
+            case 6 -> 8 + random.nextInt(4);
+            case 7 -> 10 + random.nextInt(5);
+            case 8 -> 12 + random.nextInt(5);
             default -> 2;
         };
 
@@ -290,9 +295,15 @@ public class GuMasterEntity extends Monster {
     private void applyRankAttributes(int rank) {
         double hp, atk, speed, armor, knockback;
         switch (rank) {
-            case 2 -> { hp = 60; atk = 7; speed = 0.33; armor = 6; knockback = 0.2; }
-            case 3 -> { hp = 120; atk = 14; speed = 0.36; armor = 12; knockback = 0.5; }
-            default -> { hp = 30; atk = 4; speed = 0.3; armor = 2; knockback = 0.0; }
+            case 1 -> { hp = 30; atk = 4; speed = 0.30; armor = 2; knockback = 0.0; }
+            case 2 -> { hp = 150; atk = 20; speed = 0.33; armor = 10; knockback = 0.2; }
+            case 3 -> { hp = 900; atk = 120; speed = 0.36; armor = 60; knockback = 0.5; }
+            case 4 -> { hp = 6_000; atk = 800; speed = 0.37; armor = 400; knockback = 0.7; }
+            case 5 -> { hp = 45_000; atk = 6_000; speed = 0.38; armor = 3_000; knockback = 0.85; }
+            case 6 -> { hp = 450_000; atk = 60_000; speed = 0.39; armor = 30_000; knockback = 0.95; }
+            case 7 -> { hp = 6_000_000; atk = 800_000; speed = 0.40; armor = 400_000; knockback = 1.0; }
+            case 8 -> { hp = 150_000_000; atk = 20_000_000; speed = 0.41; armor = 10_000_000; knockback = 1.0; }
+            default -> { hp = 30; atk = 4; speed = 0.30; armor = 2; knockback = 0.0; }
         }
         this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(hp);
         this.setHealth((float) hp);
@@ -1100,7 +1111,7 @@ public class GuMasterEntity extends Monster {
 
         matchKillerMoves(getGuRank());
 
-        if (getGuRank() == 3 && bossEvent == null) {
+        if (getGuRank() >= 3 && bossEvent == null) {
             initBossEvent();
         }
     }

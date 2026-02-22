@@ -6,7 +6,10 @@ import com.reverendinsanity.core.gu.GuInstance;
 import com.reverendinsanity.core.gu.GuRegistry;
 import com.reverendinsanity.core.gu.GuType;
 import com.reverendinsanity.registry.ModAttachments;
+import com.reverendinsanity.client.vfx.VfxHelper;
+import com.reverendinsanity.client.vfx.VfxType;
 import com.reverendinsanity.registry.ModEntities;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -22,9 +25,11 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.joml.Vector3f;
 
 // 无相手实体：盗天魔尊偷蛊手段，伸入空窍抓取蛊虫，抓住后可被玩家打破夺回
 public class FormlessHandEntity extends Mob {
@@ -136,7 +141,15 @@ public class FormlessHandEntity extends Mob {
             "\u00a79\u00a7l[\u65e0\u76f8\u624b] \u00a7b\u6de1\u84dd\u8272\u7684\u624b\u4f38\u5165\u4f60\u7684\u7a7a\u7a8d\uff0c\u6293\u4f4f\u4e86" + guName + "\uff01"));
 
         sl.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, player.getX(), player.getY() + 1.5, player.getZ(),
-            40, 1.0, 1.5, 1.0, 0.03);
+            40 + fingerCount * 10, 1.0, 1.5, 1.0, 0.03);
+        sl.sendParticles(ParticleTypes.REVERSE_PORTAL, player.getX(), player.getY() + 1.0, player.getZ(),
+            20 + fingerCount * 5, 0.8, 1.2, 0.8, 0.05);
+        sl.sendParticles(ParticleTypes.PORTAL, this.getX(), this.getY() + 0.5, this.getZ(),
+            30, 0.5, 0.8, 0.5, 0.3);
+        VfxHelper.spawn(player, VfxType.SPATIAL_TEAR, player.getX(), player.getY() + 1, player.getZ(),
+            0, 1, 0, 0xFF6600AA, 1.5f + fingerCount * 0.3f, 30);
+        VfxHelper.spawn(player, VfxType.SHADOW_FADE, this.getX(), this.getY() + 0.5, this.getZ(),
+            0, 1, 0, 0xFF3300CC, 1.2f, 20);
     }
 
     private void tickRetreating(ServerLevel sl) {
@@ -164,7 +177,11 @@ public class FormlessHandEntity extends Mob {
                 String guName = guType != null ? guType.displayName() : "\u86ca\u866b";
                 player.sendSystemMessage(Component.literal(
                     "\u00a79\u00a7l[\u65e0\u76f8\u624b] \u00a7c\u4f60\u7684" + guName + "\u88ab\u5077\u8d70\u4e86\uff01"));
+                VfxHelper.spawn(player, VfxType.SHADOW_FADE, player.getX(), player.getY() + 1, player.getZ(),
+                    0, 1, 0, 0xFFCC0044, 1.5f, 25);
             }
+            sl.sendParticles(ParticleTypes.REVERSE_PORTAL, owner.getX(), owner.getY() + 1.0, owner.getZ(),
+                30, 0.5, 1.0, 0.5, 0.05);
             guReturned = true;
             this.discard();
         } else {
@@ -196,6 +213,10 @@ public class FormlessHandEntity extends Mob {
 
         sl.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, player.getX(), player.getY() + 1.5, player.getZ(),
             20, 0.5, 1.0, 0.5, 0.02);
+        sl.sendParticles(ParticleTypes.REVERSE_PORTAL, player.getX(), player.getY() + 1.0, player.getZ(),
+            15, 0.4, 0.8, 0.4, 0.04);
+        VfxHelper.spawn(player, VfxType.SPATIAL_TEAR, player.getX(), player.getY() + 1, player.getZ(),
+            0, -1, 0, 0xFF00AAFF, 1.0f, 15);
     }
 
     // ==================== COMBAT ====================
@@ -229,23 +250,60 @@ public class FormlessHandEntity extends Mob {
     // ==================== PARTICLES ====================
 
     private void spawnHandParticles(ServerLevel sl) {
-        int count = state == HandState.RETREATING ? 8 : 5;
+        double fingerRadius = 0.3 + fingerCount * 0.15;
+        float fingerScale = 0.8f + fingerCount * 0.3f;
+        DustParticleOptions spatialDust = new DustParticleOptions(new Vector3f(0.3f, 0.0f, 0.6f), fingerScale);
+
+        int coreCount = state == HandState.RETREATING ? 10 + fingerCount * 2 : 5 + fingerCount;
         sl.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
             this.getX(), this.getY() + 0.5, this.getZ(),
-            count, 0.2, 0.3, 0.2, 0.01);
+            coreCount, 0.15 * fingerCount, 0.3, 0.15 * fingerCount, 0.01);
+        sl.sendParticles(spatialDust,
+            this.getX(), this.getY() + 0.5, this.getZ(),
+            fingerCount * 3, fingerRadius, 0.4, fingerRadius, 0.02);
 
         double angle = (lifeTicks * 0.15) % (Math.PI * 2);
         for (int f = 0; f < fingerCount; f++) {
             double fa = angle + (Math.PI * 2 * f / fingerCount);
-            sl.sendParticles(ParticleTypes.SOUL,
-                this.getX() + Math.cos(fa) * 0.4, this.getY() + 0.6, this.getZ() + Math.sin(fa) * 0.4,
-                1, 0.05, 0.05, 0.05, 0.0);
+            double fx = this.getX() + Math.cos(fa) * fingerRadius;
+            double fy = this.getY() + 0.6;
+            double fz = this.getZ() + Math.sin(fa) * fingerRadius;
+            sl.sendParticles(ParticleTypes.SOUL, fx, fy, fz, 2, 0.05, 0.05, 0.05, 0.0);
+            sl.sendParticles(ParticleTypes.REVERSE_PORTAL, fx, fy + 0.2, fz, 1, 0.02, 0.02, 0.02, 0.01);
+            if (lifeTicks % 5 == f % 5) {
+                double trailLen = 0.5 + fingerCount * 0.1;
+                Vec3 vel = this.getDeltaMovement();
+                sl.sendParticles(ParticleTypes.ENCHANT,
+                    fx - vel.x * trailLen, fy - vel.y * trailLen, fz - vel.z * trailLen,
+                    3, 0.1, 0.1, 0.1, 0.02);
+            }
+        }
+
+        if (state == HandState.APPROACHING && lifeTicks % 10 == 0) {
+            sl.sendParticles(ParticleTypes.PORTAL,
+                this.getX(), this.getY() + 0.5, this.getZ(),
+                5 + fingerCount * 2, 0.3, 0.5, 0.3, 0.5);
         }
 
         if (state == HandState.RETREATING) {
             sl.sendParticles(ParticleTypes.END_ROD,
                 this.getX(), this.getY() + 0.4, this.getZ(),
-                2, 0.1, 0.1, 0.1, 0.005);
+                fingerCount, 0.1, 0.1, 0.1, 0.005);
+            if (lifeTicks % 3 == 0) {
+                sl.sendParticles(spatialDust,
+                    this.getX(), this.getY() + 0.3, this.getZ(),
+                    fingerCount * 2, fingerRadius * 0.5, 0.3, fingerRadius * 0.5, 0.03);
+            }
+        }
+
+        if (lifeTicks % 20 == 0) {
+            for (ServerPlayer viewer : sl.getServer().getPlayerList().getPlayers()) {
+                if (viewer.distanceTo(this) < 32.0) {
+                    VfxType vfx = state == HandState.RETREATING ? VfxType.SHADOW_FADE : VfxType.SPATIAL_TEAR;
+                    VfxHelper.spawn(viewer, vfx, getX(), getY() + 0.5, getZ(),
+                        0, 1, 0, 0xFF6600AA, fingerScale, 18);
+                }
+            }
         }
     }
 

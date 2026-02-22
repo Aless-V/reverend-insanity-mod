@@ -3,19 +3,15 @@ package com.reverendinsanity.entity;
 import com.reverendinsanity.ReverendInsanity;
 import com.reverendinsanity.client.vfx.VfxHelper;
 import com.reverendinsanity.client.vfx.VfxType;
-import com.reverendinsanity.core.combat.KillerMove;
-import com.reverendinsanity.core.combat.KillerMoveRegistry;
-import com.reverendinsanity.core.gu.GuRegistry;
-import com.reverendinsanity.core.gu.GuType;
+import com.reverendinsanity.combat.TerrainModifier;
 import com.reverendinsanity.core.path.DaoPath;
-import com.reverendinsanity.registry.ModEntities;
-import com.reverendinsanity.registry.ModItems;
+import com.reverendinsanity.entity.ai.VenerableCombatAI;
+import com.reverendinsanity.entity.ai.VenerableCombatAI.BehaviorState;
+import com.reverendinsanity.entity.ai.VenerableCombatAI.ComboSequence;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
-import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -30,9 +26,13 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.BossEvent;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -45,21 +45,23 @@ import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.Monster;
-import net.minecraft.world.entity.monster.Zombie;
-import com.reverendinsanity.entity.PhantomImmortalEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.List;
 
-// 十大九转尊者Boss实体：蛊真人世界观中最强存在，各具独特战斗AI
+import java.lang.reflect.Method;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+// 九转尊者实体重构：十尊战斗AI、领域地形、特效与阶段化杀招总控
 public class VenerableEntity extends Monster {
 
     private static final EntityDataAccessor<String> DATA_TYPE =
@@ -69,91 +71,193 @@ public class VenerableEntity extends Monster {
     private static final ResourceLocation VEN_ATK_MOD = ResourceLocation.fromNamespaceAndPath(ReverendInsanity.MODID, "venerable_atk");
     private static final ResourceLocation VEN_ARMOR_MOD = ResourceLocation.fromNamespaceAndPath(ReverendInsanity.MODID, "venerable_armor");
     private static final ResourceLocation VEN_SPEED_MOD = ResourceLocation.fromNamespaceAndPath(ReverendInsanity.MODID, "venerable_speed");
-    private static final ResourceLocation PHASE_SPEED_MOD = ResourceLocation.fromNamespaceAndPath(ReverendInsanity.MODID, "venerable_phase_speed");
-    private static final ResourceLocation LAW_SLOW_MOD = ResourceLocation.fromNamespaceAndPath(ReverendInsanity.MODID, "venerable_law_slow");
-    private static final ResourceLocation FORMATION_ARMOR_MOD = ResourceLocation.fromNamespaceAndPath(ReverendInsanity.MODID, "venerable_formation_armor");
-    private static final ResourceLocation EARTHEN_FORTRESS_MOD = ResourceLocation.fromNamespaceAndPath(ReverendInsanity.MODID, "earthen_fortress");
-    private static final ResourceLocation SAVAGE_BOOST_MOD = ResourceLocation.fromNamespaceAndPath(ReverendInsanity.MODID, "venerable_savage_boost");
-    private static final ResourceLocation SAVAGE_SPEED_MOD = ResourceLocation.fromNamespaceAndPath(ReverendInsanity.MODID, "venerable_savage_speed");
-    private static final ResourceLocation KUANGMAN_ATK_MOD = ResourceLocation.fromNamespaceAndPath(ReverendInsanity.MODID, "venerable_kuangman_atk");
-    private static final ResourceLocation KUANGMAN_SPEED_MOD = ResourceLocation.fromNamespaceAndPath(ReverendInsanity.MODID, "venerable_kuangman_speed");
+    private static final ResourceLocation SUMMON_HP_MOD = ResourceLocation.fromNamespaceAndPath(ReverendInsanity.MODID, "venerable_summon_hp");
+    private static final ResourceLocation SUMMON_ATK_MOD = ResourceLocation.fromNamespaceAndPath(ReverendInsanity.MODID, "venerable_summon_atk");
+    private static final ResourceLocation SUMMON_SPEED_MOD = ResourceLocation.fromNamespaceAndPath(ReverendInsanity.MODID, "venerable_summon_speed");
 
-    private static final List<Item> RARE_GU_DROPS = List.of(
-        ModItems.SILVER_MOON_GU.get(), ModItems.WHITE_JADE_GU.get(),
-        ModItems.HEAVENS_EYE_GU.get(), ModItems.GOLD_LIGHT_WORM.get(),
-        ModItems.FOUR_FLAVORS_LIQUOR_WORM.get(), ModItems.IRON_BONE_GU.get(),
-        ModItems.ENSLAVE_SNAKE_GU.get(), ModItems.GIANT_STRENGTH_GU.get()
-    );
+    private static final String[] WUJI_MOVES = {
+        "wuji_law_chisel", "wuji_madness_wave", "wuji_order_barrage", "wuji_absolute_law", "wuji_law_bind",
+        "wuji_all_laws_one", "wuji_forbidden_domain", "wuji_law_chain_drag", "wuji_order_judgment", "wuji_forbidden_cage",
+        "wuji_myriad_law_origin", "wuji_law_trial", "wuji_world_end", "wuji_order_spear", "wuji_boundless_cross",
+        "wuji_law_reflect", "wuji_forbidden_seal", "wuji_pressure_aura", "wuji_law_shield", "wuji_void_all_laws",
+        "wuji_immortal_law", "wuji_prove_by_force"
+    };
+
+    private static final String[] YOUHUN_MOVES = {
+        "youhun_soul_strike", "youhun_soul_reap", "youhun_soul_devour_ultimate", "youhun_soul_split", "youhun_nine_revolution_dream",
+        "youhun_shadow_clone", "youhun_soul_storm", "youhun_soul_gaze", "youhun_devour_passive", "youhun_soul_truth",
+        "youhun_shadow_escape", "youhun_dream_cage", "youhun_mental_crush", "youhun_soul_puppet", "youhun_clone_detonate",
+        "youhun_absorb_soul", "youhun_ghost_domain", "youhun_dream_butterfly", "youhun_night_of_ghosts", "youhun_undying_soul"
+    };
+
+    private static final String[] DAOTIAN_MOVES = {
+        "daotian_space_cut", "daotian_formless_hand", "daotian_swap_heaven", "daotian_space_fold", "daotian_steal_time",
+        "daotian_void_cage", "daotian_ten_thousand_hands", "daotian_space_swap", "daotian_steal_power", "daotian_void_step",
+        "daotian_space_rift", "daotian_steal_memory", "daotian_no_gap_domain", "daotian_space_compress", "daotian_steal_defense",
+        "daotian_void_eye", "daotian_space_exile", "daotian_same_realm_clone", "daotian_copy_art", "daotian_formless_fist"
+    };
+
+    private static final String[] KUANGMAN_MOVES = {
+        "kuangman_savage_slam", "kuangman_dragon_form", "kuangman_tiger_form", "kuangman_eagle_form", "kuangman_snake_form",
+        "kuangman_bear_form", "kuangman_savage_power", "kuangman_heaven_flip", "kuangman_break_all_laws", "kuangman_beast_summon",
+        "kuangman_ten_thousand_beasts", "kuangman_undying_body", "kuangman_charge", "kuangman_split_earth", "kuangman_thousand_fall",
+        "kuangman_savage_tornado", "kuangman_devour_heal", "kuangman_giant_ape_fist", "kuangman_shock_stomp", "kuangman_blood_awakening"
+    };
+
+    private static final String[] JUYANG_MOVES = {
+        "juyang_golden_strike", "juyang_blood_sacrifice", "juyang_sun_will", "juyang_solar_judgment", "juyang_fortune_deflect",
+        "juyang_blood_contract", "juyang_golden_bloodline", "juyang_sun_burst", "juyang_fortune_shift", "juyang_blood_tide",
+        "juyang_sun_spear", "juyang_fortune_steal", "juyang_blood_boil", "juyang_sun_fall", "juyang_fate_hand",
+        "juyang_blood_formation", "juyang_true_sun_tower", "juyang_immortal_body"
+    };
+
+    private static final String[] XINGXIU_MOVES = {
+        "xingxiu_star_projection", "xingxiu_star_needle", "xingxiu_star_trap", "xingxiu_star_extinction", "xingxiu_destiny_calculation",
+        "xingxiu_star_cage", "xingxiu_star_board", "xingxiu_star_chain", "xingxiu_star_clone", "xingxiu_star_armor",
+        "xingxiu_destiny_mark", "xingxiu_meteor_fall", "xingxiu_star_eye", "xingxiu_star_lock", "xingxiu_predicted_counter",
+        "xingxiu_star_gravity", "xingxiu_star_pressure", "xingxiu_star_end"
+    };
+
+    private static final String[] LETU_MOVES = {
+        "letu_earth_spike_array", "letu_heaven_force", "letu_earth_domain", "letu_earth_barrier", "letu_heaven_earth_formation",
+        "letu_all_to_earth", "letu_earth_heaven_split", "letu_heaven_punish", "letu_earth_shield", "letu_heaven_pillar",
+        "letu_earth_prison", "letu_heaven_mercy", "letu_earth_quake", "letu_heaven_judgment", "letu_unbreak_wall",
+        "letu_all_return_origin", "letu_earth_spirit_summon", "letu_unity_of_heaven_earth"
+    };
+
+    private static final String[] YUANSHI_MOVES = {
+        "yuanshi_qi_blast", "yuanshi_qi_barrage", "yuanshi_qi_suppress", "yuanshi_three_qi_combo", "yuanshi_yinyang_swap",
+        "yuanshi_qi_barrier", "yuanshi_pressure", "yuanshi_qi_tornado", "yuanshi_yinyang_strike", "yuanshi_five_forbidden_light",
+        "yuanshi_qi_guard", "yuanshi_taiching_cleanse", "yuanshi_yinyang_harmony", "yuanshi_qi_pierce", "yuanshi_all_qi_absorb",
+        "yuanshi_yinyang_grind", "yuanshi_primal_qi", "yuanshi_origin_strike"
+    };
+
+    private static final String[] HONGLIAN_MOVES = {
+        "honglian_time_burst", "honglian_time_freeze", "honglian_fate_break", "honglian_ancient_predecessor", "honglian_spring_cicada",
+        "honglian_time_rewind", "honglian_past_present", "honglian_red_lotus_fire", "honglian_time_reverse_position", "honglian_space_fracture",
+        "honglian_time_haste", "honglian_red_lotus_domain", "honglian_time_paradox", "honglian_space_banish", "honglian_time_spear",
+        "honglian_red_lotus_rage", "honglian_causality_reverse", "honglian_space_time_collapse"
+    };
+
+    private static final String[] YUANLIAN_MOVES = {
+        "yuanlian_vine_whip", "yuanlian_vine_bind", "yuanlian_spore_rain", "yuanlian_genesis_lotus", "yuanlian_paint_prison",
+        "yuanlian_regeneration", "yuanlian_vine_wall", "yuanlian_paint_clone", "yuanlian_wood_revive", "yuanlian_poison_vine",
+        "yuanlian_genesis_scroll", "yuanlian_tree_of_life", "yuanlian_vine_burst", "yuanlian_paint_seal", "yuanlian_wood_spirit_summon",
+        "yuanlian_genesis_grand_lotus"
+    };
+
+    private static final class TimedModifier {
+        private final Holder<Attribute> attribute;
+        private int ticks;
+
+        private TimedModifier(Holder<Attribute> attribute, int ticks) {
+            this.attribute = attribute;
+            this.ticks = ticks;
+        }
+    }
+
+    private static final class DamageMark {
+        private int ticks;
+        private final float multiplier;
+
+        private DamageMark(int ticks, float multiplier) {
+            this.ticks = ticks;
+            this.multiplier = multiplier;
+        }
+    }
+
+    private static final class AreaEffect {
+        private final Vec3 center;
+        private final double radius;
+        private final float percentPerSecond;
+        private int ticks;
+        private final boolean magic;
+        private final int slowAmp;
+        private final int weakAmp;
+        private final boolean pullToCenter;
+        private final boolean randomBlink;
+        private final VfxType vfxType;
+        private final int color;
+        private final float scale;
+        private final DaoPath terrainPath;
+        private final int terrainRadius;
+
+        private AreaEffect(Vec3 center, double radius, float percentPerSecond, int ticks, boolean magic,
+                           int slowAmp, int weakAmp, boolean pullToCenter, boolean randomBlink,
+                           VfxType vfxType, int color, float scale, DaoPath terrainPath, int terrainRadius) {
+            this.center = center;
+            this.radius = radius;
+            this.percentPerSecond = percentPerSecond;
+            this.ticks = ticks;
+            this.magic = magic;
+            this.slowAmp = slowAmp;
+            this.weakAmp = weakAmp;
+            this.pullToCenter = pullToCenter;
+            this.randomBlink = randomBlink;
+            this.vfxType = vfxType;
+            this.color = color;
+            this.scale = scale;
+            this.terrainPath = terrainPath;
+            this.terrainRadius = terrainRadius;
+        }
+    }
+
+    private static final class StarTrap {
+        private final Vec3 pos;
+        private int ticks;
+        private final float percent;
+        private final double radius;
+
+        private StarTrap(Vec3 pos, int ticks, float percent, double radius) {
+            this.pos = pos;
+            this.ticks = ticks;
+            this.percent = percent;
+            this.radius = radius;
+        }
+    }
 
     private final ServerBossEvent bossEvent = new ServerBossEvent(
-        Component.literal("尊者"), BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS);
+        Component.literal("尊者"), BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS
+    );
 
-    private VenerableType venerableType = VenerableType.YUAN_SHI;
-    private int abilityCooldown = 80;
+    private final Map<String, Integer> moveCooldownTicks = new HashMap<>();
+    private final Map<String, Method> moveMethodCache = new HashMap<>();
+    private final Map<ResourceLocation, TimedModifier> timedModifiers = new HashMap<>();
+    private final Map<UUID, DamageMark> damageMarks = new HashMap<>();
+    private final List<AreaEffect> areaEffects = new ArrayList<>();
+    private final List<UUID> summonIds = new ArrayList<>();
+    private final List<StarTrap> starTraps = new ArrayList<>();
+    private final Map<UUID, ArrayDeque<Vec3>> positionHistory = new HashMap<>();
+
+    private VenerableType venerableType = VenerableType.WU_JI;
+    private VenerableCombatAI combatAI = new VenerableCombatAI();
+
     private int currentPhase = 1;
-    private int phaseSpeedBoostTicks = 0;
+    private int abilityCooldown = 80;
 
-    private boolean hasUsedCicada = false;
-    private float savedHP = -1;
-    private int savedHPTimer = 0;
+    private int wujiMadnessStacks = 0;
+    private int wujiShieldTicks = 0;
+    private boolean wujiImmortalUsed = false;
 
-    private int yuanLianRegenTick = 0;
-    private boolean yuanLianLotusReviveUsed1 = false;
-    private boolean yuanLianLotusReviveUsed2 = false;
-    private boolean yuanLianLotusReviveUsed3 = false;
-    private int leTuHitCount = 0;
-    private boolean leTuAggro = false;
-    private int invisTicks = 0;
-
-    private final List<ResourceLocation> equippedGu = new ArrayList<>();
-    private final List<KillerMove> availableMoves = new ArrayList<>();
-    private int killerMoveCooldown = 0;
-
-    private int lotusSporesTicks = 0;
-    private double lotusSporesX = 0;
-    private double lotusSporesY = 0;
-    private double lotusSporesZ = 0;
-
-    private int lawFreezeTicks = 0;
-    private int timeSlowTicks = 0;
-
-    private int enslavedCount = 0;
-    private int visibleTimer = 0;
-    private boolean cicadaEnraged = false;
-
-    private int triQiComboStep = 0;
-
-    private final List<double[]> starTraps = new ArrayList<>();
-    private int starNeedleCooldown = 0;
-
-
-    private int leTuDomainTicks = 0;
-    private int soulBeastCount = 0;
-    private int leTuMercyTicks = 0;
-    private boolean leTuFormationActive = false;
-    private int leTuFormationTicks = 0;
-    private int earthenFortressTicks = 0;
-
-    private int wuJiMadnessLayers = 0;
-    private int wuJiLawMarkTicks = 0;
-    private LivingEntity wuJiLawTarget = null;
-    private boolean wuJiImmortalUsed1 = false;
-    private boolean wuJiImmortalUsed2 = false;
-
-    private enum KuangManForm { HUMAN, ICE_PHOENIX, LIGHTNING_WOLF, GIANT }
-    private KuangManForm currentForm = KuangManForm.HUMAN;
-    private int formDurationTicks = 0;
-    private int formCooldownTicks = 0;
-
-    private int youHunGazeCooldown = 0;
     private boolean youHunSoulSplitUsed = false;
-    private int youHunSoulBeastCount = 0;
+    private int youHunDevourStacks = 0;
 
-    private int hongLianTimeFreezeTicks = 0;
-    private int predecessorCooldown = 0;
+    private int hongLianFreezeTicks = 0;
+    private boolean hongLianCicadaUsed = false;
+    private int hongLianRageTicks = 0;
 
-    private int absoluteDefenseTicks = 0;
-    private boolean absoluteDefenseUsed = false;
+    private int kuangManAwakenTicks = 0;
+
+    private boolean juYangImmortalUsed = false;
+    private int juYangDrainTicks = 0;
+
+    private int absoluteInvulTicks = 0;
+    private int mercyTicks = 0;
+    private int yuanLianRegenTicker = 0;
+
+    private float recentDamagePercent = 0.0f;
+    private int recentDamageTicks = 0;
+    private UUID recentAttacker = null;
 
     public VenerableEntity(EntityType<? extends Monster> type, Level level) {
         super(type, level);
@@ -168,13 +272,13 @@ public class VenerableEntity extends Monster {
             .add(Attributes.ARMOR, 20.0)
             .add(Attributes.ARMOR_TOUGHNESS, 10.0)
             .add(Attributes.KNOCKBACK_RESISTANCE, 0.9)
-            .add(Attributes.FOLLOW_RANGE, 50.0);
+            .add(Attributes.FOLLOW_RANGE, 64.0);
     }
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
-        builder.define(DATA_TYPE, VenerableType.YUAN_SHI.name());
+        builder.define(DATA_TYPE, VenerableType.WU_JI.name());
     }
 
     @Override
@@ -189,13 +293,13 @@ public class VenerableEntity extends Monster {
     }
 
     public void setVenerableType(VenerableType type) {
-        this.venerableType = type;
-        this.entityData.set(DATA_TYPE, type.name());
-        this.bossEvent.setName(Component.literal(type.displayNameCN));
-        this.bossEvent.setColor(type.isDemon() ? BossEvent.BossBarColor.RED : BossEvent.BossBarColor.BLUE);
-        applyVenerableStats(type);
-        selectVenerableEquipment(type);
-        matchVenerableMoves();
+        this.venerableType = type == null ? VenerableType.WU_JI : type;
+        this.entityData.set(DATA_TYPE, this.venerableType.name());
+        this.bossEvent.setName(Component.literal(this.venerableType.displayNameCN));
+        this.bossEvent.setColor(this.venerableType.isDemon() ? BossEvent.BossBarColor.RED : BossEvent.BossBarColor.BLUE);
+        applyVenerableStats(this.venerableType);
+        resetCombatState();
+        initializeCombatAI();
     }
 
     public VenerableType getVenerableType() {
@@ -207,2436 +311,2134 @@ public class VenerableEntity extends Monster {
     }
 
     private void applyVenerableStats(VenerableType type) {
-        applyMod(Attributes.MAX_HEALTH, VEN_HP_MOD, type.maxHealth - 1500.0);
-        applyMod(Attributes.ATTACK_DAMAGE, VEN_ATK_MOD, type.attackDamage - 30.0);
-        applyMod(Attributes.ARMOR, VEN_ARMOR_MOD, type.armor - 20.0);
-        applyMod(Attributes.MOVEMENT_SPEED, VEN_SPEED_MOD, type.moveSpeed - 0.35);
+        applyAttributeModifier(Attributes.MAX_HEALTH, VEN_HP_MOD, type.maxHealth - 1500.0, AttributeModifier.Operation.ADD_VALUE);
+        applyAttributeModifier(Attributes.ATTACK_DAMAGE, VEN_ATK_MOD, type.attackDamage - 30.0, AttributeModifier.Operation.ADD_VALUE);
+        applyAttributeModifier(Attributes.ARMOR, VEN_ARMOR_MOD, type.armor - 20.0, AttributeModifier.Operation.ADD_VALUE);
+        applyAttributeModifier(Attributes.MOVEMENT_SPEED, VEN_SPEED_MOD, type.moveSpeed - 0.35, AttributeModifier.Operation.ADD_VALUE);
         this.setHealth(this.getMaxHealth());
     }
 
-    private void applyMod(Holder<Attribute> attr, ResourceLocation id, double value) {
-        AttributeInstance inst = this.getAttribute(attr);
-        if (inst != null) {
-            inst.removeModifier(id);
-            if (Math.abs(value) > 0.001) {
-                inst.addTransientModifier(new AttributeModifier(id, value, AttributeModifier.Operation.ADD_VALUE));
-            }
+    private void applyAttributeModifier(Holder<Attribute> attribute, ResourceLocation id, double amount, AttributeModifier.Operation operation) {
+        AttributeInstance instance = this.getAttribute(attribute);
+        if (instance == null) {
+            return;
+        }
+        instance.removeModifier(id);
+        if (Math.abs(amount) > 0.000001d) {
+            instance.addTransientModifier(new AttributeModifier(id, amount, operation));
         }
     }
 
-    // ======================== 主循环 ========================
+    private void resetCombatState() {
+        this.moveCooldownTicks.clear();
+        this.moveMethodCache.clear();
+        this.timedModifiers.clear();
+        this.damageMarks.clear();
+        this.areaEffects.clear();
+        this.summonIds.clear();
+        this.starTraps.clear();
+        this.positionHistory.clear();
+        this.currentPhase = 1;
+        this.abilityCooldown = 80;
+        this.wujiMadnessStacks = 0;
+        this.wujiShieldTicks = 0;
+        this.wujiImmortalUsed = false;
+        this.youHunSoulSplitUsed = false;
+        this.youHunDevourStacks = 0;
+        this.hongLianFreezeTicks = 0;
+        this.hongLianCicadaUsed = false;
+        this.hongLianRageTicks = 0;
+        this.kuangManAwakenTicks = 0;
+        this.juYangImmortalUsed = false;
+        this.juYangDrainTicks = 0;
+        this.absoluteInvulTicks = 0;
+        this.mercyTicks = 0;
+        this.yuanLianRegenTicker = 0;
+        this.recentDamagePercent = 0.0f;
+        this.recentDamageTicks = 0;
+        this.recentAttacker = null;
+    }
+
+    private void initializeCombatAI() {
+        this.combatAI = new VenerableCombatAI();
+        switch (this.venerableType) {
+            case WU_JI -> initWujiCombos();
+            case YOU_HUN -> initYouHunCombos();
+            case DAO_TIAN -> initDaoTianCombos();
+            case KUANG_MAN -> initKuangManCombos();
+            case JU_YANG -> initJuYangCombos();
+            case XING_XIU -> initXingXiuCombos();
+            case LE_TU -> initLeTuCombos();
+            case YUAN_SHI -> initYuanShiCombos();
+            case HONG_LIAN -> initHongLianCombos();
+            case YUAN_LIAN -> initYuanLianCombos();
+        }
+    }
+
+    private void registerMoves(int cooldown, String... moveIds) {
+        for (String moveId : moveIds) {
+            this.moveCooldownTicks.put(moveId, cooldown);
+        }
+    }
+
+    private void registerMoveCooldown(String moveId, int cooldown) {
+        this.moveCooldownTicks.put(moveId, cooldown);
+    }
+
+    private void registerCombo(BehaviorState state, String name, String[] moveIds, int minPhase, double maxDistanceSq) {
+        this.combatAI.registerCombo(state, new ComboSequence(name, moveIds, minPhase, maxDistanceSq));
+    }
+
+    private void initWujiCombos() {
+        registerMoves(60, WUJI_MOVES);
+        registerMoveCooldown("wuji_myriad_law_origin", 180);
+        registerMoveCooldown("wuji_prove_by_force", 200);
+        registerMoveCooldown("wuji_immortal_law", 220);
+        registerCombo(BehaviorState.TACTICAL, "wuji_cc", new String[]{
+            "wuji_law_bind", "wuji_madness_wave", "wuji_madness_wave", "wuji_madness_wave", "wuji_all_laws_one"
+        }, 1, 100.0);
+        registerCombo(BehaviorState.AGGRESSIVE, "wuji_ranged", new String[]{
+            "wuji_order_barrage", "wuji_forbidden_domain", "wuji_absolute_law", "wuji_order_spear"
+        }, 2, 400.0);
+        registerCombo(BehaviorState.DEFENSIVE, "wuji_def", new String[]{
+            "wuji_law_shield", "wuji_void_all_laws", "wuji_law_reflect", "wuji_law_chain_drag"
+        }, 1, 225.0);
+        registerCombo(BehaviorState.BERSERK, "wuji_p3", new String[]{
+            "wuji_myriad_law_origin", "wuji_world_end", "wuji_boundless_cross", "wuji_prove_by_force"
+        }, 3, 900.0);
+    }
+
+    private void initYouHunCombos() {
+        registerMoves(58, YOUHUN_MOVES);
+        registerMoveCooldown("youhun_night_of_ghosts", 170);
+        registerMoveCooldown("youhun_undying_soul", 200);
+        registerCombo(BehaviorState.TACTICAL, "youhun_control", new String[]{
+            "youhun_soul_gaze", "youhun_dream_cage", "youhun_nine_revolution_dream", "youhun_soul_puppet"
+        }, 1, 196.0);
+        registerCombo(BehaviorState.AGGRESSIVE, "youhun_burst", new String[]{
+            "youhun_soul_strike", "youhun_shadow_escape", "youhun_soul_truth", "youhun_absorb_soul"
+        }, 2, 324.0);
+        registerCombo(BehaviorState.DEFENSIVE, "youhun_clone", new String[]{
+            "youhun_shadow_clone", "youhun_soul_split", "youhun_clone_detonate", "youhun_undying_soul"
+        }, 1, 625.0);
+        registerCombo(BehaviorState.BERSERK, "youhun_p3", new String[]{
+            "youhun_night_of_ghosts", "youhun_soul_devour_ultimate", "youhun_ghost_domain", "youhun_dream_butterfly"
+        }, 3, 900.0);
+    }
+
+    private void initDaoTianCombos() {
+        registerMoves(56, DAOTIAN_MOVES);
+        registerMoveCooldown("daotian_ten_thousand_hands", 160);
+        registerMoveCooldown("daotian_copy_art", 130);
+        registerCombo(BehaviorState.TACTICAL, "daotian_control", new String[]{
+            "daotian_space_fold", "daotian_steal_time", "daotian_space_swap", "daotian_void_cage"
+        }, 1, 225.0);
+        registerCombo(BehaviorState.AGGRESSIVE, "daotian_steal", new String[]{
+            "daotian_formless_hand", "daotian_swap_heaven", "daotian_steal_power", "daotian_formless_fist"
+        }, 2, 625.0);
+        registerCombo(BehaviorState.DEFENSIVE, "daotian_space", new String[]{
+            "daotian_void_step", "daotian_space_exile", "daotian_space_compress", "daotian_steal_defense"
+        }, 1, 625.0);
+        registerCombo(BehaviorState.BERSERK, "daotian_p3", new String[]{
+            "daotian_ten_thousand_hands", "daotian_no_gap_domain", "daotian_space_rift", "daotian_copy_art"
+        }, 3, 900.0);
+    }
+
+    private void initKuangManCombos() {
+        registerMoves(52, KUANGMAN_MOVES);
+        registerMoveCooldown("kuangman_ten_thousand_beasts", 165);
+        registerMoveCooldown("kuangman_blood_awakening", 170);
+        registerCombo(BehaviorState.TACTICAL, "kuangman_combo", new String[]{
+            "kuangman_tiger_form", "kuangman_charge", "kuangman_shock_stomp", "kuangman_split_earth"
+        }, 1, 144.0);
+        registerCombo(BehaviorState.AGGRESSIVE, "kuangman_forms", new String[]{
+            "kuangman_dragon_form", "kuangman_eagle_form", "kuangman_snake_form", "kuangman_giant_ape_fist"
+        }, 2, 400.0);
+        registerCombo(BehaviorState.DEFENSIVE, "kuangman_survive", new String[]{
+            "kuangman_bear_form", "kuangman_devour_heal", "kuangman_undying_body", "kuangman_savage_power"
+        }, 1, 324.0);
+        registerCombo(BehaviorState.BERSERK, "kuangman_p3", new String[]{
+            "kuangman_ten_thousand_beasts", "kuangman_heaven_flip", "kuangman_thousand_fall", "kuangman_blood_awakening"
+        }, 3, 900.0);
+    }
+
+    private void initJuYangCombos() {
+        registerMoves(62, JUYANG_MOVES);
+        registerMoveCooldown("juyang_sun_fall", 150);
+        registerMoveCooldown("juyang_immortal_body", 220);
+        registerCombo(BehaviorState.TACTICAL, "juyang_spear", new String[]{
+            "juyang_golden_strike", "juyang_sun_spear", "juyang_fortune_shift", "juyang_fortune_steal"
+        }, 1, 400.0);
+        registerCombo(BehaviorState.AGGRESSIVE, "juyang_blood", new String[]{
+            "juyang_blood_sacrifice", "juyang_blood_contract", "juyang_blood_tide", "juyang_blood_boil"
+        }, 2, 324.0);
+        registerCombo(BehaviorState.DEFENSIVE, "juyang_def", new String[]{
+            "juyang_fortune_deflect", "juyang_true_sun_tower", "juyang_golden_bloodline", "juyang_immortal_body"
+        }, 1, 256.0);
+        registerCombo(BehaviorState.BERSERK, "juyang_p3", new String[]{
+            "juyang_sun_will", "juyang_solar_judgment", "juyang_sun_burst", "juyang_sun_fall", "juyang_fate_hand"
+        }, 3, 900.0);
+    }
+
+    private void initXingXiuCombos() {
+        registerMoves(60, XINGXIU_MOVES);
+        registerMoveCooldown("xingxiu_star_end", 170);
+        registerCombo(BehaviorState.TACTICAL, "xingxiu_predict", new String[]{
+            "xingxiu_star_trap", "xingxiu_star_needle", "xingxiu_destiny_calculation", "xingxiu_star_lock"
+        }, 1, 256.0);
+        registerCombo(BehaviorState.AGGRESSIVE, "xingxiu_chain", new String[]{
+            "xingxiu_star_projection", "xingxiu_star_chain", "xingxiu_destiny_mark", "xingxiu_meteor_fall"
+        }, 2, 400.0);
+        registerCombo(BehaviorState.DEFENSIVE, "xingxiu_board", new String[]{
+            "xingxiu_star_board", "xingxiu_star_armor", "xingxiu_star_eye", "xingxiu_predicted_counter"
+        }, 1, 400.0);
+        registerCombo(BehaviorState.BERSERK, "xingxiu_p3", new String[]{
+            "xingxiu_star_extinction", "xingxiu_star_gravity", "xingxiu_star_pressure", "xingxiu_star_end"
+        }, 3, 900.0);
+    }
+
+    private void initLeTuCombos() {
+        registerMoves(64, LETU_MOVES);
+        registerMoveCooldown("letu_unity_of_heaven_earth", 180);
+        registerMoveCooldown("letu_unbreak_wall", 130);
+        registerCombo(BehaviorState.TACTICAL, "letu_control", new String[]{
+            "letu_earth_spike_array", "letu_earth_prison", "letu_heaven_pillar", "letu_earth_quake"
+        }, 1, 196.0);
+        registerCombo(BehaviorState.AGGRESSIVE, "letu_earth", new String[]{
+            "letu_earth_domain", "letu_all_to_earth", "letu_earth_heaven_split", "letu_heaven_judgment"
+        }, 2, 625.0);
+        registerCombo(BehaviorState.DEFENSIVE, "letu_guard", new String[]{
+            "letu_earth_barrier", "letu_heaven_earth_formation", "letu_unbreak_wall", "letu_all_return_origin"
+        }, 1, 256.0);
+        registerCombo(BehaviorState.BERSERK, "letu_p3", new String[]{
+            "letu_heaven_punish", "letu_earth_shield", "letu_earth_spirit_summon", "letu_unity_of_heaven_earth"
+        }, 3, 900.0);
+    }
+
+    private void initYuanShiCombos() {
+        registerMoves(58, YUANSHI_MOVES);
+        registerMoveCooldown("yuanshi_origin_strike", 170);
+        registerCombo(BehaviorState.TACTICAL, "yuanshi_control", new String[]{
+            "yuanshi_qi_suppress", "yuanshi_five_forbidden_light", "yuanshi_yinyang_strike", "yuanshi_qi_guard"
+        }, 1, 196.0);
+        registerCombo(BehaviorState.AGGRESSIVE, "yuanshi_combo", new String[]{
+            "yuanshi_qi_blast", "yuanshi_qi_barrage", "yuanshi_three_qi_combo", "yuanshi_qi_pierce"
+        }, 2, 400.0);
+        registerCombo(BehaviorState.DEFENSIVE, "yuanshi_harmony", new String[]{
+            "yuanshi_taiching_cleanse", "yuanshi_yinyang_harmony", "yuanshi_all_qi_absorb", "yuanshi_qi_barrier"
+        }, 1, 324.0);
+        registerCombo(BehaviorState.BERSERK, "yuanshi_p3", new String[]{
+            "yuanshi_primal_qi", "yuanshi_yinyang_grind", "yuanshi_yinyang_swap", "yuanshi_origin_strike"
+        }, 3, 900.0);
+    }
+
+    private void initHongLianCombos() {
+        registerMoves(56, HONGLIAN_MOVES);
+        registerMoveCooldown("honglian_space_time_collapse", 190);
+        registerMoveCooldown("honglian_spring_cicada", 210);
+        registerCombo(BehaviorState.TACTICAL, "honglian_control", new String[]{
+            "honglian_time_burst", "honglian_time_reverse_position", "honglian_fate_break", "honglian_time_paradox"
+        }, 1, 324.0);
+        registerCombo(BehaviorState.AGGRESSIVE, "honglian_space", new String[]{
+            "honglian_space_fracture", "honglian_space_banish", "honglian_time_spear", "honglian_red_lotus_fire"
+        }, 2, 625.0);
+        registerCombo(BehaviorState.DEFENSIVE, "honglian_recover", new String[]{
+            "honglian_time_rewind", "honglian_time_haste", "honglian_spring_cicada", "honglian_ancient_predecessor"
+        }, 1, 400.0);
+        registerCombo(BehaviorState.BERSERK, "honglian_p3", new String[]{
+            "honglian_time_freeze", "honglian_past_present", "honglian_red_lotus_domain", "honglian_red_lotus_rage", "honglian_space_time_collapse"
+        }, 3, 900.0);
+    }
+
+    private void initYuanLianCombos() {
+        registerMoves(62, YUANLIAN_MOVES);
+        registerMoveCooldown("yuanlian_genesis_grand_lotus", 185);
+        registerCombo(BehaviorState.TACTICAL, "yuanlian_control", new String[]{
+            "yuanlian_vine_whip", "yuanlian_vine_bind", "yuanlian_poison_vine", "yuanlian_paint_prison"
+        }, 1, 196.0);
+        registerCombo(BehaviorState.AGGRESSIVE, "yuanlian_wood", new String[]{
+            "yuanlian_spore_rain", "yuanlian_vine_burst", "yuanlian_tree_of_life", "yuanlian_genesis_lotus"
+        }, 2, 400.0);
+        registerCombo(BehaviorState.DEFENSIVE, "yuanlian_recover", new String[]{
+            "yuanlian_regeneration", "yuanlian_wood_revive", "yuanlian_genesis_scroll", "yuanlian_paint_clone"
+        }, 1, 400.0);
+        registerCombo(BehaviorState.BERSERK, "yuanlian_p3", new String[]{
+            "yuanlian_vine_wall", "yuanlian_paint_seal", "yuanlian_wood_spirit_summon", "yuanlian_genesis_grand_lotus"
+        }, 3, 900.0);
+    }
 
     @Override
     public void aiStep() {
         super.aiStep();
-        if (this.level().isClientSide()) return;
+        if (this.level().isClientSide()) {
+            return;
+        }
 
-        bossEvent.setProgress(this.getHealth() / this.getMaxHealth());
-
-        tickPhaseSpeed();
-        tickInvisibility();
-        tickAuraEffects();
-        tickLotusSpores();
-        tickLawFreeze();
-        tickTimeSlow();
-        tickLeTuDomain();
-        tickLeTuFormation();
-        tickEarthenFortress();
-        tickLeTuMercy();
-        tickWuJiLawMark();
-        tickKuangManForm();
-        tickYouHunGaze();
-        tickHongLianTimeFreeze();
+        this.bossEvent.setProgress(this.getHealth() / this.getMaxHealth());
+        updatePhase();
+        tickTimedModifiers();
+        tickDamageMarks();
+        tickAreaEffects();
         tickStarTraps();
-        tickAbsoluteDefense();
+        tickSummons();
+        tickPositionHistory();
+        tickStateTimers();
+        tickPassives();
 
-        if (venerableType == VenerableType.HONG_LIAN) {
-            tickSavedHP();
+        if (this.abilityCooldown > 0) {
+            this.abilityCooldown--;
         }
-
-        if (venerableType == VenerableType.DAO_TIAN && !this.isInvisible()) {
-            visibleTimer++;
-            if (visibleTimer >= 60 && this.getTarget() != null) {
-                this.setInvisible(true);
-                invisTicks = 80;
-                visibleTimer = 0;
-                if (this.level() instanceof ServerLevel sl) {
-                    sl.sendParticles(ParticleTypes.PORTAL, getX(), getY() + 1.0, getZ(), 30, 0.5, 1.0, 0.5, 0.1);
-                }
-            }
-        }
-
-        int newPhase = getHealth() > getMaxHealth() * 0.6f ? 1 :
-                       getHealth() > getMaxHealth() * 0.3f ? 2 : 3;
-        if (newPhase != currentPhase) {
-            onPhaseTransition(currentPhase, newPhase);
-            currentPhase = newPhase;
-        }
-
-        if (venerableType == VenerableType.YUAN_LIAN) {
-            yuanLianRegenTick++;
-            float regenRate = currentPhase == 1 ? 0.03f : currentPhase == 2 ? 0.05f : 0.08f;
-            if (yuanLianRegenTick >= 60) {
-                yuanLianRegenTick = 0;
-                this.heal(this.getMaxHealth() * regenRate);
-                if (this.level() instanceof ServerLevel sl) {
-                    sl.sendParticles(ParticleTypes.HAPPY_VILLAGER, getX(), getY() + 1.5, getZ(), 8, 0.5, 0.5, 0.5, 0.02);
-                }
-            }
-        }
-
-        if (venerableType == VenerableType.XING_XIU && this.tickCount % 400 == 0 && this.getTarget() != null) {
-            placeStarTrapAtPredictedPosition();
-        }
-
-        if (abilityCooldown > 0) {
-            abilityCooldown--;
-        }
-        if (killerMoveCooldown > 0) killerMoveCooldown--;
-        if (formCooldownTicks > 0) formCooldownTicks--;
-        if (starNeedleCooldown > 0) starNeedleCooldown--;
-        if (youHunGazeCooldown > 0) youHunGazeCooldown--;
-        if (predecessorCooldown > 0) predecessorCooldown--;
 
         LivingEntity target = this.getTarget();
-        if (target == null || !target.isAlive()) return;
-        if (abilityCooldown > 0) return;
+        if (target == null || !target.isAlive()) {
+            return;
+        }
+        if (this.abilityCooldown > 0) {
+            return;
+        }
+        if (this.venerableType == VenerableType.LE_TU && this.mercyTicks > 0) {
+            return;
+        }
 
         performVenerableAttack(target);
     }
 
-    private void tickLeTuDomain() {
-        if (leTuDomainTicks <= 0) return;
-        leTuDomainTicks--;
-        if (this.tickCount % 20 != 0) return;
-        if (!(this.level() instanceof ServerLevel sl)) return;
-
-        double range = currentPhase == 3 ? 24.0 : 10.0;
-        float dmgPerSec = currentPhase == 3 ? 4.0f : 2.0f;
-        sl.sendParticles(ParticleTypes.ASH, getX(), getY() + 0.5, getZ(), 20, range * 0.4, 1.0, range * 0.4, 0.02);
-        sl.sendParticles(ParticleTypes.ENCHANT, getX(), getY() + 1.0, getZ(), 12, range * 0.4, 1.5, range * 0.4, 0.03);
-        List<LivingEntity> nearby = this.level().getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(range),
-            e -> e != this && !(e instanceof Zombie z && "战魂".equals(z.getName().getString())));
-        for (LivingEntity entity : nearby) {
-            if (entity instanceof Player) {
-                entity.hurt(this.damageSources().magic(), dmgPerSec);
-                entity.setDeltaMovement(entity.getDeltaMovement().multiply(0.3, 1.0, 0.3));
-                entity.hurtMarked = true;
-            }
-        }
+    private void updatePhase() {
+        float healthRatio = this.getHealth() / this.getMaxHealth();
+        this.currentPhase = healthRatio > 0.66f ? 1 : (healthRatio > 0.33f ? 2 : 3);
     }
 
-    private void tickLeTuFormation() {
-        if (!leTuFormationActive) return;
-        if (leTuFormationTicks > 0) {
-            leTuFormationTicks--;
+    private void tickStateTimers() {
+        if (this.wujiShieldTicks > 0) {
+            this.wujiShieldTicks--;
+        }
+        if (this.hongLianFreezeTicks > 0) {
+            this.hongLianFreezeTicks--;
+            for (LivingEntity living : getEnemies(this.position(), 12.0)) {
+                living.setDeltaMovement(0.0, 0.0, 0.0);
+                living.hurtMarked = true;
+                living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 10, 7));
+            }
+        }
+        if (this.hongLianRageTicks > 0) {
+            this.hongLianRageTicks--;
+            if (this.tickCount % 20 == 0) {
+                hurtAreaPercent(this.position(), 8.0, 0.04f, true);
+                spawnVfx(VfxType.TIME_DISTORTION, getX(), getY() + 1.0, getZ(), 0.0, 1.0, 0.0, 0xFFFF0033, 2.0f, 30);
+            }
+        }
+        if (this.kuangManAwakenTicks > 0) {
+            this.kuangManAwakenTicks--;
+            if (this.tickCount % 20 == 0) {
+                selfDamagePercent(0.02f);
+            }
+        }
+        if (this.juYangDrainTicks > 0) {
+            this.juYangDrainTicks--;
+            if (this.tickCount % 20 == 0) {
+                selfDamagePercent(0.05f);
+            }
+        }
+        if (this.mercyTicks > 0) {
+            this.mercyTicks--;
+            if (this.tickCount % 20 == 0) {
+                healPercent(0.05f);
+            }
+        }
+        if (this.absoluteInvulTicks > 0) {
+            this.absoluteInvulTicks--;
+        }
+        if (this.recentDamageTicks > 0) {
+            this.recentDamageTicks--;
         } else {
-            leTuFormationActive = false;
+            this.recentDamagePercent = 0.0f;
+            this.recentAttacker = null;
         }
     }
 
-    private void tickEarthenFortress() {
-        if (earthenFortressTicks <= 0) return;
-        earthenFortressTicks--;
-        if (earthenFortressTicks == 0) {
-            AttributeInstance armor = this.getAttribute(Attributes.ARMOR);
-            if (armor != null) armor.removeModifier(EARTHEN_FORTRESS_MOD);
+    private void tickPassives() {
+        if (this.venerableType == VenerableType.WU_JI || this.venerableType == VenerableType.YUAN_SHI) {
+            for (LivingEntity living : getEnemies(this.position(), 8.0)) {
+                living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 30, 1));
+            }
         }
-    }
-
-    private void tickLeTuMercy() {
-        if (leTuMercyTicks > 0) leTuMercyTicks--;
-    }
-
-    private void tickWuJiLawMark() {
-        if (wuJiLawMarkTicks > 0) {
-            wuJiLawMarkTicks--;
-            if (wuJiLawTarget != null && (!wuJiLawTarget.isAlive() || wuJiLawMarkTicks == 0)) {
-                if (wuJiLawTarget instanceof Player player) {
-                    AttributeInstance speed = player.getAttribute(Attributes.MOVEMENT_SPEED);
-                    if (speed != null) speed.removeModifier(LAW_SLOW_MOD);
-                    AttributeInstance atkSpeed = player.getAttribute(Attributes.ATTACK_SPEED);
-                    if (atkSpeed != null) atkSpeed.removeModifier(LAW_SLOW_MOD);
-                }
-                wuJiLawTarget = null;
+        if (this.venerableType == VenerableType.YUAN_LIAN) {
+            this.yuanLianRegenTicker++;
+            if (this.yuanLianRegenTicker >= 60) {
+                this.yuanLianRegenTicker = 0;
+                float phaseRegen = this.currentPhase == 1 ? 0.03f : (this.currentPhase == 2 ? 0.05f : 0.08f);
+                healPercent(phaseRegen);
+                spawnVfx(VfxType.HEAL_SPIRAL, getX(), getY() + 1.0, getZ(), 0.0, 1.0, 0.0, 0xFF33CC33, 2.2f, 30);
             }
         }
     }
 
-    private void tickKuangManForm() {
-        if (currentForm == KuangManForm.HUMAN) return;
-        if (formDurationTicks > 0) {
-            formDurationTicks--;
-            if (formDurationTicks == 0) {
-                revertToHumanForm();
+    private void tickSummons() {
+        if (!(this.level() instanceof ServerLevel sl)) {
+            return;
+        }
+        Iterator<UUID> iterator = this.summonIds.iterator();
+        while (iterator.hasNext()) {
+            UUID id = iterator.next();
+            Entity entity = sl.getEntity(id);
+            if (!(entity instanceof LivingEntity living) || !living.isAlive()) {
+                iterator.remove();
             }
         }
     }
 
-    private void tickYouHunGaze() {
-        if (venerableType != VenerableType.YOU_HUN) return;
-        if (youHunGazeCooldown <= 0 && this.getTarget() != null) {
-            LivingEntity target = this.getTarget();
-            double dist = this.distanceTo(target);
-            if (dist < 12.0) {
-                Vec3 look = this.getLookAngle();
-                Vec3 toTarget = target.position().subtract(this.position()).normalize();
-                double dot = look.dot(toTarget);
-                if (dot > 0.7) {
-                    target.setDeltaMovement(target.getDeltaMovement().multiply(0.05, 0.5, 0.05));
-                    target.hurtMarked = true;
-                    youHunGazeCooldown = 200;
-                    if (this.level() instanceof ServerLevel sl) {
-                        sl.sendParticles(ParticleTypes.SCULK_SOUL, target.getX(), target.getY() + 1.0, target.getZ(), 30, 0.5, 1.0, 0.5, 0.03);
-                        this.level().playSound(null, target.blockPosition(), SoundEvents.WARDEN_AMBIENT, SoundSource.HOSTILE, 2.0f, 0.2f);
-                    }
-                }
-            }
+    private void tickPositionHistory() {
+        LivingEntity target = this.getTarget();
+        if (target == null || !target.isAlive()) {
+            return;
+        }
+        ArrayDeque<Vec3> history = this.positionHistory.computeIfAbsent(target.getUUID(), key -> new ArrayDeque<>());
+        history.addLast(target.position());
+        while (history.size() > 80) {
+            history.removeFirst();
         }
     }
 
-    private void tickHongLianTimeFreeze() {
-        if (hongLianTimeFreezeTicks <= 0) return;
-        hongLianTimeFreezeTicks--;
-        if (this.tickCount % 5 != 0) return;
-        List<LivingEntity> nearby = this.level().getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(12.0), e -> e != this);
-        for (LivingEntity entity : nearby) {
-            entity.setDeltaMovement(0, 0, 0);
-            entity.hurtMarked = true;
+    private Vec3 getPositionAgo(LivingEntity target, int ticksAgo) {
+        ArrayDeque<Vec3> history = this.positionHistory.get(target.getUUID());
+        if (history == null || history.isEmpty()) {
+            return target.position();
         }
+        int wanted = Math.max(0, history.size() - 1 - ticksAgo);
+        int index = 0;
+        for (Vec3 pos : history) {
+            if (index == wanted) {
+                return pos;
+            }
+            index++;
+        }
+        return history.peekFirst() == null ? target.position() : history.peekFirst();
     }
 
     private void tickStarTraps() {
-        if (starTraps.isEmpty()) return;
-        LivingEntity target = this.getTarget();
-        if (target == null) return;
+        if (this.starTraps.isEmpty()) {
+            return;
+        }
+        Iterator<StarTrap> iterator = this.starTraps.iterator();
+        while (iterator.hasNext()) {
+            StarTrap trap = iterator.next();
+            trap.ticks--;
+            if (trap.ticks <= 0) {
+                iterator.remove();
+                continue;
+            }
+            List<LivingEntity> victims = getEnemies(trap.pos, trap.radius);
+            if (victims.isEmpty()) {
+                continue;
+            }
+            for (LivingEntity victim : victims) {
+                hurtPercent(victim, trap.percent, true);
+            }
+            spawnVfx(VfxType.STAR_RAIN, trap.pos.x, trap.pos.y + 1.0, trap.pos.z, 0.0, 1.0, 0.0, 0xFF77BBFF, 2.0f, 25);
+            this.level().playSound(null, BlockPos.containing(trap.pos), SoundEvents.GENERIC_EXPLODE.value(), SoundSource.HOSTILE, 1.4f, 1.0f);
+            iterator.remove();
+        }
+    }
 
-        var it = starTraps.iterator();
-        while (it.hasNext()) {
-            double[] pos = it.next();
-            double dx = target.getX() - pos[0];
-            double dz = target.getZ() - pos[2];
-            if (dx * dx + dz * dz < 9.0) {
-                if (this.level() instanceof ServerLevel sl) {
-                    sl.sendParticles(ParticleTypes.FLASH, pos[0], pos[1] + 1.0, pos[2], 3, 0.5, 0.5, 0.5, 0.0);
-                    sl.sendParticles(ParticleTypes.END_ROD, pos[0], pos[1] + 0.5, pos[2], 40, 2.0, 2.0, 2.0, 0.1);
-                    this.level().playSound(null, this.blockPosition(), SoundEvents.GENERIC_EXPLODE.value(), SoundSource.HOSTILE, 1.5f, 1.0f);
+    private void tickDamageMarks() {
+        Iterator<Map.Entry<UUID, DamageMark>> iterator = this.damageMarks.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<UUID, DamageMark> entry = iterator.next();
+            entry.getValue().ticks--;
+            if (entry.getValue().ticks <= 0) {
+                iterator.remove();
+            }
+        }
+    }
+
+    private void tickTimedModifiers() {
+        Iterator<Map.Entry<ResourceLocation, TimedModifier>> iterator = this.timedModifiers.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<ResourceLocation, TimedModifier> entry = iterator.next();
+            TimedModifier timed = entry.getValue();
+            timed.ticks--;
+            if (timed.ticks <= 0) {
+                AttributeInstance instance = this.getAttribute(timed.attribute);
+                if (instance != null) {
+                    instance.removeModifier(entry.getKey());
                 }
-                target.hurt(this.damageSources().magic(), target.getMaxHealth() * 0.08f);
-                it.remove();
+                iterator.remove();
+            }
+        }
+    }
+
+    private void tickAreaEffects() {
+        Iterator<AreaEffect> iterator = this.areaEffects.iterator();
+        while (iterator.hasNext()) {
+            AreaEffect area = iterator.next();
+            area.ticks--;
+            if (area.ticks <= 0) {
+                iterator.remove();
+                continue;
+            }
+            if (area.ticks % 20 != 0) {
+                continue;
+            }
+            spawnVfx(area.vfxType, area.center.x, area.center.y + 1.0, area.center.z, 0.0, 1.0, 0.0, area.color, area.scale, 25);
+            if (area.terrainPath != null) {
+                modifyTerrain(area.center, area.terrainPath, area.terrainRadius);
+            }
+            for (LivingEntity living : getEnemies(area.center, area.radius)) {
+                if (area.percentPerSecond > 0.0f) {
+                    float damage = markedDamage(living, percentDamage(living, area.percentPerSecond));
+                    living.hurt(area.magic ? this.damageSources().magic() : this.damageSources().mobAttack(this), damage);
+                }
+                if (area.slowAmp >= 0) {
+                    living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 30, area.slowAmp));
+                }
+                if (area.weakAmp >= 0) {
+                    living.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 30, area.weakAmp));
+                }
+                if (area.pullToCenter) {
+                    Vec3 delta = area.center.subtract(living.position());
+                    if (delta.lengthSqr() > 0.0001) {
+                        Vec3 force = delta.normalize().scale(0.6);
+                        living.setDeltaMovement(living.getDeltaMovement().add(force));
+                        living.hurtMarked = true;
+                    }
+                }
+                if (area.randomBlink && this.random.nextFloat() < 0.35f) {
+                    double ox = (this.random.nextDouble() - 0.5) * 6.0;
+                    double oz = (this.random.nextDouble() - 0.5) * 6.0;
+                    living.teleportTo(living.getX() + ox, living.getY(), living.getZ() + oz);
+                }
             }
         }
     }
 
     private void performVenerableAttack(LivingEntity target) {
-        int baseCooldown = switch (currentPhase) {
-            case 2 -> 30 + random.nextInt(20);
-            case 3 -> 20 + random.nextInt(15);
-            default -> 50 + random.nextInt(30);
-        };
+        float healthRatio = this.getHealth() / this.getMaxHealth();
+        double distanceSq = this.distanceToSqr(target);
+        this.combatAI.setCombatContext(this.currentPhase, healthRatio, distanceSq);
+        this.combatAI.tick();
+        String moveId = this.combatAI.getNextMoveId();
 
-        if (cicadaEnraged) {
-            baseCooldown = baseCooldown / 2;
+        if (moveId == null || moveId.isBlank()) {
+            basicAttack(target);
+            this.abilityCooldown = 20;
+            return;
         }
 
-        double distance = this.distanceTo(target);
+        executeMove(moveId, target);
+        int cooldown = this.moveCooldownTicks.getOrDefault(moveId, 60);
+        this.combatAI.setCooldown(moveId, cooldown);
+        this.abilityCooldown = Math.max(10, cooldown / 3);
+    }
 
-        if (killerMoveCooldown <= 0 && !availableMoves.isEmpty()) {
-            float moveChance = switch (currentPhase) {
-                case 2 -> 0.30f;
-                case 3 -> 0.45f;
-                default -> 0.15f;
-            };
-            if (this.random.nextFloat() < moveChance) {
-                executeVenerableKillerMove(target);
+    private void executeMove(String moveId, LivingEntity target) {
+        String methodName = toMoveMethodName(moveId);
+        Method method = this.moveMethodCache.get(moveId);
+        if (method == null) {
+            try {
+                method = VenerableEntity.class.getDeclaredMethod(methodName, LivingEntity.class);
+                method.setAccessible(true);
+                this.moveMethodCache.put(moveId, method);
+            } catch (NoSuchMethodException ignored) {
+                basicAttack(target);
                 return;
             }
         }
-
-        switch (venerableType) {
-            case YUAN_SHI -> aiYuanShi(target, baseCooldown, distance);
-            case XING_XIU -> aiXingXiu(target, baseCooldown, distance);
-            case YUAN_LIAN -> aiYuanLian(target, baseCooldown, distance);
-            case WU_JI -> aiWuJi(target, baseCooldown, distance);
-            case KUANG_MAN -> aiKuangMan(target, baseCooldown, distance);
-            case DAO_TIAN -> aiDaoTian(target, baseCooldown, distance);
-            case JU_YANG -> aiJuYang(target, baseCooldown, distance);
-            case YOU_HUN -> aiYouHun(target, baseCooldown, distance);
-            case LE_TU -> aiLeTu(target, baseCooldown, distance);
-            case HONG_LIAN -> aiHongLian(target, baseCooldown, distance);
+        try {
+            method.invoke(this, target);
+        } catch (Exception ignored) {
+            basicAttack(target);
         }
     }
 
-    // ======================== 元始仙尊 - 气道+奴道 - 至高霸主 ========================
-
-    private void aiYuanShi(LivingEntity target, int baseCooldown, double distance) {
-        if (currentPhase == 3 && triQiComboStep == 0) {
-            triQiHumanQi(target);
-            triQiComboStep = 1;
-            abilityCooldown = 15;
-            return;
-        }
-        if (currentPhase == 3 && triQiComboStep == 1) {
-            triQiEarthQi(target);
-            triQiComboStep = 2;
-            abilityCooldown = 15;
-            return;
-        }
-        if (currentPhase == 3 && triQiComboStep == 2) {
-            triQiHeavenQi(target);
-            triQiComboStep = 0;
-            abilityCooldown = baseCooldown;
-            return;
-        }
-
-        if (distance > 10) {
-            int count = currentPhase >= 2 ? 7 : 5;
-            qiBarrage(target, count);
-            abilityCooldown = baseCooldown;
-        } else if (distance > 5) {
-            if (enslavedCount < 3) {
-                enslaveNearby();
-                abilityCooldown = baseCooldown + 20;
-            } else {
-                qiSuppression();
-                abilityCooldown = baseCooldown;
+    private static String toMoveMethodName(String moveId) {
+        String[] parts = moveId.split("_");
+        StringBuilder builder = new StringBuilder("move");
+        for (String part : parts) {
+            if (part.isBlank()) {
+                continue;
             }
+            builder.append(Character.toUpperCase(part.charAt(0)));
+            if (part.length() > 1) {
+                builder.append(part.substring(1));
+            }
+        }
+        return builder.toString();
+    }
+
+    private void basicAttack(LivingEntity target) {
+        hurtScaled(target, 1.0f, false);
+        spawnVfx(VfxType.SLASH_ARC, target.getX(), target.getY() + 1.0, target.getZ(),
+            target.getX() - getX(), 0.0, target.getZ() - getZ(), this.venerableType.color, 1.1f, 16);
+    }
+
+    private void applyTimedModifier(Holder<Attribute> attribute, String key, double amount, AttributeModifier.Operation operation, int ticks) {
+        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ReverendInsanity.MODID, key);
+        AttributeInstance instance = this.getAttribute(attribute);
+        if (instance == null) {
+            return;
+        }
+        instance.removeModifier(id);
+        if (Math.abs(amount) > 0.000001d) {
+            instance.addTransientModifier(new AttributeModifier(id, amount, operation));
+            this.timedModifiers.put(id, new TimedModifier(attribute, ticks));
         } else {
-            qiSuppression();
-            abilityCooldown = baseCooldown;
+            this.timedModifiers.remove(id);
         }
     }
 
-    private void triQiHumanQi(LivingEntity target) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        sl.sendParticles(ParticleTypes.CLOUD, getX(), getY() + 1.0, getZ(), 60, 5.0, 2.0, 5.0, 0.05);
-        sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 0.5, getZ(), 30, 5.0, 1.0, 5.0, 0.02);
-        this.level().playSound(null, blockPosition(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.HOSTILE, 2.0f, 0.6f);
-        List<LivingEntity> nearby = this.level().getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(6.0), e -> e != this);
-        for (LivingEntity entity : nearby) {
-            entity.hurt(this.damageSources().magic(), entity.getMaxHealth() * 0.08f);
-            entity.setDeltaMovement(entity.getDeltaMovement().multiply(0.3, 1.0, 0.3));
-            entity.hurtMarked = true;
+    private float baseAttackDamage() {
+        return (float) (this.venerableType.attackDamage * 0.001d * (1.0d + this.youHunDevourStacks * 0.02d));
+    }
+
+    private float percentDamage(LivingEntity target, float percent) {
+        return (float) (target.getMaxHealth() * percent);
+    }
+
+    private float markedDamage(LivingEntity target, float raw) {
+        DamageMark mark = this.damageMarks.get(target.getUUID());
+        if (mark == null) {
+            return raw;
         }
-        for (LivingEntity entity : nearby) {
-            if (entity instanceof ServerPlayer sp) {
-                VfxHelper.spawn(sp, VfxType.DOME_FIELD, getX(), getY() + 1, getZ(), 0, 1, 0, 0xFFF0F0FF, 2.0f, 30);
+        return raw * mark.multiplier;
+    }
+
+    private void addDamageMark(LivingEntity target, int ticks, float multiplier) {
+        this.damageMarks.put(target.getUUID(), new DamageMark(ticks, multiplier));
+    }
+
+    private void selfDamagePercent(float percent) {
+        float amount = (float) (this.getMaxHealth() * percent);
+        this.setHealth(Math.max(1.0f, this.getHealth() - amount));
+    }
+
+    private void healPercent(float percent) {
+        this.heal((float) (this.getMaxHealth() * percent));
+    }
+
+    private void hurtScaled(LivingEntity target, float scale, boolean magic) {
+        if (target == null || !target.isAlive()) {
+            return;
+        }
+        float damage = markedDamage(target, baseAttackDamage() * scale);
+        target.hurt(magic ? this.damageSources().magic() : this.damageSources().mobAttack(this), damage);
+    }
+
+    private void hurtPercent(LivingEntity target, float percent, boolean magic) {
+        if (target == null || !target.isAlive()) {
+            return;
+        }
+        float damage = markedDamage(target, percentDamage(target, percent));
+        target.hurt(magic ? this.damageSources().magic() : this.damageSources().mobAttack(this), damage);
+    }
+
+    private List<LivingEntity> getEnemies(Vec3 center, double radius) {
+        if (!(this.level() instanceof ServerLevel sl)) {
+            return List.of();
+        }
+        AABB box = new AABB(
+            center.x - radius, center.y - radius, center.z - radius,
+            center.x + radius, center.y + radius, center.z + radius
+        );
+        return sl.getEntitiesOfClass(LivingEntity.class, box, this::isEnemy);
+    }
+
+    private boolean isEnemy(LivingEntity entity) {
+        if (entity == this || !entity.isAlive()) {
+            return false;
+        }
+        if (entity instanceof FormlessHandEntity) {
+            return false;
+        }
+        if (entity instanceof PhantomImmortalEntity phantom && this.getUUID().equals(phantom.getOwnerUUID())) {
+            return false;
+        }
+        return !entity.isAlliedTo(this);
+    }
+
+    private void hurtAreaPercent(Vec3 center, double radius, float percent, boolean magic) {
+        for (LivingEntity living : getEnemies(center, radius)) {
+            hurtPercent(living, percent, magic);
+        }
+    }
+
+    private void hurtAreaScaled(Vec3 center, double radius, float scale, boolean magic) {
+        for (LivingEntity living : getEnemies(center, radius)) {
+            hurtScaled(living, scale, magic);
+        }
+    }
+
+    private void addAreaEffect(Vec3 center, double radius, float percentPerSecond, int ticks,
+                               boolean magic, int slowAmp, int weakAmp, boolean pullToCenter,
+                               boolean randomBlink, VfxType vfxType, int color, float scale,
+                               DaoPath terrainPath, int terrainRadius) {
+        this.areaEffects.add(new AreaEffect(
+            center, radius, percentPerSecond, ticks, magic, slowAmp, weakAmp,
+            pullToCenter, randomBlink, vfxType, color, scale, terrainPath, terrainRadius
+        ));
+    }
+
+    private void spawnVfx(VfxType type, double x, double y, double z,
+                          double dirX, double dirY, double dirZ,
+                          int color, float scale, int ticks) {
+        if (!(this.level() instanceof ServerLevel sl)) {
+            return;
+        }
+        for (ServerPlayer sp : sl.players()) {
+            if (sp.distanceToSqr(x, y, z) <= 16384.0) {
+                VfxHelper.spawn(sp, type, x, y, z, (float) dirX, (float) dirY, (float) dirZ, color, scale, ticks);
             }
         }
     }
 
-    private void triQiEarthQi(LivingEntity target) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        double tx = target.getX();
-        double tz = target.getZ();
-        sl.sendParticles(ParticleTypes.CLOUD, tx, target.getY() + 0.3, tz, 40, 3.0, 0.3, 3.0, 0.02);
-        sl.sendParticles(ParticleTypes.CRIT, tx, target.getY() + 0.5, tz, 20, 3.0, 0.5, 3.0, 0.1);
-        this.level().playSound(null, target.blockPosition(), SoundEvents.GENERIC_EXPLODE.value(), SoundSource.HOSTILE, 1.5f, 0.7f);
-        List<LivingEntity> nearby = this.level().getEntitiesOfClass(LivingEntity.class, target.getBoundingBox().inflate(4.0), e -> e != this);
-        for (LivingEntity entity : nearby) {
-            entity.hurt(this.damageSources().magic(), entity.getMaxHealth() * 0.10f);
-            entity.setDeltaMovement(entity.getDeltaMovement().add(0, 0.8, 0));
-            entity.hurtMarked = true;
+    private void spawnCenterVfx(VfxType type, int color, float scale, int ticks) {
+        spawnVfx(type, getX(), getY() + 1.0, getZ(), 0.0, 1.0, 0.0, color, scale, ticks);
+    }
+
+    private void modifyTerrain(Vec3 center, DaoPath path, int radius) {
+        if (!(this.level() instanceof ServerLevel sl)) {
+            return;
         }
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.PULSE_WAVE, tx, target.getY() + 1, tz, 0, 1, 0, 0xFF8B4513, 2.0f, 30);
+        TerrainModifier.modifyTerrain(sl, BlockPos.containing(center), path, radius);
+    }
+
+    private void clearProjectiles(double radius) {
+        if (!(this.level() instanceof ServerLevel sl)) {
+            return;
+        }
+        AABB box = this.getBoundingBox().inflate(radius);
+        for (Projectile projectile : sl.getEntitiesOfClass(Projectile.class, box, projectile -> true)) {
+            projectile.discard();
         }
     }
 
-    private void triQiHeavenQi(LivingEntity target) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        double tx = target.getX();
-        double ty = target.getY();
-        double tz = target.getZ();
-        sl.sendParticles(ParticleTypes.END_ROD, tx, ty + 8.0, tz, 60, 1.0, 4.0, 1.0, 0.1);
-        sl.sendParticles(ParticleTypes.FLASH, tx, ty + 2.0, tz, 5, 1.0, 1.0, 1.0, 0.0);
-        sl.sendParticles(ParticleTypes.CLOUD, tx, ty + 1.0, tz, 80, 6.0, 3.0, 6.0, 0.08);
-        this.level().playSound(null, target.blockPosition(), SoundEvents.GENERIC_EXPLODE.value(), SoundSource.HOSTILE, 2.5f, 0.3f);
-        this.level().playSound(null, target.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.HOSTILE, 2.0f, 0.4f);
-        List<LivingEntity> nearby = this.level().getEntitiesOfClass(LivingEntity.class, target.getBoundingBox().inflate(8.0), e -> e != this);
-        for (LivingEntity entity : nearby) {
-            entity.hurt(this.damageSources().magic(), entity.getMaxHealth() * 0.15f);
-            double knockDx = entity.getX() - tx;
-            double knockDz = entity.getZ() - tz;
-            double dist = Math.sqrt(knockDx * knockDx + knockDz * knockDz);
-            if (dist > 0.001) {
-                entity.knockback(3.0, -knockDx / dist, -knockDz / dist);
+    private void knockbackTargets(Vec3 center, double radius, double strength, double yBoost) {
+        for (LivingEntity living : getEnemies(center, radius)) {
+            Vec3 delta = living.position().subtract(center);
+            if (delta.lengthSqr() < 0.0001) {
+                continue;
             }
-        }
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.SKY_STRIKE, tx, ty, tz, 0, 1, 0, 0xFFFFD700, 2.5f, 40);
-            VfxHelper.spawn(sp, VfxType.PULSE_WAVE, tx, ty + 1, tz, 0, 1, 0, 0xFFF0F0FF, 2.0f, 30);
-        }
-    }
-
-    private void qiSuppression() {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        sl.sendParticles(ParticleTypes.CLOUD, getX(), getY() + 1.0, getZ(), 60, 4.0, 2.0, 4.0, 0.02);
-        sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 0.5, getZ(), 30, 4.0, 0.5, 4.0, 0.01);
-        this.level().playSound(null, blockPosition(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.HOSTILE, 1.5f, 0.5f);
-
-        List<LivingEntity> nearby = this.level().getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(8.0), e -> e != this);
-        for (LivingEntity entity : nearby) {
-            entity.hurt(this.damageSources().magic(), 3.0f);
-            entity.setDeltaMovement(entity.getDeltaMovement().multiply(0.3, 1.0, 0.3));
-            entity.hurtMarked = true;
-        }
-        for (LivingEntity entity : nearby) {
-            if (entity instanceof ServerPlayer sp) {
-                VfxHelper.spawn(sp, VfxType.AURA_RING, getX(), getY() + 1, getZ(), 0, 1, 0, 0xFFF0F0FF, 2.0f, 30);
-            }
+            Vec3 push = delta.normalize().scale(strength);
+            living.push(push.x, yBoost, push.z);
+            living.hurtMarked = true;
         }
     }
 
-    private void enslaveNearby() {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        sl.sendParticles(ParticleTypes.SCULK_SOUL, getX(), getY() + 2.0, getZ(), 40, 6.0, 2.0, 6.0, 0.03);
-        this.level().playSound(null, blockPosition(), SoundEvents.EVOKER_PREPARE_SUMMON, SoundSource.HOSTILE, 2.0f, 0.7f);
-
-        LivingEntity playerTarget = this.getTarget();
-        if (playerTarget == null) return;
-
-        enslavedCount = 0;
-        List<Mob> nearby = this.level().getEntitiesOfClass(Mob.class, getBoundingBox().inflate(16.0),
-            e -> e != this);
-        for (Mob mob : nearby) {
-            mob.setTarget(playerTarget);
-            enslavedCount++;
-        }
+    private void teleportBehind(LivingEntity target, double backDistance) {
+        Vec3 look = target.getLookAngle().normalize();
+        Vec3 back = target.position().subtract(look.scale(backDistance));
+        this.teleportTo(back.x, target.getY(), back.z);
     }
 
-    private void qiBarrage(LivingEntity target, int count) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        this.level().playSound(null, blockPosition(), SoundEvents.FIRECHARGE_USE, SoundSource.HOSTILE, 1.5f, 1.2f);
-
+    private void summonFormlessHands(ServerPlayer target, int count, int fingers) {
+        if (!(this.level() instanceof ServerLevel sl)) {
+            return;
+        }
         for (int i = 0; i < count; i++) {
-            double spread = (i - count / 2.0) * 1.5;
-            double hitX = target.getX() + spread * 0.5 + (random.nextDouble() - 0.5);
-            double hitZ = target.getZ() + spread * 0.5 + (random.nextDouble() - 0.5);
+            FormlessHandEntity hand = new FormlessHandEntity(sl, this, target, fingers);
+            double angle = (Math.PI * 2.0 * i) / Math.max(1, count);
+            hand.moveTo(this.getX() + Math.cos(angle) * 1.6, this.getY() + 1.0, this.getZ() + Math.sin(angle) * 1.6, this.getYRot(), this.getXRot());
+            sl.addFreshEntity(hand);
+        }
+    }
 
-            sl.sendParticles(ParticleTypes.CLOUD, getX(), getEyeY(), getZ(), 5, 0.3, 0.3, 0.3, 0.05);
-            double steps = 8;
-            double dx = (hitX - getX()) / steps;
-            double dz = (hitZ - getZ()) / steps;
-            for (int p = 0; p < steps; p++) {
-                sl.sendParticles(ParticleTypes.CLOUD,
-                    getX() + dx * p, getEyeY() + (random.nextDouble() - 0.5) * 0.5, getZ() + dz * p,
-                    2, 0.1, 0.1, 0.1, 0.01);
+    private void summonPhantom(PhantomImmortalEntity.ImmortalType type, LivingEntity target, double scale) {
+        if (!(this.level() instanceof ServerLevel sl)) {
+            return;
+        }
+        PhantomImmortalEntity summon = new PhantomImmortalEntity(sl, this, type);
+        double offsetX = (this.random.nextDouble() - 0.5) * 4.0;
+        double offsetZ = (this.random.nextDouble() - 0.5) * 4.0;
+        summon.moveTo(this.getX() + offsetX, this.getY(), this.getZ() + offsetZ, this.getYRot(), this.getXRot());
+
+        AttributeInstance hp = summon.getAttribute(Attributes.MAX_HEALTH);
+        AttributeInstance atk = summon.getAttribute(Attributes.ATTACK_DAMAGE);
+        AttributeInstance speed = summon.getAttribute(Attributes.MOVEMENT_SPEED);
+        if (hp != null) {
+            hp.removeModifier(SUMMON_HP_MOD);
+            hp.addTransientModifier(new AttributeModifier(SUMMON_HP_MOD, hp.getBaseValue() * (scale - 1.0), AttributeModifier.Operation.ADD_VALUE));
+        }
+        if (atk != null) {
+            atk.removeModifier(SUMMON_ATK_MOD);
+            atk.addTransientModifier(new AttributeModifier(SUMMON_ATK_MOD, atk.getBaseValue() * (scale - 1.0), AttributeModifier.Operation.ADD_VALUE));
+        }
+        if (speed != null) {
+            speed.removeModifier(SUMMON_SPEED_MOD);
+            speed.addTransientModifier(new AttributeModifier(SUMMON_SPEED_MOD, speed.getBaseValue() * (scale - 1.0), AttributeModifier.Operation.ADD_VALUE));
+        }
+        summon.setHealth(summon.getMaxHealth());
+        summon.setTarget(target);
+        sl.addFreshEntity(summon);
+        this.summonIds.add(summon.getUUID());
+    }
+
+    private int livingSummonCount() {
+        return this.summonIds.size();
+    }
+
+    private Entity getAnyLivingSummon() {
+        if (!(this.level() instanceof ServerLevel sl)) {
+            return null;
+        }
+        for (UUID id : this.summonIds) {
+            Entity entity = sl.getEntity(id);
+            if (entity instanceof LivingEntity living && living.isAlive()) {
+                return entity;
             }
         }
-
-        List<LivingEntity> nearby = this.level().getEntitiesOfClass(LivingEntity.class,
-            target.getBoundingBox().inflate(3.0), e -> e != this);
-        for (LivingEntity entity : nearby) {
-            entity.hurt(this.damageSources().magic(), 12.0f);
-            entity.setDeltaMovement(entity.getDeltaMovement().add(0, 0.3, 0));
-            entity.hurtMarked = true;
-        }
-        if (target instanceof ServerPlayer sp) {
-            double dirX = target.getX() - getX();
-            double dirY = target.getEyeY() - getEyeY();
-            double dirZ = target.getZ() - getZ();
-            VfxHelper.spawn(sp, VfxType.ENERGY_BEAM, getX(), getEyeY(), getZ(), (float) dirX, (float) dirY, (float) dirZ, 0xFFF0F0FF, 1.5f, 20);
-        }
+        return null;
     }
 
-    // ======================== 星宿仙尊 - 智道+星道 - 算计大师 ========================
+    private void playHostileSound(SoundEvent event, float volume, float pitch) {
+        this.level().playSound(null, this.blockPosition(), event, SoundSource.HOSTILE, volume, pitch);
+    }
 
-    private void aiXingXiu(LivingEntity target, int baseCooldown, double distance) {
-        if (distance < 8) {
-            wisdomDodge();
-            abilityCooldown = 10;
+    private void castSinglePercent(LivingEntity target, float percent, VfxType vfxType, int color, float scale, int ticks) {
+        hurtPercent(target, percent, true);
+        spawnVfx(vfxType, target.getX(), target.getY() + 1.0, target.getZ(),
+            target.getX() - getX(), target.getEyeY() - getEyeY(), target.getZ() - getZ(), color, scale, ticks);
+    }
+
+    private void castSingleScaled(LivingEntity target, float scaleDamage, VfxType vfxType, int color, float scale, int ticks) {
+        hurtScaled(target, scaleDamage, false);
+        spawnVfx(vfxType, target.getX(), target.getY() + 1.0, target.getZ(),
+            target.getX() - getX(), target.getEyeY() - getEyeY(), target.getZ() - getZ(), color, scale, ticks);
+    }
+
+    private void castAreaPercent(Vec3 center, double radius, float percent, VfxType vfxType, int color, float scale, int ticks) {
+        hurtAreaPercent(center, radius, percent, true);
+        spawnVfx(vfxType, center.x, center.y + 1.0, center.z, 0.0, 1.0, 0.0, color, scale, ticks);
+    }
+
+    private void spawnLightning(Vec3 pos) {
+        if (!(this.level() instanceof ServerLevel sl)) {
             return;
         }
-
-        if (currentPhase == 3) {
-            stellarAnnihilation(target);
-            abilityCooldown = baseCooldown + 20;
-            return;
-        }
-
-        if (random.nextFloat() < 0.3f && starNeedleCooldown <= 0) {
-            starNeedlePinning(target);
-            starNeedleCooldown = 80;
-            abilityCooldown = baseCooldown / 2;
-            return;
-        }
-
-        if (random.nextFloat() < 0.35f) {
-            heavenlyPrediction(target);
-            abilityCooldown = baseCooldown;
-            return;
-        }
-
-        int count = currentPhase >= 2 ? 5 : 3;
-        starProjectiles(target, count);
-        abilityCooldown = baseCooldown;
-    }
-
-    private void starProjectiles(LivingEntity target, int count) {
-        this.level().playSound(null, blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.HOSTILE, 2.0f, 1.5f);
-        for (int i = 0; i < count; i++) {
-            GoldBeamEntity beam = new GoldBeamEntity(this.level(), this, 10.0f);
-            beam.setPos(getX(), getEyeY() - 0.1, getZ());
-            double bx = target.getX() + (random.nextDouble() - 0.5) * 3;
-            double by = target.getEyeY() - getEyeY();
-            double bz = target.getZ() + (random.nextDouble() - 0.5) * 3;
-            beam.shoot(bx, by, bz, 2.5f, 1.5f);
-            this.level().addFreshEntity(beam);
-        }
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.GLOW_BURST, getX(), getY() + 1, getZ(), 0, 1, 0, 0xFF6699FF, 1.5f, 20);
+        LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(sl);
+        if (bolt != null) {
+            bolt.moveTo(pos.x, pos.y, pos.z);
+            sl.addFreshEntity(bolt);
         }
     }
 
-    private void heavenlyPrediction(LivingEntity target) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        placeStarTrapAtPredictedPosition();
-        sl.sendParticles(ParticleTypes.ENCHANT, getX(), getY() + 2.5, getZ(), 40, 2.0, 2.0, 2.0, 0.08);
-        sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 3.0, getZ(), 15, 1.0, 0.5, 1.0, 0.02);
-        this.level().playSound(null, blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.HOSTILE, 1.5f, 1.8f);
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.DOME_FIELD, getX(), getY() + 1, getZ(), 0, 1, 0, 0xFF6699FF, 2.0f, 30);
-        }
-
-        for (double[] trap : starTraps) {
-            double dist = Math.sqrt(Math.pow(target.getX() - trap[0], 2) + Math.pow(target.getZ() - trap[2], 2));
-            if (dist < 3.0) {
-                sl.sendParticles(ParticleTypes.FLASH, trap[0], trap[1] + 1.0, trap[2], 3, 0.5, 0.5, 0.5, 0.0);
-                sl.sendParticles(ParticleTypes.END_ROD, trap[0], trap[1], trap[2], 30, 1.5, 2.0, 1.5, 0.08);
-                target.hurt(this.damageSources().magic(), target.getMaxHealth() * 0.08f);
-                target.setDeltaMovement(target.getDeltaMovement().multiply(0.1, 0.5, 0.1));
-                target.hurtMarked = true;
-                this.level().playSound(null, target.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.HOSTILE, 2.0f, 0.5f);
-            }
-        }
-    }
-
-    private void starNeedlePinning(LivingEntity target) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        this.level().playSound(null, blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.HOSTILE, 2.0f, 2.0f);
-
-        GoldBeamEntity needle = new GoldBeamEntity(this.level(), this, 15.0f);
-        needle.setPos(getX(), getEyeY() - 0.1, getZ());
-        double bx = target.getX() - getX();
-        double by = target.getEyeY() - getEyeY();
-        double bz = target.getZ() - getZ();
-        needle.shoot(bx, by, bz, 3.5f, 0.5f);
-        this.level().addFreshEntity(needle);
-
-        sl.sendParticles(ParticleTypes.END_ROD, getX(), getEyeY(), getZ(), 15, 0.2, 0.2, 0.2, 0.05);
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.ENERGY_BEAM, getX(), getEyeY(), getZ(), (float) bx, (float) by, (float) bz, 0xFF6699FF, 1.5f, 20);
-        }
-    }
-
-    private void placeStarTrapAtPredictedPosition() {
-        if (starTraps.size() >= 3) return;
-        LivingEntity target = this.getTarget();
-        if (target == null) return;
-        Vec3 velocity = target.getDeltaMovement();
-        double predX = target.getX() + velocity.x * 40;
-        double predZ = target.getZ() + velocity.z * 40;
-        starTraps.add(new double[]{predX, target.getY(), predZ});
-        if (this.level() instanceof ServerLevel sl) {
-            sl.sendParticles(ParticleTypes.END_ROD, predX, target.getY() + 0.2, predZ, 8, 0.3, 0.1, 0.3, 0.01);
-        }
-    }
-
-    private void stellarAnnihilation(LivingEntity target) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        sl.sendParticles(ParticleTypes.FLASH, getX(), getY() + 3.0, getZ(), 8, 2.0, 2.0, 2.0, 0.0);
-        sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 1.0, getZ(), 120, 10.0, 4.0, 10.0, 0.1);
-        sl.sendParticles(ParticleTypes.LARGE_SMOKE, getX(), getY() + 1.0, getZ(), 40, 5.0, 2.0, 5.0, 0.05);
-        this.level().playSound(null, blockPosition(), SoundEvents.GENERIC_EXPLODE.value(), SoundSource.HOSTILE, 2.5f, 0.5f);
-        this.level().playSound(null, blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.HOSTILE, 2.0f, 0.3f);
-
-        for (double[] trap : starTraps) {
-            sl.sendParticles(ParticleTypes.FLASH, trap[0], trap[1] + 1.0, trap[2], 3, 0.5, 0.5, 0.5, 0.0);
-            sl.sendParticles(ParticleTypes.END_ROD, trap[0], trap[1], trap[2], 40, 2.0, 2.0, 2.0, 0.1);
-            List<LivingEntity> nearby = this.level().getEntitiesOfClass(LivingEntity.class,
-                target.getBoundingBox().move(trap[0] - target.getX(), trap[1] - target.getY(), trap[2] - target.getZ()).inflate(4.0),
-                e -> e != this);
-            for (LivingEntity entity : nearby) {
-                entity.hurt(this.damageSources().magic(), entity.getMaxHealth() * 0.10f);
-            }
-        }
-        starTraps.clear();
-
-        List<LivingEntity> nearby = this.level().getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(12.0), e -> e != this);
-        for (LivingEntity entity : nearby) {
-            float damage = entity.getMaxHealth() * 0.15f;
-            entity.hurt(this.damageSources().magic(), damage);
-        }
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.SKY_STRIKE, getX(), getY(), getZ(), 0, 1, 0, 0xFF6699FF, 2.5f, 40);
-            VfxHelper.spawn(sp, VfxType.GLOW_BURST, getX(), getY() + 1, getZ(), 0, 1, 0, 0xFF6699FF, 2.0f, 30);
-        }
+    private void addRoot(LivingEntity target, int ticks) {
+        target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, ticks, 8));
+        target.setDeltaMovement(0.0, 0.0, 0.0);
+        target.hurtMarked = true;
     }
 
     @Override
     public boolean hurt(DamageSource source, float amount) {
-        if (venerableType == VenerableType.XING_XIU) {
-            float dodgeChance = currentPhase >= 2 ? 0.40f : 0.30f;
-            if (random.nextFloat() < dodgeChance && source.getEntity() instanceof LivingEntity) {
-                wisdomDodge();
-                return false;
-            }
-        }
-        if (venerableType == VenerableType.JU_YANG) {
-            if (random.nextFloat() < 0.30f && source.getEntity() instanceof LivingEntity) {
-                if (this.level() instanceof ServerLevel sl) {
-                    sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 1.0, getZ(), 15, 0.5, 1.0, 0.5, 0.05);
-                }
-                return false;
-            }
-        }
-        if (venerableType == VenerableType.LE_TU && absoluteDefenseTicks > 0) {
-            return false;
-        }
-        if (venerableType == VenerableType.LE_TU && !leTuAggro && source.getEntity() instanceof Player) {
-            leTuHitCount++;
-            if (leTuHitCount >= 3) {
-                leTuAggro = true;
-            }
-        }
-        if (venerableType == VenerableType.LE_TU && earthenFortressTicks > 0) {
-            amount *= 0.70f;
-        }
-        if (venerableType == VenerableType.LE_TU && currentPhase == 3 && !absoluteDefenseUsed
-            && this.getHealth() - amount < this.getMaxHealth() * 0.15f && this.getHealth() > this.getMaxHealth() * 0.15f) {
-            absoluteDefenseUsed = true;
-            absoluteDefenseTicks = 60;
-            this.heal(this.getMaxHealth() * 0.05f);
-            if (this.level() instanceof ServerLevel sl) {
-                sl.sendParticles(ParticleTypes.FLASH, getX(), getY() + 2.0, getZ(), 5, 1.0, 1.0, 1.0, 0.0);
-                sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 1.0, getZ(), 60, 3.0, 3.0, 3.0, 0.05);
-            }
-            this.level().playSound(null, blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.HOSTILE, 2.5f, 0.5f);
-            if (source.getEntity() instanceof ServerPlayer sp) {
-                VfxHelper.spawn(sp, VfxType.DOME_FIELD, getX(), getY() + 1, getZ(), 0, 1, 0, 0xFFFFFFFF, 3.0f, 60);
-            }
-            return false;
-        }
-        if (venerableType == VenerableType.YUAN_SHI && random.nextFloat() < 0.35f) {
-            amount *= 0.50f;
-            if (this.level() instanceof ServerLevel sl) {
-                sl.sendParticles(ParticleTypes.CLOUD, getX(), getY() + 1.0, getZ(), 30, 2.0, 2.0, 2.0, 0.02);
-            }
-        }
-        if (venerableType == VenerableType.WU_JI) {
-            if ((currentPhase == 1 && !wuJiImmortalUsed1 && this.getHealth() - amount <= 0) ||
-                (currentPhase == 2 && !wuJiImmortalUsed2 && this.getHealth() - amount <= 0)) {
-                if (currentPhase == 1) wuJiImmortalUsed1 = true;
-                else wuJiImmortalUsed2 = true;
-                this.setHealth(this.getMaxHealth() * 0.20f);
-                if (this.level() instanceof ServerLevel sl) {
-                    sl.sendParticles(ParticleTypes.ENCHANT, getX(), getY() + 1.0, getZ(), 60, 3.0, 3.0, 3.0, 0.1);
-                    this.level().playSound(null, blockPosition(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.HOSTILE, 2.0f, 0.5f);
-                }
-                return false;
-            }
-        }
-
-        if (venerableType == VenerableType.HONG_LIAN && !hasUsedCicada && (this.getHealth() - amount) <= 0) {
-            super.hurt(source, 0);
-            springAutumnCicada();
+        if (this.absoluteInvulTicks > 0) {
             return false;
         }
 
-        boolean result = super.hurt(source, amount);
+        if (source.getEntity() instanceof LivingEntity attacker) {
+            this.recentAttacker = attacker.getUUID();
+        }
+        this.recentDamagePercent = Math.min(0.50f, this.recentDamagePercent + amount / Math.max(1.0f, this.getMaxHealth()));
+        this.recentDamageTicks = 100;
 
-        if (result && venerableType == VenerableType.JU_YANG && currentPhase >= 2 && random.nextFloat() < 0.20f) {
+        float adjusted = amount;
+        if (this.wujiShieldTicks > 0) {
+            adjusted *= 0.5f;
+        }
+        if (this.venerableType == VenerableType.KUANG_MAN && this.getHealth() < this.getMaxHealth() * 0.30f) {
+            adjusted *= 0.5f;
+        }
+
+        if (this.venerableType == VenerableType.JU_YANG && this.random.nextFloat() < 0.15f) {
             if (source.getEntity() instanceof LivingEntity attacker) {
-                List<LivingEntity> nearby = this.level().getEntitiesOfClass(LivingEntity.class,
-                    getBoundingBox().inflate(8.0), e -> e != this && e != attacker);
-                if (!nearby.isEmpty()) {
-                    LivingEntity deflectTarget = nearby.get(random.nextInt(nearby.size()));
-                    deflectTarget.hurt(this.damageSources().magic(), amount * 0.5f);
-                    if (this.level() instanceof ServerLevel sl) {
-                        sl.sendParticles(ParticleTypes.END_ROD, deflectTarget.getX(), deflectTarget.getY() + 1.0, deflectTarget.getZ(), 10, 0.5, 0.5, 0.5, 0.05);
-                    }
-                }
+                float reflectPercent = Math.max(0.01f, Math.min(0.08f, (amount / Math.max(1.0f, this.getMaxHealth())) * 0.2f));
+                hurtPercent(attacker, reflectPercent, true);
+            }
+            return false;
+        }
+
+        if (this.venerableType == VenerableType.XING_XIU && this.random.nextFloat() < 0.25f) {
+            if (source.getEntity() instanceof LivingEntity attacker) {
+                hurtPercent(attacker, 0.08f, true);
+                spawnVfx(VfxType.STAR_RAIN, attacker.getX(), attacker.getY() + 1.0, attacker.getZ(), 0.0, 1.0, 0.0, 0xFF77BBFF, 1.4f, 20);
+            }
+            return false;
+        }
+
+        if (!this.level().isClientSide() && adjusted >= this.getHealth()) {
+            if (tryPreventDeath()) {
+                return false;
             }
         }
 
-        if (result && venerableType == VenerableType.YUAN_LIAN) {
-            boolean canRevive = (currentPhase == 1 && !yuanLianLotusReviveUsed1) ||
-                                (currentPhase == 2 && !yuanLianLotusReviveUsed2) ||
-                                (currentPhase == 3 && !yuanLianLotusReviveUsed3);
-            if (canRevive && this.getHealth() < this.getMaxHealth() * 0.10f) {
-                if (currentPhase == 1) yuanLianLotusReviveUsed1 = true;
-                else if (currentPhase == 2) yuanLianLotusReviveUsed2 = true;
-                else yuanLianLotusReviveUsed3 = true;
-                this.heal(this.getMaxHealth() * 0.30f);
-                if (this.level() instanceof ServerLevel sl) {
-                    sl.sendParticles(ParticleTypes.HAPPY_VILLAGER, getX(), getY() + 1.0, getZ(), 40, 2.0, 2.0, 2.0, 0.05);
-                    sl.sendParticles(ParticleTypes.HEART, getX(), getY() + 2.0, getZ(), 10, 1.0, 1.0, 1.0, 0.05);
-                    this.level().playSound(null, blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.HOSTILE, 2.0f, 1.5f);
-                }
-            }
-        }
-
-        return result;
+        return super.hurt(source, adjusted);
     }
 
-    private void wisdomDodge() {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        sl.sendParticles(ParticleTypes.PORTAL, getX(), getY() + 1.0, getZ(), 20, 0.5, 1.0, 0.5, 0.1);
-
-        double angle;
-        double dist;
-        LivingEntity target = this.getTarget();
-        if (venerableType == VenerableType.XING_XIU && target != null) {
-            double dx = getX() - target.getX();
-            double dz = getZ() - target.getZ();
-            double len = Math.sqrt(dx * dx + dz * dz);
-            if (len > 0.001) {
-                angle = Math.atan2(dz, dx) + (random.nextDouble() - 0.5) * 0.6;
-            } else {
-                angle = random.nextDouble() * Math.PI * 2;
-            }
-            dist = 8.0 + random.nextDouble() * 4.0;
-        } else {
-            angle = random.nextDouble() * Math.PI * 2;
-            dist = 2.0 + random.nextDouble() * 2.0;
+    private boolean tryPreventDeath() {
+        if (this.venerableType == VenerableType.HONG_LIAN && !this.hongLianCicadaUsed) {
+            this.hongLianCicadaUsed = true;
+            this.setHealth(this.getMaxHealth());
+            applyTimedModifier(Attributes.ATTACK_DAMAGE, "venerable_honglian_cicada", this.venerableType.attackDamage, AttributeModifier.Operation.ADD_VALUE, 200);
+            spawnCenterVfx(VfxType.TIME_DISTORTION, 0xFFFF0033, 2.5f, 45);
+            return true;
         }
-
-        double newX = getX() + Math.cos(angle) * dist;
-        double newZ = getZ() + Math.sin(angle) * dist;
-        this.teleportTo(newX, getY(), newZ);
-        sl.sendParticles(ParticleTypes.PORTAL, getX(), getY() + 1.0, getZ(), 20, 0.5, 1.0, 0.5, 0.1);
-        this.level().playSound(null, blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.HOSTILE, 1.5f, 1.2f);
+        if (this.venerableType == VenerableType.JU_YANG && !this.juYangImmortalUsed) {
+            this.juYangImmortalUsed = true;
+            this.setHealth((float) (this.getMaxHealth() * 0.30f));
+            this.juYangDrainTicks = 100;
+            spawnCenterVfx(VfxType.GLOW_BURST, 0xFFFFAA00, 2.2f, 35);
+            return true;
+        }
+        if (this.venerableType == VenerableType.YOU_HUN) {
+            Entity anchor = getAnyLivingSummon();
+            if (anchor != null) {
+                this.teleportTo(anchor.getX(), anchor.getY(), anchor.getZ());
+                this.setHealth((float) (this.getMaxHealth() * 0.50f));
+                spawnCenterVfx(VfxType.SHADOW_FADE, 0xFF330066, 2.2f, 30);
+                return true;
+            }
+        }
+        return false;
     }
 
-    // ======================== 元莲仙尊 - 木道 - 不死之身 ========================
+    @Override
+    public void awardKillScore(Entity killed, int scoreValue, DamageSource damageSource) {
+        super.awardKillScore(killed, scoreValue, damageSource);
+        if (this.venerableType == VenerableType.YOU_HUN) {
+            this.youHunDevourStacks = Math.min(20, this.youHunDevourStacks + 1);
+        }
+    }
 
-    private void aiYuanLian(LivingEntity target, int baseCooldown, double distance) {
-        if (currentPhase == 3 && lotusSporesTicks <= 0) {
-            genesisLotusBloom();
-            abilityCooldown = baseCooldown + 40;
+    private void explodeSummons(float percent, double radius, VfxType type, int color) {
+        if (!(this.level() instanceof ServerLevel sl)) {
             return;
         }
-
-        if (distance <= 4) {
-            vineEntangle(target);
-            abilityCooldown = baseCooldown;
-            return;
-        }
-
-        if (random.nextFloat() < 0.4f) {
-            dissipateEssenceRain(target);
-            abilityCooldown = baseCooldown;
-        } else {
-            vineWhip(target);
-            abilityCooldown = baseCooldown;
+        Iterator<UUID> iterator = this.summonIds.iterator();
+        while (iterator.hasNext()) {
+            UUID id = iterator.next();
+            Entity entity = sl.getEntity(id);
+            if (!(entity instanceof LivingEntity living) || !living.isAlive()) {
+                iterator.remove();
+                continue;
+            }
+            Vec3 pos = living.position();
+            for (LivingEntity target : getEnemies(pos, radius)) {
+                hurtPercent(target, percent, true);
+            }
+            spawnVfx(type, pos.x, pos.y + 1.0, pos.z, 0.0, 1.0, 0.0, color, 1.8f, 25);
+            living.discard();
+            iterator.remove();
         }
     }
 
-    private void vineWhip(LivingEntity target) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        this.level().playSound(null, blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.HOSTILE, 1.5f, 0.8f);
+    private void lineStrike(LivingEntity target, double maxDistance, float percent, VfxType vfxType, int color) {
+        if (this.distanceTo(target) <= maxDistance) {
+            castSinglePercent(target, percent, vfxType, color, 1.6f, 22);
+        }
+    }
 
+    private void dashStrike(LivingEntity target, float percent, VfxType vfxType, int color) {
+        teleportBehind(target, 1.6);
+        castSinglePercent(target, percent, vfxType, color, 1.4f, 20);
+    }
+
+    private void transferDebuffsToTarget(LivingEntity target) {
+        List<MobEffectInstance> ownEffects = new ArrayList<>(this.getActiveEffects());
+        for (MobEffectInstance effect : ownEffects) {
+            if (effect.getEffect().value().isBeneficial()) {
+                continue;
+            }
+            target.addEffect(new MobEffectInstance(effect));
+            this.removeEffect(effect.getEffect());
+        }
+    }
+
+    private void moveWujiLawChisel(LivingEntity target) {
+        castSinglePercent(target, 0.20f, VfxType.LAW_CHAINS, 0xFFF0F0FF, 1.6f, 24);
+        playHostileSound(SoundEvents.ANVIL_LAND, 1.4f, 0.7f);
+    }
+
+    private void moveWujiMadnessWave(LivingEntity target) {
+        castAreaPercent(this.position(), 8.0, 0.03f, VfxType.RIPPLE, 0xFFF0F0FF, 2.0f, 25);
+        this.wujiMadnessStacks++;
+        if (this.wujiMadnessStacks >= 3) {
+            this.wujiMadnessStacks = 0;
+            castSinglePercent(target, 0.15f, VfxType.RIPPLE, 0xFFF0F0FF, 2.2f, 25);
+        }
+    }
+
+    private void moveWujiOrderBarrage(LivingEntity target) {
+        for (int i = 0; i < 5; i++) {
+            castSinglePercent(target, 0.05f, VfxType.PULSE_WAVE, 0xFFF0F0FF, 1.2f, 14);
+        }
+    }
+
+    private void moveWujiAbsoluteLaw(LivingEntity target) {
+        castAreaPercent(this.position(), 16.0, 0.20f, VfxType.LAW_CHAINS, 0xFFF0F0FF, 2.6f, 35);
+        for (LivingEntity living : getEnemies(this.position(), 16.0)) {
+            addRoot(living, 60);
+        }
+    }
+
+    private void moveWujiLawBind(LivingEntity target) {
+        target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 160, 2));
+        target.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 160, 2));
+        castSingleScaled(target, 1.0f, VfxType.LAW_CHAINS, 0xFFF0F0FF, 1.4f, 22);
+    }
+
+    private void moveWujiAllLawsOne(LivingEntity target) {
+        castSinglePercent(target, 0.30f, VfxType.PULSE_WAVE, 0xFFF0F0FF, 2.0f, 30);
+        target.removeAllEffects();
+    }
+
+    private void moveWujiForbiddenDomain(LivingEntity target) {
+        addAreaEffect(this.position(), 10.0, 0.03f, 200, true, 2, 1, false, false,
+            VfxType.DOME_FIELD, 0xFFF0F0FF, 2.4f, DaoPath.RULE, 3);
+    }
+
+    private void moveWujiLawChainDrag(LivingEntity target) {
+        target.teleportTo(this.getX(), this.getY(), this.getZ());
+        castSinglePercent(target, 0.08f, VfxType.LAW_CHAINS, 0xFFF0F0FF, 1.5f, 20);
+    }
+
+    private void moveWujiOrderJudgment(LivingEntity target) {
         for (int i = 0; i < 3; i++) {
-            double hitX = target.getX() + (random.nextDouble() - 0.5) * 2;
-            double hitZ = target.getZ() + (random.nextDouble() - 0.5) * 2;
-            double steps = 10;
-            double dx = (hitX - getX()) / steps;
-            double dz = (hitZ - getZ()) / steps;
-            for (int p = 0; p < steps; p++) {
-                sl.sendParticles(ParticleTypes.COMPOSTER,
-                    getX() + dx * p, getEyeY() - 0.3 + Math.sin(p * 0.5) * 0.4, getZ() + dz * p,
-                    2, 0.1, 0.1, 0.1, 0.01);
-            }
-            sl.sendParticles(ParticleTypes.HAPPY_VILLAGER, hitX, target.getY() + 1.0, hitZ, 8, 0.3, 0.5, 0.3, 0.02);
+            castSinglePercent(target, 0.08f, VfxType.SLASH_ARC, 0xFFF0F0FF, 1.3f, 12);
         }
-
-        target.hurt(this.damageSources().magic(), 8.0f);
-        target.setDeltaMovement(target.getDeltaMovement().multiply(0.4, 1.0, 0.4));
-        target.hurtMarked = true;
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.SLASH_ARC, getX(), getY() + 1, getZ(), (float)(target.getX() - getX()), 0, (float)(target.getZ() - getZ()), 0xFF33CC33, 1.5f, 20);
-        }
+        knockbackTargets(target.position(), 3.0, 1.1, 0.2);
     }
 
-    private void vineEntangle(LivingEntity target) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        float damage = 10.0f;
-        target.hurt(this.damageSources().magic(), damage);
-        this.heal(damage * 0.10f);
-        target.setDeltaMovement(target.getDeltaMovement().multiply(0.2, 1.0, 0.2));
-        target.hurtMarked = true;
-
-        double pullDx = getX() - target.getX();
-        double pullDz = getZ() - target.getZ();
-        double pullLen = Math.sqrt(pullDx * pullDx + pullDz * pullDz);
-        if (pullLen > 0.001) {
-            target.setDeltaMovement(target.getDeltaMovement().add(pullDx / pullLen * 0.5, 0.1, pullDz / pullLen * 0.5));
-            target.hurtMarked = true;
-        }
-
-        sl.sendParticles(ParticleTypes.HAPPY_VILLAGER, target.getX(), target.getY() + 0.5, target.getZ(), 20, 1.0, 1.0, 1.0, 0.03);
-        sl.sendParticles(ParticleTypes.COMPOSTER, target.getX(), target.getY(), target.getZ(), 15, 0.8, 0.5, 0.8, 0.02);
-        this.level().playSound(null, target.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.HOSTILE, 1.0f, 0.5f);
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.AURA_RING, target.getX(), target.getY() + 1, target.getZ(), 0, 1, 0, 0xFF33CC33, 1.5f, 25);
-        }
+    private void moveWujiForbiddenCage(LivingEntity target) {
+        addAreaEffect(target.position(), 8.0, 0.00f, 200, true, 7, 2, false, false,
+            VfxType.LAW_CHAINS, 0xFFF0F0FF, 2.2f, null, 0);
     }
 
-    private void dissipateEssenceRain(LivingEntity target) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        sl.sendParticles(ParticleTypes.SPORE_BLOSSOM_AIR, target.getX(), target.getY() + 3.0, target.getZ(), 40, 3.0, 2.0, 3.0, 0.03);
-        sl.sendParticles(ParticleTypes.COMPOSTER, target.getX(), target.getY() + 1.0, target.getZ(), 20, 3.0, 1.0, 3.0, 0.02);
-        this.level().playSound(null, target.blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.HOSTILE, 1.5f, 0.8f);
-
-        List<LivingEntity> nearby = this.level().getEntitiesOfClass(LivingEntity.class, target.getBoundingBox().inflate(6.0),
-            e -> e != this && e instanceof Player);
-        for (LivingEntity entity : nearby) {
-            entity.hurt(this.damageSources().magic(), 8.0f);
-            entity.setDeltaMovement(entity.getDeltaMovement().multiply(0.3, 1.0, 0.3));
-            entity.hurtMarked = true;
+    private void moveWujiMyriadLawOrigin(LivingEntity target) {
+        castAreaPercent(this.position(), 12.0, 0.35f, VfxType.LAW_CHAINS, 0xFFF0F0FF, 3.0f, 45);
+        for (LivingEntity living : getEnemies(this.position(), 12.0)) {
+            living.removeAllEffects();
         }
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.RIPPLE, target.getX(), target.getY() + 1, target.getZ(), 0, 1, 0, 0xFF33CC33, 2.0f, 25);
-        }
+        modifyTerrain(this.position(), DaoPath.RULE, 4);
     }
 
-    private void genesisLotusBloom() {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        this.heal(this.getMaxHealth() * 0.50f);
-        sl.sendParticles(ParticleTypes.HAPPY_VILLAGER, getX(), getY() + 2.0, getZ(), 80, 4.0, 3.0, 4.0, 0.1);
-        sl.sendParticles(ParticleTypes.HEART, getX(), getY() + 2.5, getZ(), 20, 2.0, 2.0, 2.0, 0.1);
-        sl.sendParticles(ParticleTypes.FLASH, getX(), getY() + 2.0, getZ(), 3, 1.0, 1.0, 1.0, 0.0);
-        this.level().playSound(null, blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.HOSTILE, 2.5f, 0.5f);
-
-        LivingEntity target = this.getTarget();
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.HEAL_SPIRAL, getX(), getY() + 1, getZ(), 0, 1, 0, 0xFF33CC33, 3.0f, 40);
-        }
-
-        lotusSporesTicks = 200;
-        lotusSporesX = getX();
-        lotusSporesY = getY();
-        lotusSporesZ = getZ();
+    private void moveWujiLawTrial(LivingEntity target) {
+        float hpRatio = target.getHealth() / Math.max(1.0f, target.getMaxHealth());
+        float pct = Math.max(0.02f, Math.min(0.20f, hpRatio * 0.20f));
+        castSinglePercent(target, pct, VfxType.ENERGY_BEAM, 0xFFF0F0FF, 1.8f, 24);
     }
 
-    private void tickLotusSpores() {
-        if (lotusSporesTicks <= 0) return;
-        lotusSporesTicks--;
-
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        if (this.tickCount % 20 == 0) {
-            sl.sendParticles(ParticleTypes.SPORE_BLOSSOM_AIR, lotusSporesX, lotusSporesY + 1.0, lotusSporesZ, 20, 4.0, 1.0, 4.0, 0.02);
-            List<LivingEntity> nearby = this.level().getEntitiesOfClass(LivingEntity.class,
-                getBoundingBox().inflate(8.0).move(lotusSporesX - getX(), lotusSporesY - getY(), lotusSporesZ - getZ()),
-                e -> e != this);
-            for (LivingEntity entity : nearby) {
-                entity.hurt(this.damageSources().magic(), 10.0f);
-            }
-        }
+    private void moveWujiWorldEnd(LivingEntity target) {
+        selfDamagePercent(0.05f);
+        castAreaPercent(this.position(), 18.0, 0.25f, VfxType.SKY_STRIKE, 0xFFF0F0FF, 3.0f, 40);
+        modifyTerrain(this.position(), DaoPath.RULE, 6);
     }
 
-    // ======================== 无极魔尊 - 律道+禁道 - 规则支配 ========================
+    private void moveWujiOrderSpear(LivingEntity target) {
+        lineStrike(target, 16.0, 0.15f, VfxType.ENERGY_BEAM, 0xFFF0F0FF);
+        spawnVfx(VfxType.LAW_CHAINS, target.getX(), target.getY() + 1.0, target.getZ(), 0.0, 1.0, 0.0, 0xFFF0F0FF, 1.5f, 22);
+        this.level().playSound(null, blockPosition(), SoundEvents.TRIDENT_THROW.value(), SoundSource.HOSTILE, 1.4f, 0.7f);
+    }
 
-    private void aiWuJi(LivingEntity target, int baseCooldown, double distance) {
-        if (currentPhase == 3) {
-            absoluteLaw();
-            abilityCooldown = baseCooldown + 30;
-            return;
+    private void moveWujiBoundlessCross(LivingEntity target) {
+        castAreaPercent(this.position(), 8.0, 0.15f, VfxType.SLASH_ARC, 0xFFF0F0FF, 2.2f, 30);
+        knockbackTargets(this.position(), 8.0, 1.2, 0.2);
+    }
+
+    private void moveWujiLawReflect(LivingEntity target) {
+        float pct = Math.max(0.02f, Math.min(0.30f, this.recentDamagePercent * 2.0f));
+        castSinglePercent(target, pct, VfxType.DOME_FIELD, 0xFFF0F0FF, 1.8f, 24);
+    }
+
+    private void moveWujiForbiddenSeal(LivingEntity target) {
+        target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 200, 2));
+        target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 200, 2));
+        target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 120, 1));
+        castSinglePercent(target, 0.06f, VfxType.LAW_CHAINS, 0xFFF0F0FF, 1.6f, 24);
+    }
+
+    private void moveWujiPressureAura(LivingEntity target) {
+        for (LivingEntity living : getEnemies(this.position(), 8.0)) {
+            living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 1));
         }
+        spawnCenterVfx(VfxType.LAW_CHAINS, 0xFFF0F0FF, 1.9f, 24);
+    }
 
-        if (random.nextFloat() < 0.35f) {
-            madnessSonicWave(target);
-            abilityCooldown = baseCooldown;
-            return;
-        }
+    private void moveWujiLawShield(LivingEntity target) {
+        this.wujiShieldTicks = 200;
+        spawnCenterVfx(VfxType.LAW_CHAINS, 0xFFF0F0FF, 2.2f, 30);
+    }
 
-        if (wuJiLawMarkTicks <= 0) {
-            lawImprison(target);
-            abilityCooldown = baseCooldown + 10;
-            return;
-        }
+    private void moveWujiVoidAllLaws(LivingEntity target) {
+        clearProjectiles(8.0);
+        modifyTerrain(this.position(), DaoPath.RULE, 3);
+        spawnCenterVfx(VfxType.PULSE_WAVE, 0xFFF0F0FF, 2.2f, 24);
+    }
 
-        if (distance > 8) {
-            int count = currentPhase >= 2 ? 5 : 3;
-            orderProjectiles(target, count);
-            abilityCooldown = baseCooldown;
+    private void moveWujiImmortalLaw(LivingEntity target) {
+        if (!this.wujiImmortalUsed && this.getHealth() < this.getMaxHealth() * 0.20f) {
+            this.wujiImmortalUsed = true;
+            healPercent(0.20f);
+            applyTimedModifier(Attributes.ARMOR, "venerable_wuji_immortal_armor", 2.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+            spawnCenterVfx(VfxType.LAW_CHAINS, 0xFFF0F0FF, 2.8f, 40);
         } else {
-            ruleStrike(target);
-            abilityCooldown = baseCooldown;
+            castSingleScaled(target, 1.0f, VfxType.LAW_CHAINS, 0xFFF0F0FF, 1.2f, 14);
         }
     }
 
-    private void madnessSonicWave(LivingEntity target) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        sl.sendParticles(ParticleTypes.SONIC_BOOM, getX(), getY() + 1.0, getZ(), 5, 4.0, 1.0, 4.0, 0.0);
-        sl.sendParticles(ParticleTypes.ENCHANT, getX(), getY() + 0.5, getZ(), 40, 4.0, 1.0, 4.0, 0.05);
-        this.level().playSound(null, blockPosition(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.HOSTILE, 2.0f, 0.3f);
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.RIPPLE, getX(), getY() + 1, getZ(), 0, 1, 0, 0xFF990099, 2.0f, 25);
-        }
-
-        List<LivingEntity> nearby = this.level().getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(8.0), e -> e != this);
-        for (LivingEntity entity : nearby) {
-            entity.hurt(this.damageSources().magic(), 6.0f);
-            entity.push((random.nextDouble() - 0.5) * 1.5, 0.3, (random.nextDouble() - 0.5) * 1.5);
-            entity.setDeltaMovement(entity.getDeltaMovement().multiply(0.4, 1.0, 0.4));
-            entity.hurtMarked = true;
-        }
-
-        if (target instanceof Player) {
-            wuJiMadnessLayers++;
-            if (wuJiMadnessLayers >= 3) {
-                wuJiMadnessLayers = 0;
-                target.hurt(this.damageSources().magic(), target.getMaxHealth() * 0.15f);
-                target.setDeltaMovement(0, 0, 0);
-                target.hurtMarked = true;
-                sl.sendParticles(ParticleTypes.FLASH, target.getX(), target.getY() + 1.0, target.getZ(), 3, 0.5, 0.5, 0.5, 0.0);
-                sl.sendParticles(ParticleTypes.SCULK_SOUL, target.getX(), target.getY(), target.getZ(), 30, 1.0, 1.5, 1.0, 0.03);
-                this.level().playSound(null, target.blockPosition(), SoundEvents.ANVIL_LAND, SoundSource.HOSTILE, 2.0f, 0.3f);
-            }
-        }
+    private void moveWujiProveByForce(LivingEntity target) {
+        castSinglePercent(target, 0.40f, VfxType.ENERGY_BEAM, 0xFFF0F0FF, 2.6f, 45);
+        spawnVfx(VfxType.LAW_CHAINS, target.getX(), target.getY() + 1.0, target.getZ(), 0.0, 1.0, 0.0, 0xFFF0F0FF, 2.0f, 40);
     }
 
-    private void lawImprison(LivingEntity target) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        sl.sendParticles(ParticleTypes.ENCHANT, target.getX(), target.getY() + 1.0, target.getZ(), 60, 1.5, 2.0, 1.5, 0.05);
-        sl.sendParticles(ParticleTypes.SCULK_SOUL, target.getX(), target.getY() + 0.5, target.getZ(), 20, 1.0, 1.0, 1.0, 0.02);
-        this.level().playSound(null, target.blockPosition(), SoundEvents.EVOKER_PREPARE_SUMMON, SoundSource.HOSTILE, 2.0f, 0.5f);
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.BLACK_HOLE, target.getX(), target.getY() + 1, target.getZ(), 0, 1, 0, 0xFF990099, 2.0f, 40);
-        }
-
-        wuJiLawTarget = target;
-        wuJiLawMarkTicks = 160;
-
-        if (target instanceof Player player) {
-            AttributeInstance speed = player.getAttribute(Attributes.MOVEMENT_SPEED);
-            if (speed != null) {
-                speed.removeModifier(LAW_SLOW_MOD);
-                speed.addTransientModifier(new AttributeModifier(LAW_SLOW_MOD, -0.6, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
-            }
-            AttributeInstance atkSpeed = player.getAttribute(Attributes.ATTACK_SPEED);
-            if (atkSpeed != null) {
-                atkSpeed.removeModifier(LAW_SLOW_MOD);
-                atkSpeed.addTransientModifier(new AttributeModifier(LAW_SLOW_MOD, -0.6, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
-            }
-        }
+    private void moveYouhunSoulStrike(LivingEntity target) {
+        castSinglePercent(target, 0.15f, VfxType.SOUL_VORTEX, 0xFF330066, 1.6f, 22);
     }
 
-    private void ruleStrike(LivingEntity target) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        target.hurt(this.damageSources().magic(), 20.0f);
-        if (currentPhase >= 2) {
-            target.setAbsorptionAmount(0);
-        }
-        double knockDx = target.getX() - getX();
-        double knockDz = target.getZ() - getZ();
-        double dist = Math.sqrt(knockDx * knockDx + knockDz * knockDz);
-        if (dist > 0.001) {
-            target.knockback(2.0, -knockDx / dist, -knockDz / dist);
-        }
-        sl.sendParticles(ParticleTypes.ENCHANT, target.getX(), target.getY() + 1.0, target.getZ(), 30, 1.0, 1.5, 1.0, 0.2);
-        this.level().playSound(null, target.blockPosition(), SoundEvents.ANVIL_LAND, SoundSource.HOSTILE, 1.5f, 0.5f);
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.IMPACT_BURST, target.getX(), target.getY() + 1, target.getZ(), 0, 1, 0, 0xFF990099, 1.5f, 20);
-        }
+    private void moveYouhunSoulReap(LivingEntity target) {
+        castAreaPercent(this.position(), 8.0, 0.08f, VfxType.SOUL_VORTEX, 0xFF330066, 2.2f, 30);
+        healPercent(0.08f);
     }
 
-    private void tickLawFreeze() {
-        if (lawFreezeTicks <= 0) return;
-        lawFreezeTicks--;
-        if (lawFreezeTicks == 0) {
-            List<Player> nearby = this.level().getEntitiesOfClass(Player.class, getBoundingBox().inflate(12.0));
-            for (Player player : nearby) {
-                AttributeInstance moveSpeed = player.getAttribute(Attributes.MOVEMENT_SPEED);
-                if (moveSpeed != null) moveSpeed.removeModifier(LAW_SLOW_MOD);
-                AttributeInstance atkSpeed = player.getAttribute(Attributes.ATTACK_SPEED);
-                if (atkSpeed != null) atkSpeed.removeModifier(LAW_SLOW_MOD);
-            }
-        }
+    private void moveYouhunSoulDevourUltimate(LivingEntity target) {
+        castAreaPercent(this.position(), 10.0, 0.25f, VfxType.SOUL_VORTEX, 0xFF330066, 2.8f, 38);
     }
 
-    private void orderProjectiles(LivingEntity target, int count) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        this.level().playSound(null, blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.HOSTILE, 1.5f, 0.6f);
-
-        for (int i = 0; i < count; i++) {
-            double hitX = target.getX() + (random.nextDouble() - 0.5) * 3;
-            double hitZ = target.getZ() + (random.nextDouble() - 0.5) * 3;
-            sl.sendParticles(ParticleTypes.ENCHANT, hitX, target.getY() + 2.0, hitZ, 15, 0.3, 1.0, 0.3, 0.05);
-            sl.sendParticles(ParticleTypes.SCULK_SOUL, hitX, target.getY() + 0.5, hitZ, 5, 0.2, 0.2, 0.2, 0.01);
-        }
-
-        List<LivingEntity> nearby = this.level().getEntitiesOfClass(LivingEntity.class,
-            target.getBoundingBox().inflate(3.0), e -> e != this);
-        for (LivingEntity entity : nearby) {
-            entity.hurt(this.damageSources().magic(), 10.0f);
-        }
-    }
-
-    private void absoluteLaw() {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        sl.sendParticles(ParticleTypes.FLASH, getX(), getY() + 2.0, getZ(), 5, 1.0, 1.0, 1.0, 0.0);
-        sl.sendParticles(ParticleTypes.ENCHANT, getX(), getY() + 1.0, getZ(), 100, 4.0, 3.0, 4.0, 0.1);
-        sl.sendParticles(ParticleTypes.SCULK_SOUL, getX(), getY() + 0.5, getZ(), 50, 4.0, 1.0, 4.0, 0.02);
-        this.level().playSound(null, blockPosition(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.HOSTILE, 2.5f, 0.3f);
-        this.level().playSound(null, blockPosition(), SoundEvents.GENERIC_EXPLODE.value(), SoundSource.HOSTILE, 2.0f, 0.5f);
-
-        List<LivingEntity> nearby = this.level().getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(8.0), e -> e != this);
-        for (LivingEntity entity : nearby) {
-            entity.setDeltaMovement(0, 0, 0);
-            entity.hurtMarked = true;
-            float damage = entity.getMaxHealth() * 0.20f;
-            entity.hurt(this.damageSources().magic(), damage);
-        }
-        lawFreezeTicks = 60;
-        for (LivingEntity entity : nearby) {
-            if (entity instanceof ServerPlayer sp) {
-                VfxHelper.spawn(sp, VfxType.DOME_FIELD, getX(), getY() + 1, getZ(), 0, 1, 0, 0xFF990099, 2.5f, 40);
-                VfxHelper.spawn(sp, VfxType.PULSE_WAVE, getX(), getY() + 1, getZ(), 0, 1, 0, 0xFF990099, 2.0f, 30);
-            }
-        }
-    }
-
-    // ======================== 狂蛮魔尊 - 力道+变化道 - 形态战士 ========================
-
-    private void aiKuangMan(LivingEntity target, int baseCooldown, double distance) {
-        if (currentPhase == 3 && currentForm == KuangManForm.HUMAN && formCooldownTicks <= 0) {
-            activateAllFormsUltimate();
-            abilityCooldown = baseCooldown;
-            return;
-        }
-
-        if (currentForm == KuangManForm.HUMAN && formCooldownTicks <= 0) {
-            int formChoice = random.nextInt(3);
-            switch (formChoice) {
-                case 0 -> switchToIcePhoenix();
-                case 1 -> switchToLightningWolf();
-                case 2 -> switchToGiant();
-            }
-            abilityCooldown = 20;
-            return;
-        }
-
-        switch (currentForm) {
-            case ICE_PHOENIX -> aiKuangManIcePhoenix(target, baseCooldown, distance);
-            case LIGHTNING_WOLF -> aiKuangManLightningWolf(target, baseCooldown, distance);
-            case GIANT -> aiKuangManGiant(target, baseCooldown, distance);
-            default -> {
-                if (distance > 6) {
-                    savageCharge(target);
-                    abilityCooldown = baseCooldown;
-                } else {
-                    devastatingStrike(target);
-                    abilityCooldown = baseCooldown;
-                }
-            }
-        }
-    }
-
-    private void switchToIcePhoenix() {
-        currentForm = KuangManForm.ICE_PHOENIX;
-        formDurationTicks = 600;
-        this.setNoGravity(true);
-        applyMod(Attributes.MOVEMENT_SPEED, KUANGMAN_SPEED_MOD, 0.10);
-        if (this.level() instanceof ServerLevel sl) {
-            sl.sendParticles(ParticleTypes.SNOWFLAKE, getX(), getY() + 1.0, getZ(), 60, 2.0, 2.0, 2.0, 0.1);
-            this.level().playSound(null, blockPosition(), SoundEvents.GLASS_BREAK, SoundSource.HOSTILE, 2.0f, 1.5f);
-            LivingEntity target = this.getTarget();
-            if (target instanceof ServerPlayer sp) {
-                VfxHelper.spawn(sp, VfxType.GLOW_BURST, getX(), getY() + 1, getZ(), 0, 1, 0, 0xFF88CCFF, 2.0f, 30);
-            }
-        }
-    }
-
-    private void switchToLightningWolf() {
-        currentForm = KuangManForm.LIGHTNING_WOLF;
-        formDurationTicks = 600;
-        applyMod(Attributes.MOVEMENT_SPEED, KUANGMAN_SPEED_MOD, 0.20);
-        if (this.level() instanceof ServerLevel sl) {
-            sl.sendParticles(ParticleTypes.ELECTRIC_SPARK, getX(), getY() + 1.0, getZ(), 60, 2.0, 2.0, 2.0, 0.1);
-            this.level().playSound(null, blockPosition(), SoundEvents.RAVAGER_ROAR, SoundSource.HOSTILE, 2.0f, 1.2f);
-            LivingEntity target = this.getTarget();
-            if (target instanceof ServerPlayer sp) {
-                VfxHelper.spawn(sp, VfxType.GLOW_BURST, getX(), getY() + 1, getZ(), 0, 1, 0, 0xFF9933FF, 2.0f, 30);
-            }
-        }
-    }
-
-    private void switchToGiant() {
-        currentForm = KuangManForm.GIANT;
-        formDurationTicks = 400;
-        applyMod(Attributes.ATTACK_DAMAGE, KUANGMAN_ATK_MOD, venerableType.attackDamage * 0.80);
-        applyMod(Attributes.MOVEMENT_SPEED, KUANGMAN_SPEED_MOD, -0.10);
-        if (this.level() instanceof ServerLevel sl) {
-            sl.sendParticles(ParticleTypes.EXPLOSION_EMITTER, getX(), getY() + 1.0, getZ(), 3, 1.0, 1.0, 1.0, 0.0);
-            sl.sendParticles(ParticleTypes.CRIT, getX(), getY() + 1.0, getZ(), 40, 2.0, 2.0, 2.0, 0.2);
-            this.level().playSound(null, blockPosition(), SoundEvents.RAVAGER_ROAR, SoundSource.HOSTILE, 3.0f, 0.3f);
-            LivingEntity target = this.getTarget();
-            if (target instanceof ServerPlayer sp) {
-                VfxHelper.spawn(sp, VfxType.GLOW_BURST, getX(), getY() + 1, getZ(), 0, 1, 0, 0xFFCC0000, 2.0f, 30);
-            }
-        }
-    }
-
-    private void revertToHumanForm() {
-        if (currentForm == KuangManForm.ICE_PHOENIX) {
-            this.setNoGravity(false);
-        }
-        currentForm = KuangManForm.HUMAN;
-        applyMod(Attributes.ATTACK_DAMAGE, KUANGMAN_ATK_MOD, 0);
-        applyMod(Attributes.MOVEMENT_SPEED, KUANGMAN_SPEED_MOD, 0);
-        formCooldownTicks = currentPhase == 3 ? 600 : 1200;
-        if (this.level() instanceof ServerLevel sl) {
-            sl.sendParticles(ParticleTypes.CRIT, getX(), getY() + 1.0, getZ(), 20, 1.0, 1.0, 1.0, 0.1);
-        }
-    }
-
-    private void activateAllFormsUltimate() {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        applyMod(Attributes.ATTACK_DAMAGE, KUANGMAN_ATK_MOD, venerableType.attackDamage * 0.80);
-        applyMod(Attributes.MOVEMENT_SPEED, KUANGMAN_SPEED_MOD, 0.20);
-        formDurationTicks = 200;
-        currentForm = KuangManForm.GIANT;
-        sl.sendParticles(ParticleTypes.FLASH, getX(), getY() + 2.0, getZ(), 5, 1.0, 1.0, 1.0, 0.0);
-        sl.sendParticles(ParticleTypes.SNOWFLAKE, getX(), getY() + 1.0, getZ(), 30, 3.0, 3.0, 3.0, 0.1);
-        sl.sendParticles(ParticleTypes.ELECTRIC_SPARK, getX(), getY() + 1.0, getZ(), 30, 3.0, 3.0, 3.0, 0.1);
-        sl.sendParticles(ParticleTypes.EXPLOSION_EMITTER, getX(), getY() + 1.0, getZ(), 3, 1.0, 1.0, 1.0, 0.0);
-        this.level().playSound(null, blockPosition(), SoundEvents.ENDER_DRAGON_GROWL, SoundSource.HOSTILE, 3.0f, 0.3f);
-        LivingEntity target = this.getTarget();
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.PULSE_WAVE, getX(), getY() + 1, getZ(), 0, 1, 0, 0xFFCC0000, 2.5f, 35);
-            VfxHelper.spawn(sp, VfxType.GLOW_BURST, getX(), getY() + 1, getZ(), 0, 1, 0, 0xFFCC0000, 2.0f, 30);
-        }
-    }
-
-    private void aiKuangManIcePhoenix(LivingEntity target, int baseCooldown, double distance) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        sl.sendParticles(ParticleTypes.SNOWFLAKE, getX(), getY() + 0.5, getZ(), 5, 1.5, 1.5, 1.5, 0.02);
-
-        if (distance > 6) {
-            IceBoltEntity bolt = new IceBoltEntity(this.level(), this, 15.0f);
-            bolt.setPos(getX(), getEyeY() - 0.1, getZ());
-            double bx = target.getX() - getX();
-            double by = target.getEyeY() - getEyeY();
-            double bz = target.getZ() - getZ();
-            bolt.shoot(bx, by, bz, 2.5f, 1.5f);
-            this.level().addFreshEntity(bolt);
-            this.level().playSound(null, blockPosition(), SoundEvents.GLASS_BREAK, SoundSource.HOSTILE, 1.5f, 1.5f);
+    private void moveYouhunSoulSplit(LivingEntity target) {
+        if (!this.youHunSoulSplitUsed && this.getHealth() < this.getMaxHealth() * 0.20f) {
+            this.youHunSoulSplitUsed = true;
+            healPercent(0.30f);
+            summonPhantom(PhantomImmortalEntity.ImmortalType.SOUL_REAPER, target, 0.40);
+            summonPhantom(PhantomImmortalEntity.ImmortalType.SOUL_REAPER, target, 0.40);
+            summonPhantom(PhantomImmortalEntity.ImmortalType.SOUL_REAPER, target, 0.40);
+            spawnCenterVfx(VfxType.SHADOW_FADE, 0xFF330066, 2.5f, 30);
         } else {
-            target.hurt(this.damageSources().magic(), 12.0f);
-            target.setDeltaMovement(target.getDeltaMovement().multiply(0.3, 1.0, 0.3));
-            target.hurtMarked = true;
-            sl.sendParticles(ParticleTypes.SNOWFLAKE, target.getX(), target.getY() + 0.5, target.getZ(), 15, 0.5, 1.0, 0.5, 0.05);
-        }
-        abilityCooldown = baseCooldown - 10;
-    }
-
-    private void aiKuangManLightningWolf(LivingEntity target, int baseCooldown, double distance) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        sl.sendParticles(ParticleTypes.ELECTRIC_SPARK, getX(), getY() + 0.5, getZ(), 5, 1.0, 1.0, 1.0, 0.02);
-
-        if (distance > 3) {
-            savageCharge(target);
-        }
-        target.hurt(this.damageSources().mobAttack(this), (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE));
-        if (random.nextFloat() < 0.3f && this.level() instanceof ServerLevel) {
-            LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(this.level());
-            if (bolt != null) {
-                bolt.moveTo(target.getX(), target.getY(), target.getZ());
-                bolt.setVisualOnly(false);
-                this.level().addFreshEntity(bolt);
-            }
-        }
-        abilityCooldown = baseCooldown / 2;
-    }
-
-    private void aiKuangManGiant(LivingEntity target, int baseCooldown, double distance) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        sl.sendParticles(ParticleTypes.CRIT, getX(), getY() + 0.5, getZ(), 5, 1.5, 1.5, 1.5, 0.1);
-
-        sl.sendParticles(ParticleTypes.EXPLOSION, getX(), getY() + 0.5, getZ(), 8, 3.0, 0.3, 3.0, 0.05);
-        this.level().playSound(null, blockPosition(), SoundEvents.GENERIC_EXPLODE.value(), SoundSource.HOSTILE, 1.5f, 0.5f);
-        List<LivingEntity> nearby = this.level().getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(5.0), e -> e != this);
-        for (LivingEntity entity : nearby) {
-            entity.hurt(this.damageSources().mobAttack(this), (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE));
-            entity.setDeltaMovement(entity.getDeltaMovement().add(0, 0.8, 0));
-            entity.hurtMarked = true;
-        }
-        abilityCooldown = baseCooldown;
-    }
-
-    private void savageCharge(LivingEntity target) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        double dx = target.getX() - getX();
-        double dz = target.getZ() - getZ();
-        double len = Math.sqrt(dx * dx + dz * dz);
-        if (len < 0.001) return;
-
-        this.setDeltaMovement(dx / len * 2.0, 0.3, dz / len * 2.0);
-        this.hurtMarked = true;
-        sl.sendParticles(ParticleTypes.EXPLOSION, getX(), getY() + 1.0, getZ(), 10, 1.0, 0.5, 1.0, 0.1);
-        this.level().playSound(null, blockPosition(), SoundEvents.RAVAGER_ROAR, SoundSource.HOSTILE, 2.0f, 0.8f);
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.IMPACT_BURST, getX(), getY() + 1, getZ(), (float)(dx / len), 0, (float)(dz / len), 0xFFCC0000, 2.0f, 25);
-        }
-
-        List<LivingEntity> nearby = this.level().getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(3.0), e -> e != this);
-        for (LivingEntity entity : nearby) {
-            entity.hurt(this.damageSources().mobAttack(this), 20.0f);
-            entity.setDeltaMovement(entity.getDeltaMovement().add(0, 0.8, 0));
-            entity.hurtMarked = true;
+            castSingleScaled(target, 1.0f, VfxType.SOUL_VORTEX, 0xFF330066, 1.2f, 15);
         }
     }
 
-    private void devastatingStrike(LivingEntity target) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        float distance = this.distanceTo(target);
-        if (distance > 6.0f) return;
+    private void moveYouhunNineRevolutionDream(LivingEntity target) {
+        target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 100, 0));
+        target.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 100, 0));
+        target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 100, 2));
+        castSinglePercent(target, 0.25f, VfxType.SOUL_VORTEX, 0xFF330066, 2.0f, 28);
+    }
 
-        target.hurt(this.damageSources().mobAttack(this), (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE) + 15.0f);
-        target.setDeltaMovement(target.getDeltaMovement().add(0, 0.5, 0));
-        target.hurtMarked = true;
-        sl.sendParticles(ParticleTypes.CRIT, target.getX(), target.getY() + 1.0, target.getZ(), 20, 0.5, 0.5, 0.5, 0.3);
-        sl.sendParticles(ParticleTypes.EXPLOSION, target.getX(), target.getY() + 0.5, target.getZ(), 3, 0.5, 0.5, 0.5, 0.05);
-        this.level().playSound(null, target.blockPosition(), SoundEvents.GENERIC_EXPLODE.value(), SoundSource.HOSTILE, 1.0f, 1.2f);
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.SLASH_ARC, target.getX(), target.getY() + 1, target.getZ(), 0, 1, 0, 0xFFCC0000, 1.5f, 20);
+    private void moveYouhunShadowClone(LivingEntity target) {
+        summonPhantom(PhantomImmortalEntity.ImmortalType.SOUL_REAPER, target, 0.40);
+        summonPhantom(PhantomImmortalEntity.ImmortalType.SOUL_REAPER, target, 0.40);
+        summonPhantom(PhantomImmortalEntity.ImmortalType.SOUL_REAPER, target, 0.40);
+        spawnCenterVfx(VfxType.SHADOW_FADE, 0xFF330066, 1.8f, 24);
+    }
+
+    private void moveYouhunSoulStorm(LivingEntity target) {
+        addAreaEffect(this.position(), 12.0, 0.02f, 160, true, 1, 0, false, true,
+            VfxType.SOUL_VORTEX, 0xFF330066, 2.2f, DaoPath.SOUL, 4);
+    }
+
+    private void moveYouhunSoulGaze(LivingEntity target) {
+        castSinglePercent(target, 0.08f, VfxType.SOUL_VORTEX, 0xFF330066, 1.7f, 22);
+        target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 80, 4));
+    }
+
+    private void moveYouhunDevourPassive(LivingEntity target) {
+        healPercent(0.05f);
+        this.youHunDevourStacks = Math.min(20, this.youHunDevourStacks + 1);
+        spawnCenterVfx(VfxType.SOUL_VORTEX, 0xFF330066, 1.6f, 20);
+    }
+
+    private void moveYouhunSoulTruth(LivingEntity target) {
+        castSinglePercent(target, 0.30f, VfxType.SOUL_VORTEX, 0xFF330066, 2.3f, 30);
+        spawnVfx(VfxType.SHADOW_FADE, target.getX(), target.getY() + 1.0, target.getZ(), 0.0, 1.0, 0.0, 0xFF330066, 1.4f, 20);
+    }
+
+    private void moveYouhunShadowEscape(LivingEntity target) {
+        teleportBehind(target, 1.2);
+        this.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, 40, 0));
+        castSinglePercent(target, 0.10f, VfxType.SHADOW_FADE, 0xFF330066, 1.6f, 22);
+    }
+
+    private void moveYouhunDreamCage(LivingEntity target) {
+        addRoot(target, 80);
+        castSinglePercent(target, 0.12f, VfxType.SOUL_VORTEX, 0xFF330066, 1.8f, 26);
+    }
+
+    private void moveYouhunMentalCrush(LivingEntity target) {
+        castAreaPercent(this.position(), 16.0, 0.05f, VfxType.SOUL_VORTEX, 0xFF330066, 2.4f, 28);
+        modifyTerrain(this.position(), DaoPath.SOUL, 5);
+        for (LivingEntity living : getEnemies(this.position(), 16.0)) {
+            living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 80, 1));
+            living.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 80, 1));
         }
     }
 
-    // ======================== 盗天魔尊 - 偷道+宇道 - 神偷 ========================
-
-    private void aiDaoTian(LivingEntity target, int baseCooldown, double distance) {
-        if (currentPhase == 3) {
-            heavenTheft(target);
-            abilityCooldown = baseCooldown + 30;
-            return;
-        }
-
-        if (distance < 5) {
-            spaceBlink();
-            abilityCooldown = 10;
-            return;
-        }
-
-        if (random.nextFloat() < 0.45f) {
-            formlessHandSteal(target);
-            spaceBlink();
-            this.setInvisible(true);
-            invisTicks = currentPhase >= 2 ? 40 : 60;
-            visibleTimer = 0;
-            abilityCooldown = baseCooldown;
-            return;
-        }
-
-        if (random.nextFloat() < 0.3f) {
-            shadowTeleport(target);
-            spaceCut(target);
-            spaceBlink();
-            this.setInvisible(true);
-            invisTicks = currentPhase >= 2 ? 40 : 60;
-            visibleTimer = 0;
-            abilityCooldown = baseCooldown;
-            return;
-        }
-
-        spaceBlink();
-        this.setInvisible(true);
-        invisTicks = 60;
-        visibleTimer = 0;
-        abilityCooldown = baseCooldown / 2;
-    }
-
-    private void formlessHandSteal(LivingEntity target) {
-        if (!(target instanceof ServerPlayer player)) return;
-        if (!(this.level() instanceof ServerLevel sl)) return;
-
-        int fingers = currentPhase == 1 ? 2 : currentPhase == 2 ? 3 : 5;
-        FormlessHandEntity hand = new FormlessHandEntity(this.level(), this, player, fingers);
-        hand.setPos(this.getX(), this.getY() + 1.5, this.getZ());
-        sl.addFreshEntity(hand);
-
-        this.level().playSound(null, this.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.HOSTILE, 1.2f, 1.8f);
-        player.sendSystemMessage(Component.literal(
-            "\u00a79\u00a7l[\u65e0\u76f8\u624b] \u00a7b\u4e00\u53ea\u6de1\u84dd\u8272\u7684\u624b\u4ece\u865a\u7a7a\u4e2d\u4f38\u51fa..."));
-    }
-
-    private void spaceBlink() {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        sl.sendParticles(ParticleTypes.PORTAL, getX(), getY() + 1.0, getZ(), 20, 0.5, 1.0, 0.5, 0.1);
-        double angle = random.nextDouble() * Math.PI * 2;
-        double dist = 6.0 + random.nextDouble() * 4.0;
-        double newX = getX() + Math.cos(angle) * dist;
-        double newZ = getZ() + Math.sin(angle) * dist;
-        this.teleportTo(newX, getY(), newZ);
-        sl.sendParticles(ParticleTypes.PORTAL, getX(), getY() + 1.0, getZ(), 20, 0.5, 1.0, 0.5, 0.1);
-        this.level().playSound(null, blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.HOSTILE, 1.0f, 1.2f);
-        LivingEntity target = this.getTarget();
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.SHADOW_FADE, getX(), getY() + 1, getZ(), 0, 1, 0, 0xFF444444, 1.5f, 20);
+    private void moveYouhunSoulPuppet(LivingEntity target) {
+        castSinglePercent(target, 0.05f, VfxType.SHADOW_FADE, 0xFF330066, 1.6f, 22);
+        if (target instanceof Mob mob) {
+            mob.setTarget(this);
         }
     }
 
-    private void shadowTeleport(LivingEntity target) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        sl.sendParticles(ParticleTypes.PORTAL, getX(), getY() + 1.0, getZ(), 30, 0.5, 1.0, 0.5, 0.1);
-        double angle = Math.atan2(target.getZ() - getZ(), target.getX() - getX());
-        double behindX = target.getX() - Math.cos(angle) * 2.0;
-        double behindZ = target.getZ() - Math.sin(angle) * 2.0;
-        this.teleportTo(behindX, target.getY(), behindZ);
-        sl.sendParticles(ParticleTypes.PORTAL, getX(), getY() + 1.0, getZ(), 30, 0.5, 1.0, 0.5, 0.1);
-        this.level().playSound(null, blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.HOSTILE, 1.5f, 1.0f);
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.SHADOW_FADE, getX(), getY() + 1, getZ(), 0, 1, 0, 0xFF444444, 1.5f, 20);
-        }
+    private void moveYouhunCloneDetonate(LivingEntity target) {
+        explodeSummons(0.10f, 6.0, VfxType.SHADOW_FADE, 0xFF330066);
     }
 
-    private void spaceCut(LivingEntity target) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        float damage = currentPhase >= 2 ? 8.0f : 5.0f;
-        target.hurt(this.damageSources().magic(), damage);
-
-        double angle = random.nextDouble() * Math.PI * 2;
-        target.setDeltaMovement(Math.cos(angle) * 0.8, 0.3, Math.sin(angle) * 0.8);
-        target.hurtMarked = true;
-
-        double steps = 8;
-        double dx = (target.getX() - getX()) / steps;
-        double dz = (target.getZ() - getZ()) / steps;
-        for (int p = 0; p < steps; p++) {
-            sl.sendParticles(ParticleTypes.PORTAL,
-                getX() + dx * p, getEyeY(), getZ() + dz * p,
-                3, 0.1, 0.2, 0.1, 0.01);
-        }
-        this.level().playSound(null, blockPosition(), SoundEvents.GLASS_BREAK, SoundSource.HOSTILE, 1.5f, 1.0f);
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.SLASH_ARC, getX(), getEyeY(), getZ(), (float)(target.getX() - getX()), 0, (float)(target.getZ() - getZ()), 0xFF444444, 1.5f, 20);
-        }
+    private void moveYouhunAbsorbSoul(LivingEntity target) {
+        castSinglePercent(target, 0.12f, VfxType.SOUL_VORTEX, 0xFF330066, 1.8f, 24);
+        healPercent(0.12f);
     }
 
-    private void heavenTheft(LivingEntity target) {
-        if (!(target instanceof ServerPlayer player)) return;
-        if (!(this.level() instanceof ServerLevel sl)) return;
-
-        int handCount = 3 + random.nextInt(3);
-        for (int i = 0; i < handCount; i++) {
-            int fingers = 3 + random.nextInt(3);
-            FormlessHandEntity hand = new FormlessHandEntity(this.level(), this, player, fingers);
-            double angle = (Math.PI * 2 * i / handCount);
-            double dist = 3.0 + random.nextDouble() * 2.0;
-            hand.setPos(
-                player.getX() + Math.cos(angle) * dist,
-                player.getY() + 2.0 + random.nextDouble(),
-                player.getZ() + Math.sin(angle) * dist);
-            sl.addFreshEntity(hand);
-        }
-
-        sl.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, player.getX(), player.getY() + 1.5, player.getZ(),
-            80, 2.0, 2.5, 2.0, 0.03);
-        this.level().playSound(null, player.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.HOSTILE, 2.0f, 1.5f);
-        player.sendSystemMessage(Component.literal(
-            "\u00a79\u00a7l[\u5077\u5929\u6362\u65e5] \u00a7b\u65e0\u6570\u6de1\u84dd\u8272\u7684\u624b\u4ece\u865a\u7a7a\u4e2d\u6d8c\u51fa\uff01"));
-        VfxHelper.spawn(player, VfxType.BLACK_HOLE, player.getX(), player.getY() + 1, player.getZ(), 0, 1, 0, 0xFF334466, 2.0f, 40);
-
-        for (int blink = 0; blink < 5; blink++) {
-            double angle = random.nextDouble() * Math.PI * 2;
-            double dist = 4.0 + random.nextDouble() * 4.0;
-            double px = target.getX() + Math.cos(angle) * dist;
-            double pz = target.getZ() + Math.sin(angle) * dist;
-            sl.sendParticles(ParticleTypes.PORTAL, this.getX(), this.getY() + 1.0, this.getZ(), 15, 0.3, 0.5, 0.3, 0.1);
-            this.teleportTo(px, target.getY(), pz);
-            sl.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, px, target.getY() + 1.5, pz, 20, 0.5, 1.0, 0.5, 0.02);
-        }
-
-        this.setInvisible(true);
-        invisTicks = 80;
-        visibleTimer = 0;
+    private void moveYouhunGhostDomain(LivingEntity target) {
+        addAreaEffect(this.position(), 10.0, 0.02f, 200, true, 1, 1, false, false,
+            VfxType.SOUL_VORTEX, 0xFF330066, 2.2f, DaoPath.SOUL, 3);
     }
 
-    private void tickInvisibility() {
-        if (invisTicks <= 0) return;
-        invisTicks--;
-        if (invisTicks == 0) {
-            this.setInvisible(false);
-            if (venerableType == VenerableType.DAO_TIAN) {
-                visibleTimer = 0;
-            }
-        }
+    private void moveYouhunDreamButterfly(LivingEntity target) {
+        target.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 60, 1));
+        castSinglePercent(target, 0.06f, VfxType.SHADOW_FADE, 0xFF330066, 1.6f, 22);
     }
 
-    // ======================== 巨阳仙尊 - 运道+血道 - 金光审判 ========================
+    private void moveYouhunNightOfGhosts(LivingEntity target) {
+        addAreaEffect(this.position(), 8.0, 0.10f, 100, true, 1, 1, false, false,
+            VfxType.SOUL_VORTEX, 0xFF330066, 2.8f, DaoPath.SOUL, 4);
+    }
 
-    private void aiJuYang(LivingEntity target, int baseCooldown, double distance) {
-        if (currentPhase == 3) {
-            solarJudgment(target);
-            giantSunWill(target);
-            bloodSacrifice(target);
-            abilityCooldown = baseCooldown + 10;
-            return;
-        }
-
-        float critRoll = random.nextFloat();
-        float critChance = 0.20f;
-
-        if (currentPhase >= 2 && random.nextFloat() < 0.20f) {
-            bloodSacrifice(target);
-            abilityCooldown = baseCooldown + 10;
-            return;
-        }
-
-        if (random.nextFloat() < 0.3f) {
-            giantSunWill(target);
-            abilityCooldown = baseCooldown + 15;
-            return;
-        }
-
-        if (distance < 5) {
-            fortuneDodge();
-            goldenBeam(target, 3, critRoll < critChance);
-            abilityCooldown = baseCooldown;
+    private void moveYouhunUndyingSoul(LivingEntity target) {
+        if (livingSummonCount() > 0) {
+            healPercent(0.05f);
         } else {
-            goldenBeam(target, currentPhase >= 2 ? 7 : 5, critRoll < critChance);
-            abilityCooldown = baseCooldown;
+            summonPhantom(PhantomImmortalEntity.ImmortalType.SOUL_REAPER, target, 0.50);
         }
+        spawnCenterVfx(VfxType.SOUL_VORTEX, 0xFF330066, 2.2f, 30);
     }
 
-    private void goldenBeam(LivingEntity target, int count, boolean crit) {
-        this.level().playSound(null, blockPosition(), SoundEvents.FIRECHARGE_USE, SoundSource.HOSTILE, 1.5f, 1.0f);
-
-        float dmg = crit ? 24.0f : 12.0f;
-        double dx = target.getX() - getX();
-        double dz = target.getZ() - getZ();
-        double len = Math.sqrt(dx * dx + dz * dz);
-        if (len < 0.001) return;
-        dx /= len;
-        dz /= len;
-
-        for (int i = 0; i < count; i++) {
-            double spreadAngle = (i - count / 2.0) * 0.12;
-            double offX = dx * Math.cos(spreadAngle) - dz * Math.sin(spreadAngle);
-            double offZ = dx * Math.sin(spreadAngle) + dz * Math.cos(spreadAngle);
-
-            GoldBeamEntity beam = new GoldBeamEntity(this.level(), this, dmg);
-            beam.setPos(getX(), getEyeY() - 0.1, getZ());
-            double sdx = target.getX() + offX * 2.0 - getX();
-            double sdy = target.getEyeY() - getEyeY();
-            double sdz = target.getZ() + offZ * 2.0 - getZ();
-            beam.shoot(sdx, sdy, sdz, 2.5f, 1.5f);
-            this.level().addFreshEntity(beam);
-        }
-
-        if (crit && this.level() instanceof ServerLevel sl) {
-            sl.sendParticles(ParticleTypes.CRIT, getX(), getY() + 2.0, getZ(), 20, 1.0, 1.0, 1.0, 0.3);
-        }
-        if (random.nextFloat() < 0.30f) {
-            target.hurt(this.damageSources().magic(), 2.0f);
-            if (this.level() instanceof ServerLevel sl) {
-                sl.sendParticles(ParticleTypes.DAMAGE_INDICATOR, target.getX(), target.getY() + 1.0, target.getZ(), 8, 0.3, 0.5, 0.3, 0.05);
-            }
-        }
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.ENERGY_BEAM, getX(), getEyeY(), getZ(), (float) dx, 0, (float) dz, 0xFFFF8800, 1.5f, 20);
-        }
+    private void moveDaotianSpaceCut(LivingEntity target) {
+        castSinglePercent(target, 0.12f, VfxType.SPATIAL_TEAR, 0xFF444444, 1.7f, 22);
     }
 
-    private void giantSunWill(LivingEntity target) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        double tx = target.getX();
-        double ty = target.getY();
-        double tz = target.getZ();
-
-        sl.sendParticles(ParticleTypes.FLASH, tx, ty + 5.0, tz, 5, 1.0, 2.0, 1.0, 0.0);
-        sl.sendParticles(ParticleTypes.END_ROD, tx, ty + 3.0, tz, 80, 2.0, 4.0, 2.0, 0.08);
-        sl.sendParticles(ParticleTypes.END_ROD, tx, ty + 1.0, tz, 40, 4.0, 0.5, 4.0, 0.02);
-        this.level().playSound(null, target.blockPosition(), SoundEvents.GENERIC_EXPLODE.value(), SoundSource.HOSTILE, 2.0f, 0.5f);
-        this.level().playSound(null, target.blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.HOSTILE, 1.5f, 0.5f);
-
-        float totalDamage = 0;
-        List<LivingEntity> nearby = this.level().getEntitiesOfClass(LivingEntity.class,
-            target.getBoundingBox().inflate(10.0), e -> e != this);
-        for (LivingEntity entity : nearby) {
-            float damage = entity.getMaxHealth() * 0.20f;
-            entity.hurt(this.damageSources().magic(), damage);
-            totalDamage += damage;
+    private void moveDaotianFormlessHand(LivingEntity target) {
+        if (target instanceof ServerPlayer serverPlayer) {
+            summonFormlessHands(serverPlayer, 1, 3);
         }
-        this.heal(totalDamage * 0.3f);
-        if (totalDamage > 0) {
-            sl.sendParticles(ParticleTypes.CRIMSON_SPORE, getX(), getY() + 1.0, getZ(), 10, 0.5, 0.8, 0.5, 0.03);
-        }
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.SKY_STRIKE, tx, ty, tz, 0, 1, 0, 0xFFFF8800, 2.0f, 30);
-        }
+        castSingleScaled(target, 1.0f, VfxType.SPATIAL_TEAR, 0xFF444444, 1.4f, 20);
     }
 
-    private void solarJudgment(LivingEntity target) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.SKY_STRIKE, target.getX(), target.getY(), target.getZ(), 0, 1, 0, 0xFFFF8800, 3.0f, 40);
-            VfxHelper.spawn(sp, VfxType.PULSE_WAVE, target.getX(), target.getY() + 1, target.getZ(), 0, 1, 0, 0xFFCC0000, 2.5f, 30);
+    private void moveDaotianSwapHeaven(LivingEntity target) {
+        if (target instanceof ServerPlayer serverPlayer) {
+            summonFormlessHands(serverPlayer, 3, 3);
         }
-
-        giantSunWill(target);
-
-        goldenBeam(target, 12, true);
-
-        sl.sendParticles(ParticleTypes.FLASH, target.getX(), target.getY() + 2.0, target.getZ(), 8, 2.0, 2.0, 2.0, 0.0);
-        sl.sendParticles(ParticleTypes.DAMAGE_INDICATOR, target.getX(), target.getY() + 1.0, target.getZ(), 25, 1.0, 1.0, 1.0, 0.1);
-        this.level().playSound(null, target.blockPosition(), SoundEvents.GENERIC_EXPLODE.value(), SoundSource.HOSTILE, 3.0f, 0.3f);
-
-        List<LivingEntity> nearby = this.level().getEntitiesOfClass(LivingEntity.class,
-            target.getBoundingBox().inflate(8.0), e -> e != this);
-        int hitCount = 0;
-        for (LivingEntity entity : nearby) {
-            entity.hurt(this.damageSources().magic(), 2.0f);
-            sl.sendParticles(ParticleTypes.DAMAGE_INDICATOR, entity.getX(), entity.getY() + 1.0, entity.getZ(), 5, 0.3, 0.5, 0.3, 0.05);
-            hitCount++;
-        }
-        this.heal(hitCount * 3.0f);
-        if (hitCount > 0) {
-            sl.sendParticles(ParticleTypes.CRIMSON_SPORE, getX(), getY() + 1.0, getZ(), 15, 0.8, 1.0, 0.8, 0.05);
-        }
+        spawnCenterVfx(VfxType.SPATIAL_TEAR, 0xFF444444, 2.0f, 26);
     }
 
-    private void fortuneDodge() {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        double angle = random.nextDouble() * Math.PI * 2;
-        double dist = 4.0 + random.nextDouble() * 3.0;
-        double newX = getX() + Math.cos(angle) * dist;
-        double newZ = getZ() + Math.sin(angle) * dist;
-        sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 1.0, getZ(), 30, 1.0, 1.5, 1.0, 0.1);
-        this.teleportTo(newX, getY(), newZ);
-        sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 1.0, getZ(), 30, 1.0, 1.5, 1.0, 0.1);
-        this.level().playSound(null, blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.HOSTILE, 2.0f, 1.0f);
-        LivingEntity target = this.getTarget();
-        if (target != null && random.nextFloat() < 0.30f) {
-            goldenBeam(target, 3, true);
-        }
+    private void moveDaotianSpaceFold(LivingEntity target) {
+        teleportBehind(target, 1.0);
+        castSinglePercent(target, 0.10f, VfxType.SPATIAL_TEAR, 0xFF444444, 1.6f, 20);
+        castSinglePercent(target, 0.10f, VfxType.SPATIAL_TEAR, 0xFF444444, 1.6f, 20);
     }
 
-    private void bloodSacrifice(LivingEntity target) {
-        float selfCost = this.getMaxHealth() * 0.05f;
-        this.setHealth(Math.max(1.0f, this.getHealth() - selfCost));
-        float trueDmg = target.getMaxHealth() * 0.15f;
-        target.hurt(damageSources().magic(), trueDmg);
-        this.heal(trueDmg * 0.5f);
-        if (level() instanceof ServerLevel sl) {
-            sl.sendParticles(ParticleTypes.DAMAGE_INDICATOR, target.getX(), target.getY() + 1.0, target.getZ(), 20, 0.5, 1.0, 0.5, 0.1);
-            sl.sendParticles(ParticleTypes.CRIMSON_SPORE, getX(), getY() + 1.0, getZ(), 15, 0.8, 1.0, 0.8, 0.05);
-        }
-        this.level().playSound(null, blockPosition(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.HOSTILE, 1.0f, 0.8f);
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.IMPACT_BURST, target.getX(), target.getY() + 1, target.getZ(), 0, 1, 0, 0xFFCC0000, 1.5f, 20);
-        }
+    private void moveDaotianStealTime(LivingEntity target) {
+        addRoot(target, 60);
+        applyTimedModifier(Attributes.MOVEMENT_SPEED, "venerable_daotian_speed", 2.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 60);
+        spawnCenterVfx(VfxType.SHADOW_FADE, 0xFF444444, 1.9f, 22);
     }
 
-    // ======================== 幽魂魔尊 - 魂道+影道 - 噬魂者 ========================
-
-    private void aiYouHun(LivingEntity target, int baseCooldown, double distance) {
-        if (currentPhase == 3 && this.getHealth() < this.getMaxHealth() * 0.20f && !youHunSoulSplitUsed) {
-            soulSplit();
-            abilityCooldown = baseCooldown;
-            return;
-        }
-
-        if (currentPhase == 3) {
-            soulDevourUltimate(target);
-            abilityCooldown = baseCooldown + 20;
-            return;
-        }
-
-        if (distance <= 4) {
-            float damage = 18.0f;
-            target.hurt(this.damageSources().magic(), damage);
-            this.heal(damage * 0.30f);
-            if (this.level() instanceof ServerLevel sl) {
-                sl.sendParticles(ParticleTypes.SCULK_SOUL, target.getX(), target.getY() + 1.0, target.getZ(), 15, 0.5, 1.0, 0.5, 0.05);
-            }
-            abilityCooldown = baseCooldown - 5;
-            return;
-        }
-
-        if (random.nextFloat() < 0.35f) {
-            soulSeize(target);
-            abilityCooldown = baseCooldown;
-            return;
-        }
-
-        soulDamage(target);
-        abilityCooldown = baseCooldown;
+    private void moveDaotianVoidCage(LivingEntity target) {
+        addAreaEffect(target.position(), 8.0, 0.00f, 120, true, 6, 2, false, false,
+            VfxType.SPATIAL_TEAR, 0xFF444444, 2.1f, DaoPath.SPACE, 3);
     }
 
-    private void soulSeize(LivingEntity target) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        sl.sendParticles(ParticleTypes.SCULK_SOUL, target.getX(), target.getY() - 0.2, target.getZ(), 30, 1.5, 0.3, 1.5, 0.02);
-        sl.sendParticles(ParticleTypes.SCULK_SOUL, target.getX(), target.getY() + 0.5, target.getZ(), 15, 0.5, 1.5, 0.5, 0.05);
-        this.level().playSound(null, target.blockPosition(), SoundEvents.WARDEN_AMBIENT, SoundSource.HOSTILE, 2.0f, 0.3f);
-
-        List<LivingEntity> nearby = this.level().getEntitiesOfClass(LivingEntity.class, target.getBoundingBox().inflate(4.0), e -> e != this);
-        for (LivingEntity entity : nearby) {
-            entity.hurt(this.damageSources().magic(), entity.getMaxHealth() * 0.08f);
-            entity.setDeltaMovement(entity.getDeltaMovement().multiply(0.3, 1.0, 0.3));
-            entity.hurtMarked = true;
+    private void moveDaotianTenThousandHands(LivingEntity target) {
+        if (target instanceof ServerPlayer serverPlayer) {
+            summonFormlessHands(serverPlayer, 8, 5);
         }
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.SHADOW_FADE, target.getX(), target.getY() + 1, target.getZ(), 0, 1, 0, 0xFF330066, 1.5f, 25);
-        }
+        castAreaPercent(this.position(), 10.0, 0.10f, VfxType.SPATIAL_TEAR, 0xFF444444, 3.0f, 36);
     }
 
-    private void soulDamage(LivingEntity target) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        float damage = currentPhase >= 2 ? 20.0f : 15.0f;
-        target.hurt(this.damageSources().magic(), damage);
-        this.heal(damage * 0.30f);
-        sl.sendParticles(ParticleTypes.SCULK_SOUL, target.getX(), target.getY() + 1.0, target.getZ(), 25, 0.5, 1.0, 0.5, 0.05);
-        sl.sendParticles(ParticleTypes.SOUL, target.getX(), target.getY() + 1.5, target.getZ(), 10, 0.3, 0.5, 0.3, 0.02);
-        this.level().playSound(null, target.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.HOSTILE, 1.5f, 1.5f);
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.ENERGY_BEAM, getX(), getEyeY(), getZ(), (float)(target.getX() - getX()), (float)(target.getEyeY() - getEyeY()), (float)(target.getZ() - getZ()), 0xFF330066, 1.5f, 20);
-        }
+    private void moveDaotianSpaceSwap(LivingEntity target) {
+        Vec3 selfPos = this.position();
+        Vec3 targetPos = target.position();
+        this.teleportTo(targetPos.x, targetPos.y, targetPos.z);
+        target.teleportTo(selfPos.x, selfPos.y, selfPos.z);
+        castSinglePercent(target, 0.08f, VfxType.SPATIAL_TEAR, 0xFF444444, 1.6f, 20);
     }
 
-    private void spawnSoulBeast(double x, double y, double z) {
-        if (youHunSoulBeastCount >= 5) return;
-        Zombie soulBeast = EntityType.ZOMBIE.create(this.level());
-        if (soulBeast == null) return;
-        soulBeast.setPos(x, y, z);
-        soulBeast.setCustomName(Component.literal("\u00a75\u9b42\u517d"));
-        soulBeast.setGlowingTag(true);
-        if (this.getTarget() != null) soulBeast.setTarget(this.getTarget());
-        this.level().addFreshEntity(soulBeast);
-        youHunSoulBeastCount++;
-        if (this.level() instanceof ServerLevel sl) {
-            sl.sendParticles(ParticleTypes.SCULK_SOUL, x, y + 1.0, z, 20, 0.5, 1.0, 0.5, 0.05);
-        }
+    private void moveDaotianStealPower(LivingEntity target) {
+        double stolen = target.getAttributeValue(Attributes.ATTACK_DAMAGE) * 0.20;
+        applyTimedModifier(Attributes.ATTACK_DAMAGE, "venerable_daotian_steal_power", stolen, AttributeModifier.Operation.ADD_VALUE, 200);
+        target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 200, 1));
+        spawnCenterVfx(VfxType.SHADOW_FADE, 0xFF444444, 1.8f, 24);
     }
 
-    private void soulSplit() {
-        if (youHunSoulSplitUsed) return;
-        youHunSoulSplitUsed = true;
-        this.heal(this.getMaxHealth() * 0.30f);
-        if (!(this.level() instanceof ServerLevel sl)) return;
-
-        for (int i = 0; i < 2; i++) {
-            double spawnX = getX() + (random.nextDouble() - 0.5) * 6.0;
-            double spawnZ = getZ() + (random.nextDouble() - 0.5) * 6.0;
-            Zombie clone = EntityType.ZOMBIE.create(this.level());
-            if (clone == null) continue;
-            clone.setPos(spawnX, getY(), spawnZ);
-            clone.setCustomName(Component.literal("\u00a75\u5e7d\u9b42\u5206\u8eab"));
-            clone.setGlowingTag(true);
-            if (this.getTarget() != null) clone.setTarget(this.getTarget());
-            this.level().addFreshEntity(clone);
-            sl.sendParticles(ParticleTypes.SCULK_SOUL, spawnX, getY() + 1.0, spawnZ, 30, 0.5, 1.5, 0.5, 0.05);
-        }
-        sl.sendParticles(ParticleTypes.FLASH, getX(), getY() + 1.0, getZ(), 3, 1.0, 1.0, 1.0, 0.0);
-        this.level().playSound(null, blockPosition(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.HOSTILE, 2.0f, 0.5f);
-        LivingEntity target = this.getTarget();
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.GLOW_BURST, getX(), getY() + 1, getZ(), 0, 1, 0, 0xFF330066, 2.0f, 30);
-        }
+    private void moveDaotianVoidStep(LivingEntity target) {
+        dashStrike(target, 0.05f, VfxType.SPATIAL_TEAR, 0xFF444444);
+        dashStrike(target, 0.05f, VfxType.SPATIAL_TEAR, 0xFF444444);
+        dashStrike(target, 0.05f, VfxType.SPATIAL_TEAR, 0xFF444444);
     }
 
-    private void soulDevourUltimate(LivingEntity target) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        sl.sendParticles(ParticleTypes.SCULK_SOUL, getX(), getY() + 1.0, getZ(), 80, 6.0, 3.0, 6.0, 0.05);
-        sl.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, getX(), getY() + 0.5, getZ(), 40, 6.0, 1.0, 6.0, 0.03);
-        sl.sendParticles(ParticleTypes.FLASH, getX(), getY() + 2.0, getZ(), 3, 1.0, 1.0, 1.0, 0.0);
-        this.level().playSound(null, blockPosition(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.HOSTILE, 2.5f, 0.3f);
-        this.level().playSound(null, blockPosition(), SoundEvents.WARDEN_DEATH, SoundSource.HOSTILE, 2.0f, 0.5f);
-
-        float totalDamageDealt = 0;
-        List<LivingEntity> nearby = this.level().getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(10.0), e -> e != this);
-        for (LivingEntity entity : nearby) {
-            float damage = entity.getMaxHealth() * 0.25f;
-            entity.hurt(this.damageSources().magic(), damage);
-            totalDamageDealt += damage;
-        }
-        this.heal(totalDamageDealt * 0.50f);
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.BLACK_HOLE, getX(), getY() + 1, getZ(), 0, 1, 0, 0xFF330066, 2.5f, 40);
-        }
+    private void moveDaotianSpaceRift(LivingEntity target) {
+        Vec3 pos = target.position();
+        castAreaPercent(pos, 5.0, 0.15f, VfxType.SPATIAL_TEAR, 0xFF444444, 2.2f, 28);
+        modifyTerrain(pos, DaoPath.SPACE, 3);
     }
 
-    // ======================== 乐土仙尊 - 土道+天道 - 杀招大师 ========================
-
-    private void aiLeTu(LivingEntity target, int baseCooldown, double distance) {
-        if (!leTuAggro) {
-            abilityCooldown = 40;
-            return;
+    private void moveDaotianStealMemory(LivingEntity target) {
+        if (!target.getActiveEffects().isEmpty()) {
+            MobEffectInstance pick = target.getActiveEffects().iterator().next();
+            target.removeEffect(pick.getEffect());
         }
-
-        if (target instanceof Player player && player.getHealth() < player.getMaxHealth() * 0.20f && leTuMercyTicks <= 0) {
-            leTuMercyTicks = 200;
-            abilityCooldown = 100;
-            player.sendSystemMessage(Component.literal("\u00a7b\u00a7l[\u4e50\u571f\u4ed9\u5c0a] \u00a77\u4f60\u8fd8\u6709\u4e00\u7ebf\u751f\u673a..."));
-            if (this.level() instanceof ServerLevel sl) {
-                sl.sendParticles(ParticleTypes.HEART, getX(), getY() + 2.0, getZ(), 10, 1.0, 1.0, 1.0, 0.05);
-            }
-            return;
-        }
-
-        if (leTuMercyTicks > 0) {
-            abilityCooldown = 20;
-            return;
-        }
-
-        if (currentPhase == 3) {
-            if (leTuDomainTicks <= 0) {
-                heavenEarthDomain(true);
-            }
-            earthenFortress();
-            if (distance <= 6) {
-                earthSpike(target);
-            } else {
-                heavenDecree(target);
-            }
-            abilityCooldown = baseCooldown;
-            return;
-        }
-
-        if (leTuDomainTicks <= 0 && currentPhase >= 1) {
-            heavenEarthDomain(false);
-            abilityCooldown = baseCooldown + 20;
-            return;
-        }
-
-        if (random.nextFloat() < 0.3f && earthenFortressTicks <= 0) {
-            earthenFortress();
-            abilityCooldown = baseCooldown;
-            return;
-        }
-
-        if (distance <= 6) {
-            earthSpike(target);
-            abilityCooldown = baseCooldown;
-        } else {
-            heavenDecree(target);
-            abilityCooldown = baseCooldown;
-        }
+        castSinglePercent(target, 0.08f, VfxType.SHADOW_FADE, 0xFF444444, 1.5f, 20);
     }
 
-    private void heavenEarthDomain(boolean enhanced) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        double range = enhanced ? 24.0 : 10.0;
-        leTuDomainTicks = enhanced ? 400 : 200;
-        sl.sendParticles(ParticleTypes.ASH, getX(), getY() + 1.0, getZ(), 60, range * 0.4, 2.0, range * 0.4, 0.05);
-        sl.sendParticles(ParticleTypes.ENCHANT, getX(), getY() + 0.5, getZ(), 40, range * 0.4, 0.3, range * 0.4, 0.01);
-        sl.sendParticles(ParticleTypes.FLASH, getX(), getY() + 2.0, getZ(), 3, 1.0, 1.0, 1.0, 0.0);
-        this.level().playSound(null, blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.HOSTILE, 2.0f, 0.5f);
-        LivingEntity target = this.getTarget();
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.DOME_FIELD, getX(), getY() + 1, getZ(), 0, 1, 0, 0xFFC8A86E, 2.5f, 40);
-        }
+    private void moveDaotianNoGapDomain(LivingEntity target) {
+        addAreaEffect(this.position(), 8.0, 0.05f, 160, true, 1, 1, false, true,
+            VfxType.SPATIAL_TEAR, 0xFF444444, 2.3f, DaoPath.SPACE, 3);
     }
 
-    private void earthenFortress() {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        if (earthenFortressTicks > 0) return;
-        earthenFortressTicks = 200;
-        AttributeInstance armor = this.getAttribute(Attributes.ARMOR);
-        if (armor != null) {
-            armor.removeModifier(EARTHEN_FORTRESS_MOD);
-            armor.addTransientModifier(new AttributeModifier(EARTHEN_FORTRESS_MOD, 15.0, AttributeModifier.Operation.ADD_VALUE));
-        }
-        sl.sendParticles(ParticleTypes.ASH, getX(), getY() + 0.5, getZ(), 40, 3.0, 0.3, 3.0, 0.01);
-        sl.sendParticles(ParticleTypes.WAX_OFF, getX(), getY() + 1.0, getZ(), 30, 3.0, 1.5, 3.0, 0.05);
-        this.level().playSound(null, blockPosition(), SoundEvents.ANVIL_LAND, SoundSource.HOSTILE, 1.5f, 0.6f);
-        LivingEntity target = this.getTarget();
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.AURA_RING, getX(), getY() + 1, getZ(), 0, 1, 0, 0xFF8B4513, 2.0f, 30);
-        }
+    private void moveDaotianSpaceCompress(LivingEntity target) {
+        addAreaEffect(target.position(), 6.0, 0.10f, 20, true, 1, 0, true, false,
+            VfxType.BLACK_HOLE, 0xFF444444, 2.0f, null, 0);
     }
 
-    private void earthSpike(LivingEntity target) {
-        if (!(level() instanceof ServerLevel sl)) return;
-        target.hurt(damageSources().mobAttack(this), 18.0f);
-        target.setDeltaMovement(target.getDeltaMovement().add(0, 0.8, 0));
+    private void moveDaotianStealDefense(LivingEntity target) {
+        double stolenArmor = Math.max(0.0, target.getAttributeValue(Attributes.ARMOR) * 0.50);
+        applyTimedModifier(Attributes.ARMOR, "venerable_daotian_steal_armor", stolenArmor, AttributeModifier.Operation.ADD_VALUE, 200);
+        target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 200, 1));
+        spawnCenterVfx(VfxType.SHADOW_FADE, 0xFF444444, 1.8f, 22);
+    }
+
+    private void moveDaotianVoidEye(LivingEntity target) {
+        addDamageMark(target, 200, 1.30f);
+        castSingleScaled(target, 1.0f, VfxType.SPATIAL_TEAR, 0xFF444444, 1.4f, 18);
+    }
+
+    private void moveDaotianSpaceExile(LivingEntity target) {
+        Vec3 dir = target.position().subtract(this.position()).normalize();
+        Vec3 exile = target.position().add(dir.scale(30.0));
+        target.teleportTo(exile.x, exile.y, exile.z);
+        modifyTerrain(exile, DaoPath.SPACE, 3);
+        castSinglePercent(target, 0.08f, VfxType.SPATIAL_TEAR, 0xFF444444, 1.7f, 20);
+    }
+
+    private void moveDaotianSameRealmClone(LivingEntity target) {
+        summonPhantom(PhantomImmortalEntity.ImmortalType.STAR_SAGE, target, 0.60);
+        spawnCenterVfx(VfxType.SHADOW_FADE, 0xFF444444, 1.9f, 22);
+    }
+
+    private void moveDaotianCopyArt(LivingEntity target) {
+        castSinglePercent(target, 0.12f, VfxType.SPATIAL_TEAR, 0xFF444444, 1.8f, 24);
+        castSinglePercent(target, 0.08f, VfxType.SPATIAL_TEAR, 0xFF444444, 1.5f, 20);
+    }
+
+    private void moveDaotianFormlessFist(LivingEntity target) {
+        if (target instanceof ServerPlayer serverPlayer) {
+            summonFormlessHands(serverPlayer, 5, 5);
+        }
+        castSinglePercent(target, 0.20f, VfxType.SPATIAL_TEAR, 0xFF444444, 2.2f, 28);
+        modifyTerrain(target.position(), DaoPath.SPACE, 4);
+    }
+
+    private void moveKuangmanSavageSlam(LivingEntity target) {
+        castAreaPercent(this.position(), 8.0, 0.15f, VfxType.IMPACT_BURST, 0xFFCC0000, 2.4f, 30);
+        modifyTerrain(target.position(), DaoPath.STRENGTH, 3);
+    }
+
+    private void moveKuangmanDragonForm(LivingEntity target) {
+        castAreaPercent(target.position(), 8.0, 0.12f, VfxType.ENERGY_BEAM, 0xFFCC0000, 2.0f, 26);
+        spawnCenterVfx(VfxType.BEAST_PHANTOM, 0xFFCC0000, 1.8f, 22);
+    }
+
+    private void moveKuangmanTigerForm(LivingEntity target) {
+        castSinglePercent(target, 0.05f, VfxType.BEAST_PHANTOM, 0xFFCC0000, 1.2f, 12);
+        castSinglePercent(target, 0.05f, VfxType.BEAST_PHANTOM, 0xFFCC0000, 1.2f, 12);
+        castSinglePercent(target, 0.05f, VfxType.SLASH_ARC, 0xFFCC0000, 1.3f, 12);
+    }
+
+    private void moveKuangmanEagleForm(LivingEntity target) {
+        castSinglePercent(target, 0.10f, VfxType.BEAST_PHANTOM, 0xFFCC0000, 1.6f, 22);
+        knockbackTargets(target.position(), 4.0, 1.6, 0.5);
+    }
+
+    private void moveKuangmanSnakeForm(LivingEntity target) {
+        addRoot(target, 60);
+        castSinglePercent(target, 0.15f, VfxType.BEAST_PHANTOM, 0xFFCC0000, 1.8f, 24);
+    }
+
+    private void moveKuangmanBearForm(LivingEntity target) {
+        applyTimedModifier(Attributes.ARMOR, "venerable_kuangman_bear_armor", 0.50, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 100);
+        spawnCenterVfx(VfxType.BEAST_PHANTOM, 0xFFCC0000, 1.9f, 24);
+    }
+
+    private void moveKuangmanSavagePower(LivingEntity target) {
+        applyTimedModifier(Attributes.ATTACK_DAMAGE, "venerable_kuangman_power_atk", 1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+        applyTimedModifier(Attributes.MOVEMENT_SPEED, "venerable_kuangman_power_speed", 0.50, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+        spawnCenterVfx(VfxType.BEAST_PHANTOM, 0xFFCC0000, 2.2f, 30);
+    }
+
+    private void moveKuangmanHeavenFlip(LivingEntity target) {
+        target.push(0.0, 2.0, 0.0);
         target.hurtMarked = true;
-        sl.sendParticles(ParticleTypes.ASH, target.getX(), target.getY(), target.getZ(), 25, 0.5, 0.5, 0.5, 0.1);
-        sl.sendParticles(ParticleTypes.WAX_OFF, target.getX(), target.getY() + 0.5, target.getZ(), 15, 0.3, 0.8, 0.3, 0.05);
-        this.level().playSound(null, target.blockPosition(), SoundEvents.ANVIL_LAND, SoundSource.HOSTILE, 1.5f, 0.6f);
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.SKY_STRIKE, target.getX(), target.getY(), target.getZ(), 0, 1, 0, 0xFF8B4513, 1.5f, 20);
+        castSinglePercent(target, 0.20f, VfxType.IMPACT_BURST, 0xFFCC0000, 2.0f, 28);
+        modifyTerrain(target.position(), DaoPath.STRENGTH, 3);
+    }
+
+    private void moveKuangmanBreakAllLaws(LivingEntity target) {
+        target.removeAllEffects();
+        castSinglePercent(target, 0.10f, VfxType.PULSE_WAVE, 0xFFCC0000, 1.8f, 24);
+    }
+
+    private void moveKuangmanBeastSummon(LivingEntity target) {
+        summonPhantom(PhantomImmortalEntity.ImmortalType.BLOOD_DEMON, target, 0.50);
+        summonPhantom(PhantomImmortalEntity.ImmortalType.BLOOD_DEMON, target, 0.50);
+        summonPhantom(PhantomImmortalEntity.ImmortalType.BLOOD_DEMON, target, 0.50);
+        spawnCenterVfx(VfxType.BEAST_PHANTOM, 0xFFCC0000, 2.0f, 28);
+    }
+
+    private void moveKuangmanTenThousandBeasts(LivingEntity target) {
+        castAreaPercent(this.position(), 10.0, 0.30f, VfxType.BEAST_PHANTOM, 0xFFCC0000, 3.0f, 42);
+        modifyTerrain(this.position(), DaoPath.STRENGTH, 5);
+    }
+
+    private void moveKuangmanUndyingBody(LivingEntity target) {
+        if (this.getHealth() < this.getMaxHealth() * 0.30f) {
+            applyTimedModifier(Attributes.ARMOR, "venerable_kuangman_undying_armor", 2.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 120);
+            spawnCenterVfx(VfxType.BEAST_PHANTOM, 0xFFCC0000, 2.0f, 30);
         }
     }
 
-    private void heavenDecree(LivingEntity target) {
-        if (!(level() instanceof ServerLevel sl)) return;
-        float dmg = 12.0f;
-        if (target.getHealth() > target.getMaxHealth() * 0.5f) {
-            dmg += target.getMaxHealth() * 0.10f;
-        }
-        target.hurt(damageSources().magic(), dmg);
-        sl.sendParticles(ParticleTypes.END_ROD, target.getX(), target.getY() + 3.0, target.getZ(), 30, 0.5, 2.0, 0.5, 0.05);
-        sl.sendParticles(ParticleTypes.ENCHANT, target.getX(), target.getY() + 1.0, target.getZ(), 20, 0.8, 1.0, 0.8, 0.1);
-        this.level().playSound(null, target.blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.HOSTILE, 2.0f, 1.2f);
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.SKY_STRIKE, target.getX(), target.getY() + 3, target.getZ(), 0, -1, 0, 0xFFF0E0C0, 2.0f, 30);
+    private void moveKuangmanCharge(LivingEntity target) {
+        Vec3 dir = target.position().subtract(this.position()).normalize();
+        this.push(dir.x * 1.6, 0.1, dir.z * 1.6);
+        castSinglePercent(target, 0.12f, VfxType.IMPACT_BURST, 0xFFCC0000, 1.8f, 22);
+        knockbackTargets(target.position(), 3.0, 1.2, 0.3);
+    }
+
+    private void moveKuangmanSplitEarth(LivingEntity target) {
+        castAreaPercent(this.position(), 8.0, 0.20f, VfxType.SLASH_ARC, 0xFFCC0000, 2.3f, 28);
+        modifyTerrain(target.position(), DaoPath.STRENGTH, 4);
+    }
+
+    private void moveKuangmanThousandFall(LivingEntity target) {
+        castAreaPercent(this.position(), 4.0, 0.08f, VfxType.IMPACT_BURST, 0xFFCC0000, 1.6f, 20);
+        castAreaPercent(this.position(), 8.0, 0.05f, VfxType.IMPACT_BURST, 0xFFCC0000, 1.8f, 20);
+    }
+
+    private void moveKuangmanSavageTornado(LivingEntity target) {
+        addAreaEffect(this.position(), 6.0, 0.08f, 80, true, 1, 0, false, false,
+            VfxType.TORNADO, 0xFFCC0000, 2.2f, null, 0);
+        knockbackTargets(this.position(), 6.0, 1.0, 0.2);
+    }
+
+    private void moveKuangmanDevourHeal(LivingEntity target) {
+        castSingleScaled(target, 1.0f, VfxType.BEAST_PHANTOM, 0xFFCC0000, 1.2f, 18);
+        healPercent(0.03f);
+    }
+
+    private void moveKuangmanGiantApeFist(LivingEntity target) {
+        castAreaPercent(this.position(), 12.0, 0.25f, VfxType.IMPACT_BURST, 0xFFCC0000, 2.8f, 36);
+        knockbackTargets(this.position(), 12.0, 1.4, 0.4);
+    }
+
+    private void moveKuangmanShockStomp(LivingEntity target) {
+        castAreaPercent(this.position(), 6.0, 0.03f, VfxType.IMPACT_BURST, 0xFFCC0000, 1.8f, 20);
+        for (LivingEntity living : getEnemies(this.position(), 6.0)) {
+            living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 80, 4));
         }
     }
 
-    public void onNearbyEntityDeath(double x, double y, double z) {
-        if (venerableType == VenerableType.LE_TU && leTuDomainTicks > 0) {
-            spawnWarSoul(x, y, z);
-        }
-        if (venerableType == VenerableType.YOU_HUN) {
-            spawnSoulBeast(x, y, z);
-        }
-    }
-
-    private void spawnWarSoul(double x, double y, double z) {
-        if (soulBeastCount >= 5) return;
-        Zombie warSoul = EntityType.ZOMBIE.create(this.level());
-        if (warSoul == null) return;
-        warSoul.setPos(x, y, z);
-        warSoul.setCustomName(Component.literal("\u00a75\u6218\u9b42"));
-        warSoul.setGlowingTag(true);
-        if (this.getTarget() != null) warSoul.setTarget(this.getTarget());
-        this.level().addFreshEntity(warSoul);
-        soulBeastCount++;
-        if (this.level() instanceof ServerLevel sl) {
-            sl.sendParticles(ParticleTypes.SCULK_SOUL, x, y + 1.0, z, 20, 0.5, 1.0, 0.5, 0.05);
-        }
-    }
-
-    // ======================== 红莲魔尊 - 宙道+宇道 - 时间主宰 ========================
-
-    private void aiHongLian(LivingEntity target, int baseCooldown, double distance) {
-        if (currentPhase == 3) {
-            if (predecessorCooldown <= 0 && random.nextFloat() < 0.25f) {
-                summonAncientPredecessors(target);
-                predecessorCooldown = 400;
-                abilityCooldown = baseCooldown;
-                return;
-            }
-            timeFreeze();
-            abilityCooldown = baseCooldown + 30;
-            return;
-        }
-
-        if (random.nextFloat() < 0.30f && target instanceof LivingEntity) {
-            fateInterrupt(target);
-        }
-
-        if (distance < 4) {
-            timeSlow();
-            temporalBurst(target);
-            abilityCooldown = baseCooldown;
-            return;
-        }
-
-        if (distance > 8) {
-            temporalBurst(target);
-            abilityCooldown = baseCooldown;
+    private void moveKuangmanBloodAwakening(LivingEntity target) {
+        if (this.currentPhase >= 3 && this.getHealth() < this.getMaxHealth() * 0.15f) {
+            applyTimedModifier(Attributes.ATTACK_DAMAGE, "venerable_kuangman_awake_atk", 3.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 100);
+            applyTimedModifier(Attributes.MOVEMENT_SPEED, "venerable_kuangman_awake_speed", 1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 100);
+            this.kuangManAwakenTicks = 100;
+            spawnCenterVfx(VfxType.BEAST_PHANTOM, 0xFFCC0000, 2.8f, 40);
         } else {
-            timeSlow();
-            abilityCooldown = baseCooldown / 2;
-        }
-
-        if (random.nextFloat() < 0.25f) {
-            hpReversal();
-        }
-
-        if (currentPhase >= 2 && cicadaEnraged) {
-            applyMod(Attributes.MOVEMENT_SPEED, PHASE_SPEED_MOD, 0.08);
+            castSingleScaled(target, 1.0f, VfxType.BEAST_PHANTOM, 0xFFCC0000, 1.2f, 14);
         }
     }
 
-    private void fateInterrupt(LivingEntity target) {
-        target.setDeltaMovement(0, 0, 0);
-        target.hurtMarked = true;
-        if (this.level() instanceof ServerLevel sl) {
-            sl.sendParticles(ParticleTypes.END_ROD, target.getX(), target.getY() + 1.0, target.getZ(), 15, 0.5, 1.0, 0.5, 0.03);
-            this.level().playSound(null, target.blockPosition(), SoundEvents.BELL_BLOCK, SoundSource.HOSTILE, 1.5f, 0.5f);
+    private void moveJuyangGoldenStrike(LivingEntity target) {
+        castSinglePercent(target, 0.10f, VfxType.ENERGY_BEAM, 0xFFFF8800, 1.6f, 20);
+        if (this.random.nextFloat() < 0.15f) {
+            castSinglePercent(target, 0.10f, VfxType.GLOW_BURST, 0xFFFF8800, 1.7f, 20);
         }
     }
 
-    private void timeFreeze() {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        hongLianTimeFreezeTicks = 100;
-        sl.sendParticles(ParticleTypes.FLASH, getX(), getY() + 2.0, getZ(), 8, 2.0, 2.0, 2.0, 0.0);
-        sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 1.0, getZ(), 100, 6.0, 3.0, 6.0, 0.05);
-        sl.sendParticles(ParticleTypes.ENCHANT, getX(), getY() + 0.5, getZ(), 60, 6.0, 1.0, 6.0, 0.02);
-        this.level().playSound(null, blockPosition(), SoundEvents.BELL_BLOCK, SoundSource.HOSTILE, 3.0f, 0.1f);
-        this.level().playSound(null, blockPosition(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.HOSTILE, 2.0f, 0.3f);
-        LivingEntity target = this.getTarget();
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.DOME_FIELD, getX(), getY() + 1, getZ(), 0, 1, 0, 0xFFFF0033, 2.5f, 40);
+    private void moveJuyangBloodSacrifice(LivingEntity target) {
+        selfDamagePercent(0.10f);
+        castSinglePercent(target, 0.20f, VfxType.BLOOD_RAIN, 0xFFFF8800, 2.0f, 24);
+        healPercent(0.10f);
+    }
+
+    private void moveJuyangSunWill(LivingEntity target) {
+        castAreaPercent(this.position(), 8.0, 0.12f, VfxType.GLOW_BURST, 0xFFFF8800, 2.2f, 28);
+        for (LivingEntity living : getEnemies(this.position(), 8.0)) {
+            living.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 60, 0));
         }
     }
 
-    private void timeSlow() {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-        sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 1.0, getZ(), 60, 4.0, 2.0, 4.0, 0.02);
-        sl.sendParticles(ParticleTypes.ENCHANT, getX(), getY() + 0.5, getZ(), 30, 4.0, 1.0, 4.0, 0.01);
-        this.level().playSound(null, blockPosition(), SoundEvents.BELL_BLOCK, SoundSource.HOSTILE, 2.0f, 0.3f);
-        LivingEntity target = this.getTarget();
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.RIPPLE, getX(), getY() + 1, getZ(), 0, 1, 0, 0xFFFF0033, 2.0f, 25);
-        }
-
-        double speedMul = cicadaEnraged ? 0.08 : 0.15;
-        List<LivingEntity> nearby = this.level().getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(8.0), e -> e != this);
-        for (LivingEntity entity : nearby) {
-            entity.setDeltaMovement(entity.getDeltaMovement().multiply(speedMul, 0.5, speedMul));
-            entity.hurtMarked = true;
-        }
-        timeSlowTicks = 100;
-    }
-
-    private void tickTimeSlow() {
-        if (timeSlowTicks <= 0) return;
-        timeSlowTicks--;
-
-        if (this.tickCount % 10 != 0) return;
-        List<LivingEntity> nearby = this.level().getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(8.0), e -> e != this);
-        for (LivingEntity entity : nearby) {
-            entity.setDeltaMovement(entity.getDeltaMovement().multiply(0.4, 0.8, 0.4));
-            entity.hurtMarked = true;
+    private void moveJuyangSolarJudgment(LivingEntity target) {
+        for (int i = 0; i < 6; i++) {
+            castSinglePercent(target, 0.05f, VfxType.ENERGY_BEAM, 0xFFFF8800, 1.2f, 12);
         }
     }
 
-    private void temporalBurst(LivingEntity target) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
+    private void moveJuyangFortuneDeflect(LivingEntity target) {
+        this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 120, 1));
+        spawnCenterVfx(VfxType.GLOW_BURST, 0xFFFF8800, 1.8f, 24);
+    }
 
-        double dx = target.getX() - getX();
-        double dz = target.getZ() - getZ();
-        double len = Math.sqrt(dx * dx + dz * dz);
-        if (len < 0.001) return;
-        dx /= len;
-        dz /= len;
+    private void moveJuyangBloodContract(LivingEntity target) {
+        selfDamagePercent(0.20f);
+        this.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
+        spawnCenterVfx(VfxType.BLOOD_RAIN, 0xFFFF8800, 2.0f, 28);
+    }
 
-        float burstDamage = cicadaEnraged ? 22.5f : 15.0f;
-        List<LivingEntity> nearby = this.level().getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(6.0), e -> e != this);
-        for (LivingEntity entity : nearby) {
-            double ex = entity.getX() - getX();
-            double ez = entity.getZ() - getZ();
-            double elen = Math.sqrt(ex * ex + ez * ez);
-            if (elen > 0.001) {
-                double dot = (ex / elen) * dx + (ez / elen) * dz;
-                double coneWidth = currentPhase >= 2 ? 0.3 : 0.5;
-                if (dot > coneWidth) {
-                    entity.hurt(this.damageSources().magic(), burstDamage);
-                    entity.knockback(1.5, -dx, -dz);
-                }
-            }
-        }
+    private void moveJuyangGoldenBloodline(LivingEntity target) {
+        applyTimedModifier(Attributes.ATTACK_DAMAGE, "venerable_juyang_bloodline_atk", 0.30, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+        applyTimedModifier(Attributes.ARMOR, "venerable_juyang_bloodline_armor", 0.30, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+        applyTimedModifier(Attributes.MOVEMENT_SPEED, "venerable_juyang_bloodline_speed", 0.30, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+        spawnCenterVfx(VfxType.AURA_RING, 0xFFFF8800, 2.2f, 28);
+    }
 
-        sl.sendParticles(ParticleTypes.END_ROD, getX() + dx * 3, getY() + 1.0, getZ() + dz * 3, 30, 1.5, 1.0, 1.5, 0.05);
-        sl.sendParticles(ParticleTypes.CRIT, getX() + dx * 3, getY() + 1.0, getZ() + dz * 3, 15, 1.0, 0.5, 1.0, 0.2);
-        this.level().playSound(null, blockPosition(), SoundEvents.GLASS_BREAK, SoundSource.HOSTILE, 2.0f, 0.5f);
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.PULSE_WAVE, getX(), getY() + 1, getZ(), (float) dx, 0, (float) dz, 0xFFFF0033, 2.0f, 25);
+    private void moveJuyangSunBurst(LivingEntity target) {
+        castAreaPercent(this.position(), 6.0, 0.15f, VfxType.GLOW_BURST, 0xFFFF8800, 2.2f, 28);
+        modifyTerrain(this.position(), DaoPath.FIRE, 3);
+    }
+
+    private void moveJuyangFortuneShift(LivingEntity target) {
+        transferDebuffsToTarget(target);
+        castSinglePercent(target, 0.05f, VfxType.GLOW_BURST, 0xFFFF8800, 1.4f, 18);
+    }
+
+    private void moveJuyangBloodTide(LivingEntity target) {
+        addAreaEffect(this.position(), 8.0, 0.03f, 100, true, 1, 1, false, false,
+            VfxType.BLOOD_RAIN, 0xFFFF8800, 2.2f, DaoPath.BLOOD, 3);
+    }
+
+    private void moveJuyangSunSpear(LivingEntity target) {
+        lineStrike(target, 16.0, 0.10f, VfxType.ENERGY_BEAM, 0xFFFF8800);
+        this.level().playSound(null, blockPosition(), SoundEvents.TRIDENT_THROW.value(), SoundSource.HOSTILE, 1.3f, 1.0f);
+    }
+
+    private void moveJuyangFortuneSteal(LivingEntity target) {
+        double stolenArmor = Math.max(0.0, target.getAttributeValue(Attributes.ARMOR) * 0.20);
+        applyTimedModifier(Attributes.ARMOR, "venerable_juyang_steal_armor", stolenArmor, AttributeModifier.Operation.ADD_VALUE, 200);
+        castSingleScaled(target, 1.0f, VfxType.GLOW_BURST, 0xFFFF8800, 1.3f, 16);
+    }
+
+    private void moveJuyangBloodBoil(LivingEntity target) {
+        selfDamagePercent(0.15f);
+        healPercent(0.15f);
+        applyTimedModifier(Attributes.ATTACK_DAMAGE, "venerable_juyang_blood_boil", 0.50, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+        spawnCenterVfx(VfxType.BLOOD_RAIN, 0xFFFF8800, 2.4f, 30);
+    }
+
+    private void moveJuyangSunFall(LivingEntity target) {
+        castAreaPercent(target.position(), 12.0, 0.20f, VfxType.SKY_STRIKE, 0xFFFF8800, 2.8f, 36);
+        castAreaPercent(target.position(), 12.0, 0.05f, VfxType.GLOW_BURST, 0xFFFF8800, 2.4f, 28);
+        modifyTerrain(target.position(), DaoPath.FIRE, 3);
+    }
+
+    private void moveJuyangFateHand(LivingEntity target) {
+        if (target.getHealth() < target.getMaxHealth() * 0.10f && this.random.nextFloat() < 0.30f) {
+            castSinglePercent(target, 0.30f, VfxType.GLOW_BURST, 0xFFFF8800, 2.2f, 30);
+        } else {
+            castSinglePercent(target, 0.05f, VfxType.GLOW_BURST, 0xFFFF8800, 1.3f, 16);
         }
     }
 
-    private void hpReversal() {
-        if (savedHP > 0 && savedHP > this.getHealth()) {
-            float restored = savedHP;
-            this.setHealth(Math.min(restored, this.getMaxHealth()));
-            if (this.level() instanceof ServerLevel sl) {
-                sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 1.5, getZ(), 50, 2.0, 2.0, 2.0, 0.1);
-                sl.sendParticles(ParticleTypes.FLASH, getX(), getY() + 2.0, getZ(), 3, 1.0, 1.0, 1.0, 0.0);
-            }
-            this.level().playSound(null, blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.HOSTILE, 2.0f, 0.5f);
-            savedHP = -1;
+    private void moveJuyangBloodFormation(LivingEntity target) {
+        selfDamagePercent(0.10f);
+        addAreaEffect(this.position(), 12.0, 0.02f, 200, true, 1, 1, false, false,
+            VfxType.BLOOD_RAIN, 0xFFFF8800, 2.6f, DaoPath.BLOOD, 4);
+    }
+
+    private void moveJuyangTrueSunTower(LivingEntity target) {
+        applyTimedModifier(Attributes.ARMOR, "venerable_juyang_tower", 0.50, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+        modifyTerrain(this.position(), DaoPath.FIRE, 4);
+        spawnCenterVfx(VfxType.DOME_FIELD, 0xFFFF8800, 2.4f, 34);
+    }
+
+    private void moveJuyangImmortalBody(LivingEntity target) {
+        if (!this.juYangImmortalUsed) {
+            this.juYangImmortalUsed = true;
+            this.setHealth((float) (this.getMaxHealth() * 0.30f));
+            this.juYangDrainTicks = 100;
+            spawnCenterVfx(VfxType.GLOW_BURST, 0xFFFF8800, 2.6f, 36);
+        } else {
+            castSingleScaled(target, 1.0f, VfxType.GLOW_BURST, 0xFFFF8800, 1.2f, 14);
         }
     }
 
-    private void tickSavedHP() {
-        savedHPTimer++;
-        if (savedHPTimer >= 200) {
-            savedHP = this.getHealth();
-            savedHPTimer = 0;
+    private void moveXingxiuStarProjection(LivingEntity target) {
+        castSinglePercent(target, 0.12f, VfxType.STAR_RAIN, 0xFF77BBFF, 1.6f, 20);
+    }
+
+    private void moveXingxiuStarNeedle(LivingEntity target) {
+        addRoot(target, 60);
+        castSinglePercent(target, 0.08f, VfxType.STAR_RAIN, 0xFF77BBFF, 1.5f, 20);
+    }
+
+    private void moveXingxiuStarTrap(LivingEntity target) {
+        Vec3 predict = target.position().add(target.getDeltaMovement().scale(20.0));
+        this.starTraps.add(new StarTrap(predict, 200, 0.10f, 2.5));
+        spawnVfx(VfxType.STAR_RAIN, predict.x, predict.y + 1.0, predict.z, 0.0, 1.0, 0.0, 0xFF77BBFF, 1.8f, 24);
+    }
+
+    private void moveXingxiuStarExtinction(LivingEntity target) {
+        castAreaPercent(target.position(), 12.0, 0.18f, VfxType.STAR_RAIN, 0xFF77BBFF, 2.5f, 34);
+        modifyTerrain(target.position(), DaoPath.STAR, 4);
+        spawnVfx(VfxType.SKY_STRIKE, target.getX(), target.getY() + 1.0, target.getZ(), 0.0, 1.0, 0.0, 0xFF77BBFF, 2.2f, 30);
+    }
+
+    private void moveXingxiuDestinyCalculation(LivingEntity target) {
+        this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 80, 2));
+        castSinglePercent(target, 0.15f, VfxType.STAR_RAIN, 0xFF77BBFF, 1.8f, 24);
+    }
+
+    private void moveXingxiuStarCage(LivingEntity target) {
+        addAreaEffect(target.position(), 6.0, 0.03f, 200, true, 2, 1, false, false,
+            VfxType.STAR_RAIN, 0xFF77BBFF, 2.1f, null, 0);
+    }
+
+    private void moveXingxiuStarBoard(LivingEntity target) {
+        addAreaEffect(this.position(), 12.0, 0.00f, 200, true, 1, 1, false, false,
+            VfxType.DOME_FIELD, 0xFF77BBFF, 2.4f, null, 0);
+        applyTimedModifier(Attributes.ATTACK_DAMAGE, "venerable_xingxiu_board_atk", 0.30, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+        applyTimedModifier(Attributes.ARMOR, "venerable_xingxiu_board_armor", 0.30, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+    }
+
+    private void moveXingxiuStarChain(LivingEntity target) {
+        for (int i = 0; i < 5; i++) {
+            castSinglePercent(target, 0.03f, VfxType.STAR_RAIN, 0xFF77BBFF, 1.1f, 10);
+        }
+        castSinglePercent(target, 0.10f, VfxType.STAR_RAIN, 0xFF77BBFF, 1.7f, 20);
+    }
+
+    private void moveXingxiuStarClone(LivingEntity target) {
+        summonPhantom(PhantomImmortalEntity.ImmortalType.STAR_SAGE, target, 0.60);
+        spawnCenterVfx(VfxType.STAR_RAIN, 0xFF77BBFF, 1.9f, 22);
+    }
+
+    private void moveXingxiuStarArmor(LivingEntity target) {
+        applyTimedModifier(Attributes.ARMOR, "venerable_xingxiu_star_armor", 0.50, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+        spawnCenterVfx(VfxType.AURA_RING, 0xFF77BBFF, 2.0f, 24);
+    }
+
+    private void moveXingxiuDestinyMark(LivingEntity target) {
+        addDamageMark(target, 200, 1.25f);
+        castSingleScaled(target, 1.0f, VfxType.STAR_RAIN, 0xFF77BBFF, 1.2f, 16);
+    }
+
+    private void moveXingxiuMeteorFall(LivingEntity target) {
+        castAreaPercent(target.position(), 8.0, 0.15f, VfxType.STAR_RAIN, 0xFF77BBFF, 2.2f, 30);
+        modifyTerrain(target.position(), DaoPath.STAR, 3);
+        spawnVfx(VfxType.SKY_STRIKE, target.getX(), target.getY() + 1.0, target.getZ(), 0.0, 1.0, 0.0, 0xFF77BBFF, 2.2f, 28);
+    }
+
+    private void moveXingxiuStarEye(LivingEntity target) {
+        addDamageMark(target, 120, 1.15f);
+        castSinglePercent(target, 0.08f, VfxType.STAR_RAIN, 0xFF77BBFF, 1.5f, 20);
+    }
+
+    private void moveXingxiuStarLock(LivingEntity target) {
+        target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 120, 4));
+        addAreaEffect(target.position(), 4.0, 0.06f, 60, true, 4, 1, false, false,
+            VfxType.STAR_RAIN, 0xFF77BBFF, 1.9f, null, 0);
+    }
+
+    private void moveXingxiuPredictedCounter(LivingEntity target) {
+        this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 80, 1));
+        castSinglePercent(target, 0.08f, VfxType.STAR_RAIN, 0xFF77BBFF, 1.4f, 18);
+    }
+
+    private void moveXingxiuStarGravity(LivingEntity target) {
+        addAreaEffect(target.position(), 8.0, 0.05f, 60, true, 2, 0, true, false,
+            VfxType.BLACK_HOLE, 0xFF77BBFF, 2.0f, DaoPath.STAR, 3);
+    }
+
+    private void moveXingxiuStarPressure(LivingEntity target) {
+        castAreaPercent(this.position(), 8.0, 0.05f, VfxType.STAR_RAIN, 0xFF77BBFF, 2.0f, 24);
+        for (LivingEntity living : getEnemies(this.position(), 8.0)) {
+            living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 80, 1));
+            living.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 80, 1));
         }
     }
 
-    private void springAutumnCicada() {
-        hasUsedCicada = true;
-        this.setHealth(this.getMaxHealth());
-
-        if (this.level() instanceof ServerLevel sl) {
-            sl.sendParticles(ParticleTypes.FLASH, getX(), getY() + 2.0, getZ(), 10, 2.0, 2.0, 2.0, 0.0);
-            sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 1.0, getZ(), 150, 8.0, 4.0, 8.0, 0.15);
-            sl.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, getX(), getY() + 0.5, getZ(), 60, 5.0, 2.0, 5.0, 0.08);
-            sl.sendParticles(ParticleTypes.ENCHANT, getX(), getY() + 1.5, getZ(), 80, 4.0, 3.0, 4.0, 0.1);
-        }
-        this.level().playSound(null, blockPosition(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.HOSTILE, 3.0f, 0.3f);
-        this.level().playSound(null, blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.HOSTILE, 2.5f, 0.3f);
-        this.level().playSound(null, blockPosition(), SoundEvents.ENDER_DRAGON_GROWL, SoundSource.HOSTILE, 2.5f, 0.5f);
-        List<ServerPlayer> viewers = this.level().getEntitiesOfClass(ServerPlayer.class, getBoundingBox().inflate(50.0));
-        for (ServerPlayer sp : viewers) {
-            VfxHelper.spawn(sp, VfxType.GLOW_BURST, getX(), getY() + 1, getZ(), 0, 1, 0, 0xFFFF0033, 3.0f, 40);
-        }
-
-        currentPhase = 1;
-        abilityCooldown = 60;
-        cicadaEnraged = true;
+    private void moveXingxiuStarEnd(LivingEntity target) {
+        castAreaPercent(this.position(), 20.0, 0.25f, VfxType.STAR_RAIN, 0xFF77BBFF, 3.0f, 40);
+        modifyTerrain(this.position(), DaoPath.STAR, 6);
+        spawnCenterVfx(VfxType.SKY_STRIKE, 0xFF77BBFF, 2.8f, 36);
     }
 
-    // 前有古人：红莲魔尊召唤历史蛊仙幻影作战
-    private void summonAncientPredecessors(LivingEntity target) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-
-        PhantomImmortalEntity.ImmortalType[] types = PhantomImmortalEntity.ImmortalType.values();
-        int count = 2 + random.nextInt(2);
-
-        sl.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, getX(), getY() + 2.0, getZ(), 80, 4.0, 3.0, 4.0, 0.05);
-        sl.sendParticles(ParticleTypes.FLASH, getX(), getY() + 2.0, getZ(), 5, 1.0, 1.0, 1.0, 0.0);
-        this.level().playSound(null, blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.HOSTILE, 2.5f, 0.3f);
-        this.level().playSound(null, blockPosition(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.HOSTILE, 1.5f, 0.5f);
-
-        for (int i = 0; i < count; i++) {
-            PhantomImmortalEntity.ImmortalType iType = types[random.nextInt(types.length)];
-            PhantomImmortalEntity phantom = new PhantomImmortalEntity(this.level(), this, iType);
-            double angle = (Math.PI * 2 * i / count) + random.nextDouble() * 0.3;
-            double dist = 3.0 + random.nextDouble() * 2.0;
-            double spawnX = getX() + Math.cos(angle) * dist;
-            double spawnZ = getZ() + Math.sin(angle) * dist;
-            phantom.setPos(spawnX, getY(), spawnZ);
-            if (target instanceof LivingEntity) phantom.setTarget(target);
-            sl.addFreshEntity(phantom);
-            sl.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, spawnX, getY() + 1.0, spawnZ, 30, 0.5, 1.5, 0.5, 0.03);
+    private void moveLetuEarthSpikeArray(LivingEntity target) {
+        castAreaPercent(this.position(), 8.0, 0.08f, VfxType.EARTH_PILLAR, 0xFFC8A86E, 2.0f, 24);
+        for (LivingEntity living : getEnemies(this.position(), 8.0)) {
+            living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 80, 2));
         }
-
-        if (target instanceof ServerPlayer sp) {
-            VfxHelper.spawn(sp, VfxType.PULSE_WAVE, getX(), getY() + 1, getZ(), 0, 1, 0, 0xFFFF0033, 2.5f, 35);
-        }
+        modifyTerrain(this.position(), DaoPath.EARTH, 3);
     }
 
-    // ======================== 乐土绝对防御 ========================
-
-    private void tickAbsoluteDefense() {
-        if (absoluteDefenseTicks > 0) {
-            absoluteDefenseTicks--;
-            if (this.tickCount % 10 == 0 && this.level() instanceof ServerLevel sl) {
-                sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 1.0, getZ(), 15, 2.0, 2.0, 2.0, 0.02);
-            }
-        }
+    private void moveLetuHeavenForce(LivingEntity target) {
+        castSinglePercent(target, 0.10f, VfxType.SKY_STRIKE, 0xFFC8A86E, 1.6f, 22);
+        knockbackTargets(target.position(), 3.0, 1.2, 0.4);
     }
 
-    // ======================== 杀招差异化执行 ========================
-
-    private void executeVenerableKillerMove(LivingEntity target) {
-        KillerMove move = availableMoves.get(this.random.nextInt(availableMoves.size()));
-        if (!(this.level() instanceof ServerLevel sl)) return;
-
-        float power = move.power();
-        float hpPercent = power / 150f;
-        float damage = target.getMaxHealth() * hpPercent;
-        damage = Math.min(damage, 60.0f);
-        damage = Math.max(damage, 10.0f);
-
-        if (cicadaEnraged) {
-            damage *= 1.5f;
-        }
-
-        DaoPath path = move.primaryPath();
-        ParticleOptions particle = getPathParticle(path);
-
-        sl.sendParticles(particle, this.getX(), this.getY() + 1.5, this.getZ(), 80, 4.0, 3.0, 4.0, 0.1);
-        sl.sendParticles(ParticleTypes.EXPLOSION, this.getX(), this.getY() + 1.0, this.getZ(), 8, 3.0, 1.5, 3.0, 0.08);
-
-        switch (move.moveType()) {
-            case ATTACK, ULTIMATE -> {
-                target.hurt(this.damageSources().magic(), damage);
-                List<LivingEntity> nearby = this.level().getEntitiesOfClass(LivingEntity.class,
-                    target.getBoundingBox().inflate(6.0), e -> e != this && e != target);
-                float splashDmg = damage * 0.5f;
-                for (LivingEntity e : nearby) {
-                    e.hurt(this.damageSources().magic(), splashDmg);
-                }
-                sl.sendParticles(ParticleTypes.CRIT, target.getX(), target.getY() + 1.0, target.getZ(), 40, 1.5, 1.5, 1.5, 0.4);
-            }
-            case DEFENSE, BUFF -> {
-                this.heal(this.getMaxHealth() * 0.20f);
-                sl.sendParticles(ParticleTypes.HEART, this.getX(), this.getY() + 2.0, this.getZ(), 20, 1.5, 1.5, 1.5, 0.1);
-                target.hurt(this.damageSources().magic(), damage * 0.6f);
-            }
-            case CONTROL, DEBUFF -> {
-                target.hurt(this.damageSources().magic(), damage * 0.7f);
-                target.setDeltaMovement(0, 0, 0);
-                target.hurtMarked = true;
-                sl.sendParticles(ParticleTypes.SCULK_SOUL, target.getX(), target.getY() + 1.0, target.getZ(), 40, 2.0, 1.5, 2.0, 0.03);
-            }
-            case MOVEMENT -> {
-                double angle = Math.atan2(target.getZ() - this.getZ(), target.getX() - this.getX());
-                double behindX = target.getX() - Math.cos(angle) * 2.5;
-                double behindZ = target.getZ() - Math.sin(angle) * 2.5;
-                sl.sendParticles(ParticleTypes.PORTAL, this.getX(), this.getY() + 1.0, this.getZ(), 40, 0.5, 1.5, 0.5, 0.15);
-                this.teleportTo(behindX, target.getY(), behindZ);
-                sl.sendParticles(ParticleTypes.PORTAL, this.getX(), this.getY() + 1.0, this.getZ(), 40, 0.5, 1.5, 0.5, 0.15);
-                target.hurt(this.damageSources().mobAttack(this), damage * 1.8f);
-            }
-            default -> target.hurt(this.damageSources().magic(), damage);
-        }
-
-        applyVenerableKillerMoveBonus(target, damage, sl);
-
-        this.level().playSound(null, this.blockPosition(), SoundEvents.ENDER_DRAGON_GROWL, SoundSource.HOSTILE, 2.0f, 0.8f);
-        killerMoveCooldown = move.cooldownTicks() / 5;
-        abilityCooldown = 20;
+    private void moveLetuEarthDomain(LivingEntity target) {
+        addAreaEffect(this.position(), 10.0, 0.02f, 200, true, 2, 0, false, false,
+            VfxType.EARTH_PILLAR, 0xFFC8A86E, 2.4f, DaoPath.EARTH, 3);
     }
 
-    private void applyVenerableKillerMoveBonus(LivingEntity target, float damage, ServerLevel sl) {
-        switch (venerableType) {
-            case YUAN_SHI -> {
-                List<LivingEntity> mobs = this.level().getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(12.0),
-                    e -> e != this && !(e instanceof Player) && e instanceof net.minecraft.world.entity.Mob);
-                for (LivingEntity entity : mobs) {
-                    if (entity instanceof net.minecraft.world.entity.Mob mob && this.getTarget() != null) {
-                        mob.setTarget(this.getTarget());
-                    }
-                }
-            }
-            case XING_XIU -> {
-                double angle = random.nextDouble() * Math.PI * 2;
-                double dist = 12.0 + random.nextDouble() * 4.0;
-                double newX = target.getX() + Math.cos(angle) * dist;
-                double newZ = target.getZ() + Math.sin(angle) * dist;
-                sl.sendParticles(ParticleTypes.PORTAL, getX(), getY() + 1.0, getZ(), 30, 0.5, 1.0, 0.5, 0.1);
-                this.teleportTo(newX, getY(), newZ);
-                sl.sendParticles(ParticleTypes.PORTAL, getX(), getY() + 1.0, getZ(), 30, 0.5, 1.0, 0.5, 0.1);
-            }
-            case YUAN_LIAN -> {
-                this.heal(this.getMaxHealth() * 0.20f);
-                sl.sendParticles(ParticleTypes.HEART, getX(), getY() + 2.0, getZ(), 10, 1.0, 1.0, 1.0, 0.05);
-            }
-            case WU_JI -> {
-                target.setDeltaMovement(0, 0, 0);
-                target.hurtMarked = true;
-                lawFreezeTicks = 60;
-                List<Player> nearby = this.level().getEntitiesOfClass(Player.class, getBoundingBox().inflate(8.0));
-                for (Player player : nearby) {
-                    AttributeInstance atkSpeed = player.getAttribute(Attributes.ATTACK_SPEED);
-                    if (atkSpeed != null) {
-                        atkSpeed.removeModifier(LAW_SLOW_MOD);
-                        atkSpeed.addTransientModifier(new AttributeModifier(LAW_SLOW_MOD, -0.6, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
-                    }
-                }
-                sl.sendParticles(ParticleTypes.ENCHANT, target.getX(), target.getY() + 1.0, target.getZ(), 40, 1.0, 2.0, 1.0, 0.1);
-            }
-            case KUANG_MAN -> {
-                double knockDx = target.getX() - getX();
-                double knockDz = target.getZ() - getZ();
-                double dist = Math.sqrt(knockDx * knockDx + knockDz * knockDz);
-                if (dist > 0.001) {
-                    target.knockback(4.0, -knockDx / dist, -knockDz / dist);
-                }
-                target.setDeltaMovement(target.getDeltaMovement().add(0, 1.0, 0));
-                target.hurtMarked = true;
-            }
-            case DAO_TIAN -> {
-                this.setInvisible(true);
-                invisTicks = 40;
-                visibleTimer = 0;
-                double behindAngle = Math.atan2(target.getZ() - getZ(), target.getX() - getX());
-                double bx = target.getX() - Math.cos(behindAngle) * 2.0;
-                double bz = target.getZ() - Math.sin(behindAngle) * 2.0;
-                sl.sendParticles(ParticleTypes.PORTAL, getX(), getY() + 1.0, getZ(), 20, 0.5, 1.0, 0.5, 0.1);
-                this.teleportTo(bx, target.getY(), bz);
-            }
-            case JU_YANG -> {
-                if (target instanceof ServerPlayer sp) {
-                    VfxHelper.spawn(sp, VfxType.SKY_STRIKE, target.getX(), target.getY(), target.getZ(), 0, 1, 0, 0xFFFF8800, 2.0f, 30);
-                }
-                target.hurt(this.damageSources().magic(), target.getMaxHealth() * 0.10f);
-            }
-            case YOU_HUN -> {
-                this.heal(damage * 0.50f);
-                sl.sendParticles(ParticleTypes.SOUL, getX(), getY() + 1.5, getZ(), 20, 1.0, 1.0, 1.0, 0.05);
-            }
-            case LE_TU -> {
-                List<LivingEntity> allies = this.level().getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(10.0),
-                    e -> e != this && !(e instanceof Player));
-                for (LivingEntity ally : allies) {
-                    ally.heal(ally.getMaxHealth() * 0.10f);
-                }
-                this.heal(this.getMaxHealth() * 0.10f);
-                sl.sendParticles(ParticleTypes.HEART, getX(), getY() + 2.0, getZ(), 15, 5.0, 1.0, 5.0, 0.03);
-            }
-            case HONG_LIAN -> {
-                timeSlowTicks = 60;
-                List<LivingEntity> nearby = this.level().getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(8.0), e -> e != this);
-                for (LivingEntity entity : nearby) {
-                    entity.setDeltaMovement(entity.getDeltaMovement().multiply(0.1, 0.5, 0.1));
-                    entity.hurtMarked = true;
-                }
-                sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 1.0, getZ(), 40, 4.0, 2.0, 4.0, 0.02);
-                this.level().playSound(null, blockPosition(), SoundEvents.BELL_BLOCK, SoundSource.HOSTILE, 2.0f, 0.2f);
-            }
+    private void moveLetuEarthBarrier(LivingEntity target) {
+        applyTimedModifier(Attributes.ARMOR, "venerable_letu_barrier", 2.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+        spawnCenterVfx(VfxType.EARTH_PILLAR, 0xFFC8A86E, 2.2f, 28);
+    }
+
+    private void moveLetuHeavenEarthFormation(LivingEntity target) {
+        addAreaEffect(this.position(), 12.0, 0.00f, 200, true, 1, 1, false, false,
+            VfxType.DOME_FIELD, 0xFFC8A86E, 2.6f, DaoPath.RULE, 3);
+        applyTimedModifier(Attributes.ARMOR, "venerable_letu_formation", 0.50, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+    }
+
+    private void moveLetuAllToEarth(LivingEntity target) {
+        castAreaPercent(this.position(), 8.0, 0.20f, VfxType.EARTH_PILLAR, 0xFFC8A86E, 2.4f, 28);
+        modifyTerrain(this.position(), DaoPath.EARTH, 4);
+    }
+
+    private void moveLetuEarthHeavenSplit(LivingEntity target) {
+        castAreaPercent(this.position(), 8.0, 0.15f, VfxType.SKY_STRIKE, 0xFFC8A86E, 2.3f, 28);
+        modifyTerrain(target.position(), DaoPath.EARTH, 3);
+    }
+
+    private void moveLetuHeavenPunish(LivingEntity target) {
+        castSinglePercent(target, 0.12f, VfxType.SKY_STRIKE, 0xFFC8A86E, 1.8f, 24);
+        spawnLightning(target.position());
+        this.level().playSound(null, blockPosition(), SoundEvents.TRIDENT_THUNDER.value(), SoundSource.HOSTILE, 1.5f, 0.9f);
+    }
+
+    private void moveLetuEarthShield(LivingEntity target) {
+        modifyTerrain(this.position(), DaoPath.EARTH, 3);
+        spawnCenterVfx(VfxType.EARTH_PILLAR, 0xFFC8A86E, 2.0f, 24);
+    }
+
+    private void moveLetuHeavenPillar(LivingEntity target) {
+        castSinglePercent(target, 0.08f, VfxType.EARTH_PILLAR, 0xFFC8A86E, 1.6f, 22);
+        knockbackTargets(target.position(), 4.0, 1.2, 0.3);
+    }
+
+    private void moveLetuEarthPrison(LivingEntity target) {
+        addAreaEffect(target.position(), 4.0, 0.03f, 120, true, 6, 1, false, false,
+            VfxType.EARTH_PILLAR, 0xFFC8A86E, 2.0f, DaoPath.EARTH, 2);
+    }
+
+    private void moveLetuHeavenMercy(LivingEntity target) {
+        if (this.getHealth() < this.getMaxHealth() * 0.20f) {
+            this.mercyTicks = 100;
+            spawnCenterVfx(VfxType.HEAL_SPIRAL, 0xFFC8A86E, 2.2f, 30);
+        } else {
+            castSingleScaled(target, 1.0f, VfxType.SKY_STRIKE, 0xFFC8A86E, 1.2f, 14);
         }
     }
 
-    private ParticleOptions getPathParticle(DaoPath path) {
-        if (path == null) return ParticleTypes.END_ROD;
-        return switch (path) {
-            case FIRE -> ParticleTypes.FLAME;
-            case ICE -> ParticleTypes.SNOWFLAKE;
-            case LIGHTNING -> ParticleTypes.ELECTRIC_SPARK;
-            case SOUL, DARK -> ParticleTypes.SCULK_SOUL;
-            case LIGHT, STAR -> ParticleTypes.END_ROD;
-            case BLOOD -> ParticleTypes.DAMAGE_INDICATOR;
-            case POISON -> ParticleTypes.ITEM_SLIME;
-            case WIND, FLIGHT -> ParticleTypes.CLOUD;
-            case WATER -> ParticleTypes.SPLASH;
-            case WOOD -> ParticleTypes.HAPPY_VILLAGER;
-            case TIME, SPACE -> ParticleTypes.PORTAL;
-            case STRENGTH, EARTH -> ParticleTypes.CRIT;
-            case SHADOW -> ParticleTypes.SMOKE;
-            default -> ParticleTypes.ENCHANT;
-        };
-    }
-
-    // ======================== 蛊虫装备与杀招系统 ========================
-
-    private void selectVenerableEquipment(VenerableType type) {
-        equippedGu.clear();
-        switch (type) {
-            case YUAN_SHI -> {
-                equippedGu.add(GuRegistry.id("true_qi_gu"));
-                equippedGu.add(GuRegistry.id("qi_shield_gu"));
-                equippedGu.add(GuRegistry.id("profound_qi_gu"));
-                equippedGu.add(GuRegistry.id("enslave_worm_gu"));
-                equippedGu.add(GuRegistry.id("enslave_shield_gu"));
-                equippedGu.add(GuRegistry.id("feast_gu"));
-                equippedGu.add(GuRegistry.id("enslave_snake_gu"));
-            }
-            case XING_XIU -> {
-                equippedGu.add(GuRegistry.id("thought_gu"));
-                equippedGu.add(GuRegistry.id("mind_guard_gu"));
-                equippedGu.add(GuRegistry.id("heavens_eye_gu"));
-                equippedGu.add(GuRegistry.id("starlight_gu"));
-                equippedGu.add(GuRegistry.id("star_shield_gu"));
-                equippedGu.add(GuRegistry.id("star_fall_gu"));
-            }
-            case YUAN_LIAN -> {
-                equippedGu.add(GuRegistry.id("vitality_grass_gu"));
-                equippedGu.add(GuRegistry.id("vitality_leaf_gu"));
-                equippedGu.add(GuRegistry.id("self_heal_gu"));
-                equippedGu.add(GuRegistry.id("flesh_bone_gu"));
-                equippedGu.add(GuRegistry.id("stealth_scales_gu"));
-                equippedGu.add(GuRegistry.id("moonlight_gu"));
-                equippedGu.add(GuRegistry.id("white_boar_gu"));
-            }
-            case WU_JI -> {
-                equippedGu.add(GuRegistry.id("rule_gu"));
-                equippedGu.add(GuRegistry.id("order_gu"));
-                equippedGu.add(GuRegistry.id("supreme_law_gu"));
-                equippedGu.add(GuRegistry.id("seal_gu"));
-                equippedGu.add(GuRegistry.id("restriction_gu"));
-                equippedGu.add(GuRegistry.id("heaven_seal_gu"));
-            }
-            case KUANG_MAN -> {
-                equippedGu.add(GuRegistry.id("bear_strength_gu"));
-                equippedGu.add(GuRegistry.id("savage_bull_gu"));
-                equippedGu.add(GuRegistry.id("taishan_gu"));
-                equippedGu.add(GuRegistry.id("giant_strength_gu"));
-                equippedGu.add(GuRegistry.id("morph_gu"));
-                equippedGu.add(GuRegistry.id("heaven_change_gu"));
-                equippedGu.add(GuRegistry.id("shrink_ground_gu"));
-                equippedGu.add(GuRegistry.id("enslave_snake_gu"));
-            }
-            case DAO_TIAN -> {
-                equippedGu.add(GuRegistry.id("steal_qi_gu"));
-                equippedGu.add(GuRegistry.id("steal_hide_gu"));
-                equippedGu.add(GuRegistry.id("heaven_steal_gu"));
-                equippedGu.add(GuRegistry.id("displacement_gu"));
-                equippedGu.add(GuRegistry.id("warp_gu"));
-                equippedGu.add(GuRegistry.id("space_barrier_gu"));
-            }
-            case JU_YANG -> {
-                equippedGu.add(GuRegistry.id("lucky_gu"));
-                equippedGu.add(GuRegistry.id("misfortune_ward_gu"));
-                equippedGu.add(GuRegistry.id("heavens_secret_gu"));
-                equippedGu.add(GuRegistry.id("blood_spear_gu"));
-                equippedGu.add(GuRegistry.id("blood_sacrifice_gu"));
-                equippedGu.add(GuRegistry.id("blood_shield_gu"));
-                equippedGu.add(GuRegistry.id("gold_light_worm"));
-            }
-            case YOU_HUN -> {
-                equippedGu.add(GuRegistry.id("soul_search_gu"));
-                equippedGu.add(GuRegistry.id("soul_shield_gu"));
-                equippedGu.add(GuRegistry.id("soul_crush_gu"));
-                equippedGu.add(GuRegistry.id("shadow_cloak_gu"));
-                equippedGu.add(GuRegistry.id("shadow_blade_gu"));
-                equippedGu.add(GuRegistry.id("shadow_step_gu"));
-            }
-            case LE_TU -> {
-                equippedGu.add(GuRegistry.id("earth_wall_gu"));
-                equippedGu.add(GuRegistry.id("earth_spike_gu"));
-                equippedGu.add(GuRegistry.id("mountain_guard_gu"));
-                equippedGu.add(GuRegistry.id("heaven_will_gu"));
-                equippedGu.add(GuRegistry.id("heaven_seal_gu"));
-                equippedGu.add(GuRegistry.id("heaven_decree_gu"));
-            }
-            case HONG_LIAN -> {
-                equippedGu.add(GuRegistry.id("time_decel_gu"));
-                equippedGu.add(GuRegistry.id("time_shield_gu"));
-                equippedGu.add(GuRegistry.id("time_reversal_gu"));
-                equippedGu.add(GuRegistry.id("spring_autumn_cicada"));
-                equippedGu.add(GuRegistry.id("warp_gu"));
-                equippedGu.add(GuRegistry.id("space_barrier_gu"));
-            }
+    private void moveLetuEarthQuake(LivingEntity target) {
+        castAreaPercent(this.position(), 12.0, 0.10f, VfxType.IMPACT_BURST, 0xFFC8A86E, 2.4f, 30);
+        for (LivingEntity living : getEnemies(this.position(), 12.0)) {
+            living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 20, 7));
         }
     }
 
-    private void matchVenerableMoves() {
-        availableMoves.clear();
-        DaoPath primaryPath = venerableType.getPrimaryPath();
-        DaoPath secondaryPath = venerableType.getSecondaryPath();
+    private void moveLetuHeavenJudgment(LivingEntity target) {
+        lineStrike(target, 16.0, 0.15f, VfxType.ENERGY_BEAM, 0xFFC8A86E);
+        addRoot(target, 40);
+    }
 
-        for (KillerMove move : KillerMoveRegistry.getAll()) {
-            if (move.primaryPath() != primaryPath && move.primaryPath() != secondaryPath) continue;
-            boolean hasAllGu = true;
-            for (ResourceLocation reqGu : move.getAllRequiredGu()) {
-                if (!equippedGu.contains(reqGu)) {
-                    hasAllGu = false;
-                    break;
-                }
+    private void moveLetuUnbreakWall(LivingEntity target) {
+        this.absoluteInvulTicks = 60;
+        spawnCenterVfx(VfxType.DOME_FIELD, 0xFFC8A86E, 2.4f, 30);
+    }
+
+    private void moveLetuAllReturnOrigin(LivingEntity target) {
+        healPercent(0.15f);
+        for (UUID id : this.summonIds) {
+            if (!(this.level() instanceof ServerLevel sl)) {
+                continue;
             }
-            if (hasAllGu) {
-                availableMoves.add(move);
+            Entity entity = sl.getEntity(id);
+            if (entity instanceof LivingEntity living && living.isAlive()) {
+                living.heal((float) (living.getMaxHealth() * 0.08f));
             }
         }
+        spawnCenterVfx(VfxType.HEAL_SPIRAL, 0xFFC8A86E, 2.2f, 30);
+    }
 
-        if (availableMoves.isEmpty()) {
-            for (KillerMove move : KillerMoveRegistry.getAll()) {
-                if (move.primaryPath() == primaryPath || move.primaryPath() == secondaryPath) {
-                    availableMoves.add(move);
-                    if (availableMoves.size() >= 3) break;
-                }
-            }
+    private void moveLetuEarthSpiritSummon(LivingEntity target) {
+        summonPhantom(PhantomImmortalEntity.ImmortalType.QI_MASTER, target, 0.50);
+        summonPhantom(PhantomImmortalEntity.ImmortalType.QI_MASTER, target, 0.50);
+        spawnCenterVfx(VfxType.EARTH_PILLAR, 0xFFC8A86E, 2.2f, 28);
+    }
+
+    private void moveLetuUnityOfHeavenEarth(LivingEntity target) {
+        castAreaPercent(this.position(), 12.0, 0.25f, VfxType.SKY_STRIKE, 0xFFC8A86E, 2.8f, 36);
+        modifyTerrain(this.position(), DaoPath.EARTH, 5);
+    }
+
+    private void moveYuanshiQiBlast(LivingEntity target) {
+        castSinglePercent(target, 0.10f, VfxType.QI_STORM, 0xFFFFD700, 1.6f, 20);
+        knockbackTargets(target.position(), 3.0, 1.0, 0.2);
+    }
+
+    private void moveYuanshiQiBarrage(LivingEntity target) {
+        for (int i = 0; i < 8; i++) {
+            castSinglePercent(target, 0.02f, VfxType.QI_STORM, 0xFFFFD700, 1.0f, 8);
         }
     }
 
-    // ======================== 通用系统 ========================
-
-    private void onPhaseTransition(int oldPhase, int newPhase) {
-        if (!(this.level() instanceof ServerLevel sl)) return;
-
-        if (oldPhase == 1 && newPhase == 2) {
-            sl.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, getX(), getY() + 1.0, getZ(), 50, 2.0, 2.0, 2.0, 0.05);
-            this.level().playSound(null, blockPosition(), SoundEvents.WITHER_SPAWN, SoundSource.HOSTILE, 2.0f, 1.0f);
-            AttributeInstance speedAttr = this.getAttribute(Attributes.MOVEMENT_SPEED);
-            if (speedAttr != null) {
-                speedAttr.removeModifier(PHASE_SPEED_MOD);
-                speedAttr.addTransientModifier(new AttributeModifier(PHASE_SPEED_MOD, 0.06, AttributeModifier.Operation.ADD_VALUE));
-            }
-            phaseSpeedBoostTicks = 600;
-
-            if (venerableType == VenerableType.KUANG_MAN) {
-                applyMod(Attributes.ATTACK_DAMAGE, SAVAGE_BOOST_MOD, venerableType.attackDamage * 0.20);
-                applyMod(Attributes.MOVEMENT_SPEED, SAVAGE_SPEED_MOD, 0.04);
-                sl.sendParticles(ParticleTypes.EXPLOSION_EMITTER, getX(), getY() + 1.0, getZ(), 2, 1.0, 1.0, 1.0, 0.0);
-                this.level().playSound(null, blockPosition(), SoundEvents.RAVAGER_ROAR, SoundSource.HOSTILE, 2.5f, 0.5f);
-            }
-        } else if (oldPhase == 2 && newPhase == 3) {
-            sl.sendParticles(ParticleTypes.FLASH, getX(), getY() + 1.5, getZ(), 5, 0.5, 0.5, 0.5, 0.0);
-            sl.sendParticles(ParticleTypes.EXPLOSION, getX(), getY() + 1.0, getZ(), 10, 3.0, 2.0, 3.0, 0.1);
-            this.level().playSound(null, blockPosition(), SoundEvents.ENDER_DRAGON_GROWL, SoundSource.HOSTILE, 2.5f, 0.5f);
-
-            if (venerableType == VenerableType.KUANG_MAN) {
-                applyMod(Attributes.ATTACK_DAMAGE, SAVAGE_BOOST_MOD, venerableType.attackDamage * 0.40);
-                applyMod(Attributes.MOVEMENT_SPEED, SAVAGE_SPEED_MOD, 0.08);
-            }
+    private void moveYuanshiQiSuppress(LivingEntity target) {
+        castAreaPercent(this.position(), 8.0, 0.05f, VfxType.QI_STORM, 0xFFFFD700, 1.8f, 24);
+        for (LivingEntity living : getEnemies(this.position(), 8.0)) {
+            living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 80, 2));
         }
     }
 
-    private void tickPhaseSpeed() {
-        if (phaseSpeedBoostTicks > 0) {
-            phaseSpeedBoostTicks--;
-            if (phaseSpeedBoostTicks == 0) {
-                AttributeInstance speedAttr = this.getAttribute(Attributes.MOVEMENT_SPEED);
-                if (speedAttr != null) speedAttr.removeModifier(PHASE_SPEED_MOD);
+    private void moveYuanshiThreeQiCombo(LivingEntity target) {
+        castSinglePercent(target, 0.06f, VfxType.QI_STORM, 0xFFFFD700, 1.2f, 10);
+        castSinglePercent(target, 0.06f, VfxType.QI_STORM, 0xFFFFD700, 1.2f, 10);
+        castSinglePercent(target, 0.06f, VfxType.QI_STORM, 0xFFFFD700, 1.2f, 10);
+        knockbackTargets(target.position(), 3.0, 1.0, 0.3);
+    }
+
+    private void moveYuanshiYinyangSwap(LivingEntity target) {
+        float selfRatio = this.getHealth() / this.getMaxHealth();
+        float targetRatio = target.getHealth() / target.getMaxHealth();
+        this.setHealth(Math.max(1.0f, this.getMaxHealth() * targetRatio));
+        target.setHealth(Math.max(1.0f, target.getMaxHealth() * selfRatio));
+        spawnCenterVfx(VfxType.QI_STORM, 0xFFFFD700, 2.2f, 28);
+    }
+
+    private void moveYuanshiQiBarrier(LivingEntity target) {
+        clearProjectiles(8.0);
+        applyTimedModifier(Attributes.ARMOR, "venerable_yuanshi_qi_barrier", 0.30, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+        spawnCenterVfx(VfxType.QI_STORM, 0xFFFFD700, 2.2f, 28);
+    }
+
+    private void moveYuanshiPressure(LivingEntity target) {
+        for (LivingEntity living : getEnemies(this.position(), 8.0)) {
+            living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 80, 1));
+        }
+        spawnCenterVfx(VfxType.QI_STORM, 0xFFFFD700, 1.8f, 22);
+    }
+
+    private void moveYuanshiQiTornado(LivingEntity target) {
+        addAreaEffect(this.position(), 6.0, 0.08f, 80, true, 1, 0, true, false,
+            VfxType.TORNADO, 0xFFFFD700, 2.0f, null, 0);
+    }
+
+    private void moveYuanshiYinyangStrike(LivingEntity target) {
+        castSinglePercent(target, 0.08f, VfxType.QI_STORM, 0xFFFFD700, 1.4f, 16);
+        target.setRemainingFireTicks(60);
+        target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 1));
+    }
+
+    private void moveYuanshiFiveForbiddenLight(LivingEntity target) {
+        for (int i = 0; i < 5; i++) {
+            castSinglePercent(target, 0.04f, VfxType.ENERGY_BEAM, 0xFFFFD700, 1.0f, 10);
+        }
+        modifyTerrain(target.position(), DaoPath.RULE, 3);
+        addRoot(target, 40);
+    }
+
+    private void moveYuanshiQiGuard(LivingEntity target) {
+        applyTimedModifier(Attributes.ARMOR, "venerable_yuanshi_qi_guard_armor", 0.30, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+        spawnCenterVfx(VfxType.QI_STORM, 0xFFFFD700, 2.0f, 26);
+    }
+
+    private void moveYuanshiTaichingCleanse(LivingEntity target) {
+        this.removeAllEffects();
+        healPercent(0.10f);
+        spawnCenterVfx(VfxType.QI_STORM, 0xFFFFD700, 2.0f, 24);
+    }
+
+    private void moveYuanshiYinyangHarmony(LivingEntity target) {
+        applyTimedModifier(Attributes.ATTACK_DAMAGE, "venerable_yuanshi_harmony_atk", 0.20, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+        applyTimedModifier(Attributes.ARMOR, "venerable_yuanshi_harmony_armor", 0.20, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+        applyTimedModifier(Attributes.MOVEMENT_SPEED, "venerable_yuanshi_harmony_speed", 0.20, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+        spawnCenterVfx(VfxType.QI_STORM, 0xFFFFD700, 2.2f, 28);
+    }
+
+    private void moveYuanshiQiPierce(LivingEntity target) {
+        lineStrike(target, 16.0, 0.12f, VfxType.ENERGY_BEAM, 0xFFFFD700);
+    }
+
+    private void moveYuanshiAllQiAbsorb(LivingEntity target) {
+        castAreaPercent(this.position(), 8.0, 0.05f, VfxType.QI_STORM, 0xFFFFD700, 2.0f, 24);
+        healPercent(0.05f);
+    }
+
+    private void moveYuanshiYinyangGrind(LivingEntity target) {
+        addAreaEffect(this.position(), 8.0, 0.03f, 200, true, 1, 1, true, false,
+            VfxType.TORNADO, 0xFFFFD700, 2.2f, DaoPath.RULE, 3);
+    }
+
+    private void moveYuanshiPrimalQi(LivingEntity target) {
+        applyTimedModifier(Attributes.ATTACK_DAMAGE, "venerable_yuanshi_primal_atk", 0.50, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+        applyTimedModifier(Attributes.ARMOR, "venerable_yuanshi_primal_armor", 0.30, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+        spawnCenterVfx(VfxType.QI_STORM, 0xFFFFD700, 2.6f, 32);
+    }
+
+    private void moveYuanshiOriginStrike(LivingEntity target) {
+        castSinglePercent(target, 0.30f, VfxType.QI_STORM, 0xFFFFD700, 2.6f, 36);
+        castAreaPercent(target.position(), 8.0, 0.15f, VfxType.SKY_STRIKE, 0xFFFFD700, 2.2f, 28);
+        modifyTerrain(target.position(), DaoPath.RULE, 4);
+    }
+
+    private void moveHonglianTimeBurst(LivingEntity target) {
+        castSinglePercent(target, 0.10f, VfxType.TIME_DISTORTION, 0xFFFF0033, 1.6f, 20);
+        applyTimedModifier(Attributes.MOVEMENT_SPEED, "venerable_honglian_burst_speed", 0.50, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 120);
+    }
+
+    private void moveHonglianTimeFreeze(LivingEntity target) {
+        this.hongLianFreezeTicks = 60;
+        spawnCenterVfx(VfxType.TIME_DISTORTION, 0xFFFF0033, 2.6f, 32);
+    }
+
+    private void moveHonglianFateBreak(LivingEntity target) {
+        target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 200, 2));
+        target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 200, 1));
+        castSingleScaled(target, 1.0f, VfxType.TIME_DISTORTION, 0xFFFF0033, 1.4f, 18);
+    }
+
+    private void moveHonglianAncientPredecessor(LivingEntity target) {
+        summonPhantom(PhantomImmortalEntity.ImmortalType.QI_MASTER, target, 1.00);
+        spawnCenterVfx(VfxType.TIME_DISTORTION, 0xFFFF0033, 1.9f, 24);
+    }
+
+    private void moveHonglianSpringCicada(LivingEntity target) {
+        this.hongLianCicadaUsed = false;
+        spawnCenterVfx(VfxType.TIME_DISTORTION, 0xFFFF0033, 2.3f, 30);
+    }
+
+    private void moveHonglianTimeRewind(LivingEntity target) {
+        healPercent(Math.min(0.30f, this.recentDamagePercent));
+        spawnCenterVfx(VfxType.TIME_DISTORTION, 0xFFFF0033, 2.2f, 28);
+    }
+
+    private void moveHonglianPastPresent(LivingEntity target) {
+        for (int i = 0; i < 6; i++) {
+            summonPhantom(PhantomImmortalEntity.ImmortalType.QI_MASTER, target, 0.80);
+        }
+        addAreaEffect(this.position(), 10.0, 0.08f, 100, true, 1, 1, false, false,
+            VfxType.TIME_DISTORTION, 0xFFFF0033, 2.6f, null, 0);
+    }
+
+    private void moveHonglianRedLotusFire(LivingEntity target) {
+        castAreaPercent(this.position(), 8.0, 0.10f, VfxType.TIME_DISTORTION, 0xFFFF0033, 2.0f, 24);
+        addAreaEffect(this.position(), 8.0, 0.03f, 100, true, 1, 0, false, false,
+            VfxType.TIME_DISTORTION, 0xFFFF0033, 1.8f, DaoPath.FIRE, 3);
+    }
+
+    private void moveHonglianTimeReversePosition(LivingEntity target) {
+        Vec3 oldPos = getPositionAgo(target, 60);
+        target.teleportTo(oldPos.x, oldPos.y, oldPos.z);
+        castSinglePercent(target, 0.08f, VfxType.TIME_DISTORTION, 0xFFFF0033, 1.5f, 20);
+    }
+
+    private void moveHonglianSpaceFracture(LivingEntity target) {
+        castAreaPercent(target.position(), 6.0, 0.10f, VfxType.SPATIAL_TEAR, 0xFFFF0033, 2.0f, 24);
+        modifyTerrain(target.position(), DaoPath.FIRE, 3);
+        spawnVfx(VfxType.TIME_DISTORTION, target.getX(), target.getY() + 1.0, target.getZ(), 0.0, 1.0, 0.0, 0xFFFF0033, 1.6f, 20);
+    }
+
+    private void moveHonglianTimeHaste(LivingEntity target) {
+        applyTimedModifier(Attributes.ATTACK_DAMAGE, "venerable_honglian_haste_atk", 1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+        applyTimedModifier(Attributes.MOVEMENT_SPEED, "venerable_honglian_haste_speed", 0.50, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+        spawnCenterVfx(VfxType.TIME_DISTORTION, 0xFFFF0033, 2.2f, 28);
+    }
+
+    private void moveHonglianRedLotusDomain(LivingEntity target) {
+        addAreaEffect(this.position(), 10.0, 0.03f, 200, true, 2, 1, false, false,
+            VfxType.TIME_DISTORTION, 0xFFFF0033, 2.4f, DaoPath.FIRE, 4);
+    }
+
+    private void moveHonglianTimeParadox(LivingEntity target) {
+        addDamageMark(target, 60, 2.0f);
+        castSingleScaled(target, 1.0f, VfxType.TIME_DISTORTION, 0xFFFF0033, 1.4f, 18);
+    }
+
+    private void moveHonglianSpaceBanish(LivingEntity target) {
+        Vec3 dir = target.position().subtract(this.position()).normalize();
+        Vec3 exile = target.position().add(dir.scale(20.0));
+        target.teleportTo(exile.x, exile.y, exile.z);
+        spawnVfx(VfxType.SPATIAL_TEAR, exile.x, exile.y + 1.0, exile.z, 0.0, 1.0, 0.0, 0xFFFF0033, 1.8f, 22);
+    }
+
+    private void moveHonglianTimeSpear(LivingEntity target) {
+        lineStrike(target, 16.0, 0.12f, VfxType.ENERGY_BEAM, 0xFFFF0033);
+        spawnVfx(VfxType.TIME_DISTORTION, target.getX(), target.getY() + 1.0, target.getZ(), 0.0, 1.0, 0.0, 0xFFFF0033, 1.6f, 22);
+    }
+
+    private void moveHonglianRedLotusRage(LivingEntity target) {
+        if (this.currentPhase >= 3) {
+            this.hongLianRageTicks = 100;
+            spawnCenterVfx(VfxType.TIME_DISTORTION, 0xFFFF0033, 2.6f, 34);
+        } else {
+            castSingleScaled(target, 1.0f, VfxType.TIME_DISTORTION, 0xFFFF0033, 1.2f, 14);
+        }
+    }
+
+    private void moveHonglianCausalityReverse(LivingEntity target) {
+        float pct = Math.max(0.02f, Math.min(0.30f, this.recentDamagePercent * 2.0f));
+        castSinglePercent(target, pct, VfxType.TIME_DISTORTION, 0xFFFF0033, 2.0f, 26);
+    }
+
+    private void moveHonglianSpaceTimeCollapse(LivingEntity target) {
+        castAreaPercent(this.position(), 12.0, 0.25f, VfxType.TIME_DISTORTION, 0xFFFF0033, 3.0f, 42);
+        modifyTerrain(this.position(), DaoPath.TIME, 5);
+        this.hongLianFreezeTicks = 100;
+        spawnCenterVfx(VfxType.SPATIAL_TEAR, 0xFFFF0033, 2.8f, 38);
+    }
+
+    private void moveYuanlianVineWhip(LivingEntity target) {
+        castSinglePercent(target, 0.08f, VfxType.VINE_CAGE, 0xFF33CC33, 1.4f, 18);
+        target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 1));
+    }
+
+    private void moveYuanlianVineBind(LivingEntity target) {
+        addRoot(target, 60);
+        castSinglePercent(target, 0.09f, VfxType.VINE_CAGE, 0xFF33CC33, 1.6f, 22);
+    }
+
+    private void moveYuanlianSporeRain(LivingEntity target) {
+        castAreaPercent(this.position(), 8.0, 0.06f, VfxType.VINE_CAGE, 0xFF33CC33, 2.0f, 24);
+        addAreaEffect(this.position(), 8.0, 0.02f, 100, true, 1, 0, false, false,
+            VfxType.VINE_CAGE, 0xFF33CC33, 1.8f, DaoPath.WOOD, 3);
+    }
+
+    private void moveYuanlianGenesisLotus(LivingEntity target) {
+        healPercent(0.20f);
+        castAreaPercent(this.position(), 8.0, 0.10f, VfxType.HEAL_SPIRAL, 0xFF33CC33, 2.4f, 30);
+        spawnCenterVfx(VfxType.VINE_CAGE, 0xFF33CC33, 2.0f, 24);
+    }
+
+    private void moveYuanlianPaintPrison(LivingEntity target) {
+        target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 100, 0));
+        addAreaEffect(target.position(), 4.0, 0.05f, 100, true, 3, 1, false, false,
+            VfxType.VINE_CAGE, 0xFF33CC33, 1.8f, null, 0);
+    }
+
+    private void moveYuanlianRegeneration(LivingEntity target) {
+        healPercent(this.currentPhase == 1 ? 0.03f : (this.currentPhase == 2 ? 0.05f : 0.08f));
+        spawnCenterVfx(VfxType.HEAL_SPIRAL, 0xFF33CC33, 1.8f, 22);
+    }
+
+    private void moveYuanlianVineWall(LivingEntity target) {
+        modifyTerrain(this.position(), DaoPath.WOOD, 3);
+        spawnCenterVfx(VfxType.VINE_CAGE, 0xFF33CC33, 2.2f, 26);
+    }
+
+    private void moveYuanlianPaintClone(LivingEntity target) {
+        summonPhantom(PhantomImmortalEntity.ImmortalType.STAR_SAGE, target, 0.30);
+        summonPhantom(PhantomImmortalEntity.ImmortalType.STAR_SAGE, target, 0.30);
+        spawnCenterVfx(VfxType.SHADOW_FADE, 0xFF33CC33, 1.8f, 22);
+    }
+
+    private void moveYuanlianWoodRevive(LivingEntity target) {
+        healPercent(0.05f);
+        for (UUID id : this.summonIds) {
+            if (!(this.level() instanceof ServerLevel sl)) {
+                continue;
+            }
+            Entity entity = sl.getEntity(id);
+            if (entity instanceof LivingEntity living && living.isAlive()) {
+                living.heal((float) (living.getMaxHealth() * 0.05f));
             }
         }
+        spawnCenterVfx(VfxType.HEAL_SPIRAL, 0xFF33CC33, 1.9f, 22);
     }
 
-    private void tickAuraEffects() {
-        if (this.tickCount % 40 != 0) return;
-        if (!(this.level() instanceof ServerLevel sl)) return;
-
-        switch (venerableType) {
-            case YUAN_SHI -> sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 1.5, getZ(), 10, 1.5, 1.5, 1.5, 0.02);
-            case XING_XIU -> sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 2.0, getZ(), 12, 2.0, 2.0, 2.0, 0.01);
-            case YUAN_LIAN -> sl.sendParticles(ParticleTypes.HAPPY_VILLAGER, getX(), getY() + 1.0, getZ(), 8, 1.5, 1.0, 1.5, 0.02);
-            case WU_JI -> sl.sendParticles(ParticleTypes.ENCHANT, getX(), getY() + 2.0, getZ(), 15, 1.5, 2.0, 1.5, 0.05);
-            case KUANG_MAN -> sl.sendParticles(ParticleTypes.CRIT, getX(), getY() + 1.0, getZ(), 10, 1.0, 1.0, 1.0, 0.1);
-            case DAO_TIAN -> sl.sendParticles(ParticleTypes.PORTAL, getX(), getY() + 1.0, getZ(), 12, 1.0, 1.5, 1.0, 0.05);
-            case JU_YANG -> sl.sendParticles(ParticleTypes.FLAME, getX(), getY() + 1.5, getZ(), 10, 1.0, 1.0, 1.0, 0.02);
-            case YOU_HUN -> sl.sendParticles(ParticleTypes.SCULK_SOUL, getX(), getY() + 1.0, getZ(), 10, 1.5, 1.5, 1.5, 0.02);
-            case LE_TU -> sl.sendParticles(ParticleTypes.ASH, getX(), getY() + 1.5, getZ(), 8, 1.5, 1.0, 1.5, 0.01);
-            case HONG_LIAN -> sl.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, getX(), getY() + 1.0, getZ(), 10, 1.0, 1.5, 1.0, 0.02);
-        }
+    private void moveYuanlianPoisonVine(LivingEntity target) {
+        addAreaEffect(target.position(), 3.0, 0.02f, 200, true, 1, 0, false, false,
+            VfxType.VINE_CAGE, 0xFF33CC33, 1.6f, null, 0);
     }
 
-    // ======================== 数据存储 ========================
+    private void moveYuanlianGenesisScroll(LivingEntity target) {
+        addAreaEffect(this.position(), 12.0, 0.00f, 200, true, 1, 1, false, false,
+            VfxType.VINE_CAGE, 0xFF33CC33, 2.2f, DaoPath.WOOD, 3);
+        applyTimedModifier(Attributes.ATTACK_DAMAGE, "venerable_yuanlian_scroll_atk", 0.30, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, 200);
+    }
+
+    private void moveYuanlianTreeOfLife(LivingEntity target) {
+        modifyTerrain(this.position(), DaoPath.WOOD, 4);
+        addAreaEffect(this.position(), 8.0, 0.00f, 200, true, -1, -1, false, false,
+            VfxType.HEAL_SPIRAL, 0xFF33CC33, 2.4f, DaoPath.WOOD, 3);
+        healPercent(0.10f);
+    }
+
+    private void moveYuanlianVineBurst(LivingEntity target) {
+        castAreaPercent(this.position(), 6.0, 0.12f, VfxType.VINE_CAGE, 0xFF33CC33, 2.0f, 24);
+        knockbackTargets(this.position(), 6.0, 1.0, 0.3);
+    }
+
+    private void moveYuanlianPaintSeal(LivingEntity target) {
+        addRoot(target, 60);
+        target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 60, 4));
+        target.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 60, 4));
+        spawnVfx(VfxType.VINE_CAGE, target.getX(), target.getY() + 1.0, target.getZ(), 0.0, 1.0, 0.0, 0xFF33CC33, 2.0f, 24);
+    }
+
+    private void moveYuanlianWoodSpiritSummon(LivingEntity target) {
+        summonPhantom(PhantomImmortalEntity.ImmortalType.QI_MASTER, target, 0.50);
+        summonPhantom(PhantomImmortalEntity.ImmortalType.QI_MASTER, target, 0.50);
+        spawnCenterVfx(VfxType.VINE_CAGE, 0xFF33CC33, 2.0f, 24);
+    }
+
+    private void moveYuanlianGenesisGrandLotus(LivingEntity target) {
+        castAreaPercent(this.position(), 12.0, 0.20f, VfxType.VINE_CAGE, 0xFF33CC33, 2.8f, 38);
+        healPercent(0.30f);
+        modifyTerrain(this.position(), DaoPath.WOOD, 5);
+        spawnCenterVfx(VfxType.HEAL_SPIRAL, 0xFF33CC33, 2.8f, 36);
+    }
 
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-        tag.putString("VenerableType", venerableType.name());
-        tag.putInt("CurrentPhase", currentPhase);
-        tag.putBoolean("HasUsedCicada", hasUsedCicada);
-        tag.putFloat("SavedHP", savedHP);
-        tag.putBoolean("LeTuAggro", leTuAggro);
-        tag.putInt("LeTuHitCount", leTuHitCount);
-        tag.putBoolean("CicadaEnraged", cicadaEnraged);
-        tag.putString("KuangManForm", currentForm.name());
-        tag.putInt("FormDuration", formDurationTicks);
-        tag.putInt("FormCooldown", formCooldownTicks);
-        tag.putBoolean("WuJiImmortal1", wuJiImmortalUsed1);
-        tag.putBoolean("WuJiImmortal2", wuJiImmortalUsed2);
-        tag.putBoolean("YouHunSoulSplit", youHunSoulSplitUsed);
-        tag.putBoolean("LotusRevive1", yuanLianLotusReviveUsed1);
-        tag.putBoolean("LotusRevive2", yuanLianLotusReviveUsed2);
-        tag.putBoolean("LotusRevive3", yuanLianLotusReviveUsed3);
-        ListTag guList = new ListTag();
-        for (ResourceLocation guId : equippedGu) {
-            guList.add(StringTag.valueOf(guId.toString()));
-        }
-        tag.put("EquippedGu", guList);
+        tag.putString("VenerableType", this.venerableType.name());
+        tag.putInt("CurrentPhase", this.currentPhase);
+        tag.putInt("AbilityCooldown", this.abilityCooldown);
+        tag.putInt("WujiShieldTicks", this.wujiShieldTicks);
+        tag.putBoolean("WujiImmortalUsed", this.wujiImmortalUsed);
+        tag.putBoolean("YouHunSoulSplitUsed", this.youHunSoulSplitUsed);
+        tag.putInt("YouHunDevourStacks", this.youHunDevourStacks);
+        tag.putBoolean("HongLianCicadaUsed", this.hongLianCicadaUsed);
+        tag.putBoolean("JuYangImmortalUsed", this.juYangImmortalUsed);
+        tag.putInt("JuYangDrainTicks", this.juYangDrainTicks);
+        tag.putInt("KuangManAwakenTicks", this.kuangManAwakenTicks);
+        tag.putInt("HongLianFreezeTicks", this.hongLianFreezeTicks);
+        tag.putInt("HongLianRageTicks", this.hongLianRageTicks);
+        tag.putInt("MercyTicks", this.mercyTicks);
+        tag.putInt("AbsoluteInvulTicks", this.absoluteInvulTicks);
+        tag.put("CombatAI", this.combatAI.save());
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.contains("VenerableType")) {
-            VenerableType type = VenerableType.fromName(tag.getString("VenerableType"));
-            setVenerableType(type);
+        if (tag.contains("VenerableType", Tag.TAG_STRING)) {
+            setVenerableType(VenerableType.fromName(tag.getString("VenerableType")));
         }
-        if (tag.contains("CurrentPhase")) currentPhase = tag.getInt("CurrentPhase");
-        if (tag.contains("HasUsedCicada")) hasUsedCicada = tag.getBoolean("HasUsedCicada");
-        if (tag.contains("SavedHP")) savedHP = tag.getFloat("SavedHP");
-        if (tag.contains("LeTuAggro")) leTuAggro = tag.getBoolean("LeTuAggro");
-        if (tag.contains("LeTuHitCount")) leTuHitCount = tag.getInt("LeTuHitCount");
-        if (tag.contains("CicadaEnraged")) cicadaEnraged = tag.getBoolean("CicadaEnraged");
-        if (tag.contains("KuangManForm")) {
-            try { currentForm = KuangManForm.valueOf(tag.getString("KuangManForm")); } catch (Exception e) { currentForm = KuangManForm.HUMAN; }
-        }
-        if (tag.contains("FormDuration")) formDurationTicks = tag.getInt("FormDuration");
-        if (tag.contains("FormCooldown")) formCooldownTicks = tag.getInt("FormCooldown");
-        if (tag.contains("WuJiImmortal1")) wuJiImmortalUsed1 = tag.getBoolean("WuJiImmortal1");
-        if (tag.contains("WuJiImmortal2")) wuJiImmortalUsed2 = tag.getBoolean("WuJiImmortal2");
-        if (tag.contains("YouHunSoulSplit")) youHunSoulSplitUsed = tag.getBoolean("YouHunSoulSplit");
-        if (tag.contains("LotusRevive1")) yuanLianLotusReviveUsed1 = tag.getBoolean("LotusRevive1");
-        if (tag.contains("LotusRevive2")) yuanLianLotusReviveUsed2 = tag.getBoolean("LotusRevive2");
-        if (tag.contains("LotusRevive3")) yuanLianLotusReviveUsed3 = tag.getBoolean("LotusRevive3");
-        if (tag.contains("EquippedGu")) {
-            equippedGu.clear();
-            ListTag guList = tag.getList("EquippedGu", Tag.TAG_STRING);
-            for (int i = 0; i < guList.size(); i++) {
-                equippedGu.add(ResourceLocation.parse(guList.getString(i)));
-            }
-            matchVenerableMoves();
+        this.currentPhase = Math.max(1, tag.getInt("CurrentPhase"));
+        this.abilityCooldown = Math.max(0, tag.getInt("AbilityCooldown"));
+        this.wujiShieldTicks = Math.max(0, tag.getInt("WujiShieldTicks"));
+        this.wujiImmortalUsed = tag.getBoolean("WujiImmortalUsed");
+        this.youHunSoulSplitUsed = tag.getBoolean("YouHunSoulSplitUsed");
+        this.youHunDevourStacks = Math.max(0, tag.getInt("YouHunDevourStacks"));
+        this.hongLianCicadaUsed = tag.getBoolean("HongLianCicadaUsed");
+        this.juYangImmortalUsed = tag.getBoolean("JuYangImmortalUsed");
+        this.juYangDrainTicks = Math.max(0, tag.getInt("JuYangDrainTicks"));
+        this.kuangManAwakenTicks = Math.max(0, tag.getInt("KuangManAwakenTicks"));
+        this.hongLianFreezeTicks = Math.max(0, tag.getInt("HongLianFreezeTicks"));
+        this.hongLianRageTicks = Math.max(0, tag.getInt("HongLianRageTicks"));
+        this.mercyTicks = Math.max(0, tag.getInt("MercyTicks"));
+        this.absoluteInvulTicks = Math.max(0, tag.getInt("AbsoluteInvulTicks"));
+        if (tag.contains("CombatAI", Tag.TAG_COMPOUND)) {
+            this.combatAI.load(tag.getCompound("CombatAI"));
         }
     }
-
-    // ======================== Boss事件 ========================
 
     @Override
     public void startSeenByPlayer(ServerPlayer player) {
@@ -2650,30 +2452,11 @@ public class VenerableEntity extends Monster {
         this.bossEvent.removePlayer(player);
     }
 
-    // ======================== 掉落 ========================
-
-    @Override
-    protected void dropCustomDeathLoot(ServerLevel level, DamageSource source, boolean recentlyHit) {
-        super.dropCustomDeathLoot(level, source, recentlyHit);
-
-        this.spawnAtLocation(new ItemStack(ModItems.BREAKTHROUGH_STONE.get(), 3));
-        this.spawnAtLocation(new ItemStack(ModItems.PRIMEVAL_STONE.get(), 10 + random.nextInt(11)));
-        this.spawnAtLocation(new ItemStack(ModItems.LORE_SCROLL.get(), 2));
-
-        for (int i = 0; i < 3; i++) {
-            Item drop = RARE_GU_DROPS.get(random.nextInt(RARE_GU_DROPS.size()));
-            this.spawnAtLocation(new ItemStack(drop));
-        }
-    }
-
     @Override
     protected int getBaseExperienceReward() {
         return 200;
     }
 
-    // ======================== 音效 ========================
-
-    @Nullable
     @Override
     protected SoundEvent getAmbientSound() {
         return SoundEvents.WARDEN_AMBIENT;

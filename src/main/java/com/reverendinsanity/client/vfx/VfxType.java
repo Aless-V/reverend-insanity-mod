@@ -14,5 +14,15 @@ public enum VfxType {
     BLACK_HOLE,
     TORNADO,
     SKY_STRIKE,
-    DOME_FIELD
+    DOME_FIELD,
+    SPATIAL_TEAR,
+    TIME_DISTORTION,
+    SOUL_VORTEX,
+    LAW_CHAINS,
+    BEAST_PHANTOM,
+    BLOOD_RAIN,
+    EARTH_PILLAR,
+    STAR_RAIN,
+    VINE_CAGE,
+    QI_STORM
 }

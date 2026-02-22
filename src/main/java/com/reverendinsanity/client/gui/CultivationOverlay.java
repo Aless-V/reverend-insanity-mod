@@ -19,7 +19,7 @@ public class CultivationOverlay {
         int screenHeight = mc.getWindow().getGuiScaledHeight();
         int screenWidth = mc.getWindow().getGuiScaledWidth();
         int x = 5;
-        int y = screenHeight - 79;
+        int y = 5;
 
         String rankText = getRankName(ClientDataCache.getRankLevel()) + "\u00b7" + getSubRankName(ClientDataCache.getSubRankIndex());
         String aptText = " \u27e8" + ClientDataCache.getAptitudeName() + "\u27e9";
