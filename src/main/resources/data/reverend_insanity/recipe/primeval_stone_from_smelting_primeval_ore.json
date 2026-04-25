@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "ingredient": {
+    "item": "reverend_insanity:primeval_stone_ore"
+  },
+  "result": {
+    "id": "reverend_insanity:primeval_stone",
+    "count": 1
+  },
+  "experience": 0.7,
+  "cookingtime": 200
+}
