@@ -3,6 +3,10 @@ build/
 bin/
 out/
 
+# Logs
+logs/
+*.log
+
 # Gradle wrapper
 .gradle/
 gradle/
