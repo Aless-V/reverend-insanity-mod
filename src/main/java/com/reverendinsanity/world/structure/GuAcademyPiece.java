@@ -14,6 +14,8 @@ import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.FenceBlock;
+import net.minecraft.world.level.block.IronBarsBlock;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -68,11 +70,12 @@ public class GuAcademyPiece extends StructurePiece {
         generateDormitory(level, random, chunkBB, bx + 16, by, bz + 20);
         generateCourtyard(level, random, chunkBB, bx + 28, by, bz + 20);
         generateLanterns(level, random, chunkBB, bx, by, bz);
+        refreshConnectionSensitiveBlocks(level, chunkBB, bx, by, bz, TOTAL_W, TOTAL_D, TOTAL_H + 2);
     }
 
     private void place(WorldGenLevel level, BlockState state, int x, int y, int z, BoundingBox bb) {
         if (bb.isInside(x, y, z)) {
-            level.setBlock(new BlockPos(x, y, z), state, 2);
+            level.setBlock(new BlockPos(x, y, z), state, 3);
         }
     }
 
@@ -112,10 +115,10 @@ public class GuAcademyPiece extends StructurePiece {
                         place(level, Blocks.STONE_BRICK_SLAB.defaultBlockState(), bx + x, by + 2, bz + z, chunkBB);
                     }
                 } else if (isEdge) {
-                    place(level, Blocks.STONE_BRICK_WALL.defaultBlockState(), bx + x, by, bz + z, chunkBB);
-                    if ((x + z) % 6 == 0) {
-                        place(level, Blocks.STONE_BRICKS.defaultBlockState(), bx + x, by, bz + z, chunkBB);
-                        place(level, Blocks.STONE_BRICKS.defaultBlockState(), bx + x, by + 1, bz + z, chunkBB);
+                    place(level, Blocks.STONE_BRICKS.defaultBlockState(), bx + x, by, bz + z, chunkBB);
+                    place(level, Blocks.STONE_BRICKS.defaultBlockState(), bx + x, by + 1, bz + z, chunkBB);
+                    if ((x == 0 || x == TOTAL_W - 1) && (z % 6 == 0)) {
+                        place(level, Blocks.STONE_BRICK_WALL.defaultBlockState(), bx + x, by + 2, bz + z, chunkBB);
                     }
                 }
             }
@@ -293,6 +296,61 @@ public class GuAcademyPiece extends StructurePiece {
         place(level, Blocks.CHAIN.defaultBlockState(), ox + w / 2, lightY + 1, oz + d / 2, chunkBB);
         place(level, Blocks.LANTERN.defaultBlockState()
             .setValue(BlockStateProperties.HANGING, true), ox + w / 2, lightY, oz + d / 2, chunkBB);
+    }
+
+    private void refreshConnectionSensitiveBlocks(WorldGenLevel level, BoundingBox chunkBB,
+                                                  int bx, int by, int bz, int w, int d, int h) {
+        for (int x = 0; x < w; x++) {
+            for (int y = 0; y < h; y++) {
+                for (int z = 0; z < d; z++) {
+                    BlockPos pos = new BlockPos(bx + x, by + y, bz + z);
+                    if (!chunkBB.isInside(pos)) {
+                        continue;
+                    }
+
+                    BlockState state = level.getBlockState(pos);
+                    if (state.is(Blocks.OAK_FENCE)) {
+                        level.setBlock(pos, connectedFenceState(level, pos), 2);
+                    } else if (state.is(Blocks.GLASS_PANE)) {
+                        level.setBlock(pos, connectedPaneState(level, pos), 2);
+                    }
+                }
+            }
+        }
+    }
+
+    private BlockState connectedFenceState(WorldGenLevel level, BlockPos pos) {
+        boolean north = connectsFence(level.getBlockState(pos.north()));
+        boolean east = connectsFence(level.getBlockState(pos.east()));
+        boolean south = connectsFence(level.getBlockState(pos.south()));
+        boolean west = connectsFence(level.getBlockState(pos.west()));
+
+        return Blocks.OAK_FENCE.defaultBlockState()
+            .setValue(FenceBlock.NORTH, north)
+            .setValue(FenceBlock.EAST, east)
+            .setValue(FenceBlock.SOUTH, south)
+            .setValue(FenceBlock.WEST, west);
+    }
+
+    private boolean connectsFence(BlockState other) {
+        return other.is(Blocks.OAK_FENCE) || other.is(Blocks.OAK_FENCE_GATE);
+    }
+
+    private BlockState connectedPaneState(WorldGenLevel level, BlockPos pos) {
+        boolean north = connectsPane(level.getBlockState(pos.north()));
+        boolean east = connectsPane(level.getBlockState(pos.east()));
+        boolean south = connectsPane(level.getBlockState(pos.south()));
+        boolean west = connectsPane(level.getBlockState(pos.west()));
+
+        return Blocks.GLASS_PANE.defaultBlockState()
+            .setValue(IronBarsBlock.NORTH, north)
+            .setValue(IronBarsBlock.EAST, east)
+            .setValue(IronBarsBlock.SOUTH, south)
+            .setValue(IronBarsBlock.WEST, west);
+    }
+
+    private boolean connectsPane(BlockState other) {
+        return other.is(Blocks.GLASS_PANE);
     }
 
     private void generateDormitory(WorldGenLevel level, RandomSource random, BoundingBox chunkBB,

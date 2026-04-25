@@ -13,6 +13,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.FenceBlock;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -63,11 +64,12 @@ public class CaravanCampPiece extends StructurePiece {
         generateCampfire(level, random, chunkBB, bx + TOTAL_W / 2, by, bz + TOTAL_D / 2);
         generateTradingStall(level, random, chunkBB, bx + 2, by, bz + 13);
         generateScatteredGoods(level, random, chunkBB, bx, by, bz);
+        refreshConnectionSensitiveBlocks(level, chunkBB, bx, by, bz, TOTAL_W, TOTAL_D, TOTAL_H + 2);
     }
 
     private void place(WorldGenLevel level, BlockState state, int x, int y, int z, BoundingBox bb) {
         if (bb.isInside(x, y, z)) {
-            level.setBlock(new BlockPos(x, y, z), state, 2);
+            level.setBlock(new BlockPos(x, y, z), state, 3);
         }
     }
 
@@ -98,9 +100,7 @@ public class CaravanCampPiece extends StructurePiece {
                             .setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.NORTH), bx + x, by, bz + z, chunkBB);
                     }
                 } else if (isEdge) {
-                    if (random.nextFloat() < 0.85f) {
-                        place(level, Blocks.OAK_FENCE.defaultBlockState(), bx + x, by, bz + z, chunkBB);
-                    }
+                    place(level, Blocks.OAK_FENCE.defaultBlockState(), bx + x, by, bz + z, chunkBB);
                 }
             }
         }
@@ -109,28 +109,35 @@ public class CaravanCampPiece extends StructurePiece {
     private void generateMainTent(WorldGenLevel level, RandomSource random, BoundingBox chunkBB,
                                   int ox, int oy, int oz) {
         int w = 7, d = 7;
+        int floorY = oy - 1;
 
         for (int x = 0; x < w; x++) {
             for (int z = 0; z < d; z++) {
-                place(level, Blocks.WHITE_CARPET.defaultBlockState(), ox + x, oy, oz + z, chunkBB);
+                place(level, Blocks.OAK_PLANKS.defaultBlockState(), ox + x, floorY, oz + z, chunkBB);
             }
         }
 
-        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox, oy + 1, oz, chunkBB);
-        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w - 1, oy + 1, oz, chunkBB);
-        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox, oy + 1, oz + d - 1, chunkBB);
-        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w - 1, oy + 1, oz + d - 1, chunkBB);
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox, floorY + 1, oz, chunkBB);
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w - 1, floorY + 1, oz, chunkBB);
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox, floorY + 1, oz + d - 1, chunkBB);
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w - 1, floorY + 1, oz + d - 1, chunkBB);
 
-        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w / 2, oy + 1, oz + d / 2, chunkBB);
-        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w / 2, oy + 2, oz + d / 2, chunkBB);
-        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w / 2, oy + 3, oz + d / 2, chunkBB);
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox, floorY + 2, oz, chunkBB);
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w - 1, floorY + 2, oz, chunkBB);
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox, floorY + 2, oz + d - 1, chunkBB);
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w - 1, floorY + 2, oz + d - 1, chunkBB);
+
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w / 2, floorY + 1, oz + d / 2, chunkBB);
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w / 2, floorY + 2, oz + d / 2, chunkBB);
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w / 2, floorY + 3, oz + d / 2, chunkBB);
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w / 2, floorY + 4, oz + d / 2, chunkBB);
 
         for (int x = 0; x < w; x++) {
             for (int z = 0; z < d; z++) {
                 int distX = Math.min(x, w - 1 - x);
                 int distZ = Math.min(z, d - 1 - z);
                 int minDist = Math.min(distX, distZ);
-                int roofY = oy + 2 + Math.min(minDist, 2);
+                int roofY = floorY + 3 + Math.min(minDist, 2);
 
                 BlockState woolColor;
                 if ((x + z) % 3 == 0) {
@@ -145,7 +152,7 @@ public class CaravanCampPiece extends StructurePiece {
             }
         }
 
-        BlockPos tentChest = new BlockPos(ox + 1, oy + 1, oz + 1);
+        BlockPos tentChest = new BlockPos(ox + 1, floorY + 1, oz + 1);
         if (chunkBB.isInside(tentChest)) {
             level.setBlock(tentChest, Blocks.CHEST.defaultBlockState(), 2);
             if (level.getBlockEntity(tentChest) instanceof ChestBlockEntity chestEntity) {
@@ -159,44 +166,51 @@ public class CaravanCampPiece extends StructurePiece {
         place(level, Blocks.RED_BED.defaultBlockState()
             .setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.NORTH)
             .setValue(BlockStateProperties.BED_PART, net.minecraft.world.level.block.state.properties.BedPart.FOOT),
-            ox + w - 2, oy + 1, oz + d - 2, chunkBB);
+            ox + w - 2, floorY + 1, oz + d - 2, chunkBB);
         place(level, Blocks.RED_BED.defaultBlockState()
             .setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.NORTH)
             .setValue(BlockStateProperties.BED_PART, net.minecraft.world.level.block.state.properties.BedPart.HEAD),
-            ox + w - 2, oy + 1, oz + d - 3, chunkBB);
+            ox + w - 2, floorY + 1, oz + d - 3, chunkBB);
     }
 
     private void generateSmallTent(WorldGenLevel level, RandomSource random, BoundingBox chunkBB,
                                    int ox, int oy, int oz) {
         int w = 5, d = 5;
+        int floorY = oy - 1;
 
         for (int x = 0; x < w; x++) {
             for (int z = 0; z < d; z++) {
-                place(level, Blocks.BROWN_CARPET.defaultBlockState(), ox + x, oy, oz + z, chunkBB);
+                place(level, Blocks.OAK_PLANKS.defaultBlockState(), ox + x, floorY, oz + z, chunkBB);
             }
         }
 
-        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox, oy + 1, oz, chunkBB);
-        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w - 1, oy + 1, oz, chunkBB);
-        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox, oy + 1, oz + d - 1, chunkBB);
-        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w - 1, oy + 1, oz + d - 1, chunkBB);
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox, floorY + 1, oz, chunkBB);
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w - 1, floorY + 1, oz, chunkBB);
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox, floorY + 1, oz + d - 1, chunkBB);
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w - 1, floorY + 1, oz + d - 1, chunkBB);
 
-        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w / 2, oy + 1, oz + d / 2, chunkBB);
-        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w / 2, oy + 2, oz + d / 2, chunkBB);
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox, floorY + 2, oz, chunkBB);
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w - 1, floorY + 2, oz, chunkBB);
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox, floorY + 2, oz + d - 1, chunkBB);
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w - 1, floorY + 2, oz + d - 1, chunkBB);
+
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w / 2, floorY + 1, oz + d / 2, chunkBB);
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w / 2, floorY + 2, oz + d / 2, chunkBB);
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w / 2, floorY + 3, oz + d / 2, chunkBB);
 
         for (int x = 0; x < w; x++) {
             for (int z = 0; z < d; z++) {
                 int distX = Math.min(x, w - 1 - x);
                 int distZ = Math.min(z, d - 1 - z);
                 int minDist = Math.min(distX, distZ);
-                int roofY = oy + 2 + Math.min(minDist, 1);
+                int roofY = floorY + 3 + Math.min(minDist, 1);
 
                 place(level, Blocks.BROWN_WOOL.defaultBlockState(), ox + x, roofY, oz + z, chunkBB);
             }
         }
 
-        place(level, Blocks.BARREL.defaultBlockState(), ox + 1, oy + 1, oz + 1, chunkBB);
-        place(level, Blocks.BARREL.defaultBlockState(), ox + w - 2, oy + 1, oz + 1, chunkBB);
+        place(level, Blocks.BARREL.defaultBlockState(), ox + 1, floorY + 1, oz + 1, chunkBB);
+        place(level, Blocks.BARREL.defaultBlockState(), ox + w - 2, floorY + 1, oz + 1, chunkBB);
     }
 
     private void generateCampfire(WorldGenLevel level, RandomSource random, BoundingBox chunkBB,
@@ -216,30 +230,36 @@ public class CaravanCampPiece extends StructurePiece {
     private void generateTradingStall(WorldGenLevel level, RandomSource random, BoundingBox chunkBB,
                                       int ox, int oy, int oz) {
         int w = 7, d = 4;
+        int floorY = oy - 1;
 
         for (int x = 0; x < w; x++) {
             for (int z = 0; z < d; z++) {
-                place(level, Blocks.OAK_PLANKS.defaultBlockState(), ox + x, oy, oz + z, chunkBB);
+                place(level, Blocks.OAK_PLANKS.defaultBlockState(), ox + x, floorY, oz + z, chunkBB);
             }
         }
 
-        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox, oy + 1, oz, chunkBB);
-        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w - 1, oy + 1, oz, chunkBB);
-        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox, oy + 1, oz + d - 1, chunkBB);
-        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w - 1, oy + 1, oz + d - 1, chunkBB);
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox, floorY + 1, oz, chunkBB);
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w - 1, floorY + 1, oz, chunkBB);
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox, floorY + 1, oz + d - 1, chunkBB);
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w - 1, floorY + 1, oz + d - 1, chunkBB);
+
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox, floorY + 2, oz, chunkBB);
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w - 1, floorY + 2, oz, chunkBB);
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox, floorY + 2, oz + d - 1, chunkBB);
+        place(level, Blocks.OAK_FENCE.defaultBlockState(), ox + w - 1, floorY + 2, oz + d - 1, chunkBB);
 
         for (int x = 0; x < w; x++) {
             for (int z = 0; z < d; z++) {
                 BlockState woolColor = (x + z) % 2 == 0
                     ? Blocks.BLUE_WOOL.defaultBlockState()
                     : Blocks.WHITE_WOOL.defaultBlockState();
-                place(level, woolColor, ox + x, oy + 2, oz + z, chunkBB);
+                place(level, woolColor, ox + x, floorY + 3, oz + z, chunkBB);
             }
         }
 
-        place(level, Blocks.CRAFTING_TABLE.defaultBlockState(), ox + 1, oy + 1, oz + 1, chunkBB);
+        place(level, Blocks.CRAFTING_TABLE.defaultBlockState(), ox + 1, floorY + 1, oz + 1, chunkBB);
 
-        BlockPos stallChest = new BlockPos(ox + 3, oy + 1, oz + 1);
+        BlockPos stallChest = new BlockPos(ox + 3, floorY + 1, oz + 1);
         if (chunkBB.isInside(stallChest)) {
             level.setBlock(stallChest, Blocks.CHEST.defaultBlockState(), 2);
             if (level.getBlockEntity(stallChest) instanceof ChestBlockEntity chestEntity) {
@@ -250,8 +270,8 @@ public class CaravanCampPiece extends StructurePiece {
             }
         }
 
-        place(level, ModBlocks.WINE_JAR.get().defaultBlockState(), ox + 5, oy + 1, oz + 1, chunkBB);
-        place(level, ModBlocks.GU_SHELF.get().defaultBlockState(), ox + w - 2, oy + 1, oz + d - 2, chunkBB);
+        place(level, ModBlocks.WINE_JAR.get().defaultBlockState(), ox + 5, floorY + 1, oz + 1, chunkBB);
+        place(level, ModBlocks.GU_SHELF.get().defaultBlockState(), ox + w - 2, floorY + 1, oz + d - 2, chunkBB);
     }
 
     private void generateScatteredGoods(WorldGenLevel level, RandomSource random, BoundingBox chunkBB,
@@ -282,5 +302,41 @@ public class CaravanCampPiece extends StructurePiece {
                 level.setBlock(torchPos, Blocks.TORCH.defaultBlockState(), 2);
             }
         }
+    }
+
+    private void refreshConnectionSensitiveBlocks(WorldGenLevel level, BoundingBox chunkBB,
+                                                  int bx, int by, int bz, int w, int d, int h) {
+        for (int x = 0; x < w; x++) {
+            for (int y = 0; y < h; y++) {
+                for (int z = 0; z < d; z++) {
+                    BlockPos pos = new BlockPos(bx + x, by + y, bz + z);
+                    if (!chunkBB.isInside(pos)) {
+                        continue;
+                    }
+
+                    BlockState state = level.getBlockState(pos);
+                    if (state.is(Blocks.OAK_FENCE)) {
+                        level.setBlock(pos, connectedFenceState(level, pos), 2);
+                    }
+                }
+            }
+        }
+    }
+
+    private BlockState connectedFenceState(WorldGenLevel level, BlockPos pos) {
+        boolean north = connectsFence(level.getBlockState(pos.north()));
+        boolean east = connectsFence(level.getBlockState(pos.east()));
+        boolean south = connectsFence(level.getBlockState(pos.south()));
+        boolean west = connectsFence(level.getBlockState(pos.west()));
+
+        return Blocks.OAK_FENCE.defaultBlockState()
+            .setValue(FenceBlock.NORTH, north)
+            .setValue(FenceBlock.EAST, east)
+            .setValue(FenceBlock.SOUTH, south)
+            .setValue(FenceBlock.WEST, west);
+    }
+
+    private boolean connectsFence(BlockState other) {
+        return other.is(Blocks.OAK_FENCE) || other.is(Blocks.OAK_FENCE_GATE);
     }
 }
