@@ -1,4 +1,4 @@
-This is a fork of the [reverend-insanity-mod](https://github.com/dkjsiogu/reverend-insanity-mod) mod but then fully transalted into english, the original had support for english but almost all of the language was hard coded in mandarin, so the english language file didn't change much. Besides fully translating, I am also going to change a lot of things concerning game logic to make it follow the novel more and make changes to block and entity textures. Suggestions and/or issues are welcomed!
+This is a fork of the [reverend-insanity-mod](https://github.com/dkjsiogu/reverend-insanity-mod) mod but then fully transalted into english, the original had support for english but almost all of the language was hard coded in mandarin, so the english language file didn't change much. Besides fully translating, I am also going to change a lot of things concerning game logic to make it follow the novel more and make changes to block and entity textures. This is mostly for personal use but suggestions and/or issue reports are welcome!
 
 ### (below is the original readme but translated into english)
 
