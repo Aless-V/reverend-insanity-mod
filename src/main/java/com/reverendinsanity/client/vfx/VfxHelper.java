@@ -5,7 +5,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-// 服务端工具类，方便地发送VFX网络包
+// Server-Side Utility Class: Conveniently sends VFX network packets.
 public class VfxHelper {
 
     public static void spawn(ServerPlayer player, VfxType type, int color, float scale, int durationTicks) {

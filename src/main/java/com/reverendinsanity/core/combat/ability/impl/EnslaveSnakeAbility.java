@@ -37,9 +37,9 @@ public class EnslaveSnakeAbility extends GuAbility {
             count++;
         }
         if (count > 0) {
-            player.displayClientMessage(Component.literal("奴蛇蛊催动，控制了 " + count + " 只生物"), true);
+            player.displayClientMessage(Component.literal("Slave Snake Gu activated. Controlled " + count + " creatures"), true);
         } else {
-            player.displayClientMessage(Component.literal("周围没有可控制的生物"), true);
+            player.displayClientMessage(Component.literal("No controllable creatures nearby."), true);
         }
 
         VfxHelper.spawn(player, VfxType.PULSE_WAVE,

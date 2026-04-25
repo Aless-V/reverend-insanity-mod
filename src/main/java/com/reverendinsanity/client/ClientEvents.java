@@ -17,7 +17,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-// 客户端事件处理：监听技能、杀招、空窍管理、防御按键
+// Client Event Handling: Listens for skill, Killer Move, Aperture Management, and defense key presses.
 @EventBusSubscriber(modid = ReverendInsanity.MODID, value = Dist.CLIENT)
 public class ClientEvents {
 

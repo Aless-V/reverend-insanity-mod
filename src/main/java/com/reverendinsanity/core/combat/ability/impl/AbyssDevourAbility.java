@@ -13,7 +13,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import java.util.List;
 
-// 深渊吞噬蛊技能：深渊侵蚀——8格AOE暗影伤害+吸血（二转）
+// Abyss Devouring Gu Skill: Abyss Erosion — 8-block AOE shadow damage + life steal (Rank 2)
 public class AbyssDevourAbility extends GuAbility {
 
     public AbyssDevourAbility() {

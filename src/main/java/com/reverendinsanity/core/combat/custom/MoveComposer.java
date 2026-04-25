@@ -224,13 +224,13 @@ public class MoveComposer {
 
     public enum ValidationResult {
         OK(""),
-        NOT_OPENED("空窍未开"),
-        NO_CORE("需要选择核心蛊"),
-        TOO_MANY_SUPPORT("辅助蛊数量超过上限"),
-        INVALID_GU("蛊虫无效"),
-        RANK_TOO_LOW("境界不足"),
-        MISSING_GU("窍穴中缺少所需蛊虫"),
-        DUPLICATE_GU("不能重复使用同一蛊虫");
+        NOT_OPENED("Aperture not opened"),
+        NO_CORE("You need to select a core Gu."),
+        TOO_MANY_SUPPORT("Support Gu count exceeds limit."),
+        INVALID_GU("Invalid Gu insect."),
+        RANK_TOO_LOW("Insufficient cultivation rank."),
+        MISSING_GU("The aperture lacks the required Gu insect."),
+        DUPLICATE_GU("Cannot use the same Gu insect multiple times.");
 
         private final String message;
         ValidationResult(String message) { this.message = message; }

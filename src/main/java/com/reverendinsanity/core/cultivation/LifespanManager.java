@@ -55,29 +55,29 @@ public class LifespanManager {
 
         if (ratio <= 0.05f && warned > 5) {
             player.displayClientMessage(
-                    Component.literal("【寿元将尽】生命即将走到尽头！剩余寿元: " + currentLifespan)
+                    Component.literal("【Lifespan Exhaustion】Your life is about to reach its end! Remaining Lifespan: " + currentLifespan)
                             .withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD), false);
             warnedThresholds.put(uuid, 5);
         } else if (ratio <= 0.1f && warned > 10) {
             player.displayClientMessage(
-                    Component.literal("寿元不足一成！需尽快突破或寻找延寿之法。剩余: " + currentLifespan)
+                    Component.literal("Lifespan below 10%! Seek breakthrough or find life-extending methods immediately. Remaining: " + currentLifespan)
                             .withStyle(ChatFormatting.RED), false);
             warnedThresholds.put(uuid, 10);
         } else if (ratio <= 0.25f && warned > 25) {
             player.displayClientMessage(
-                    Component.literal("寿元已不足四分之一。剩余: " + currentLifespan)
+                    Component.literal("Less than a quarter of your lifespan remains. Remaining: " + currentLifespan)
                             .withStyle(ChatFormatting.GOLD), false);
             warnedThresholds.put(uuid, 25);
         } else if (ratio <= 0.5f && warned > 50) {
             player.displayClientMessage(
-                    Component.literal("寿元过半。剩余: " + currentLifespan)
+                    Component.literal("More than half of your lifespan remains. Remaining: " + currentLifespan)
                             .withStyle(ChatFormatting.YELLOW), true);
             warnedThresholds.put(uuid, 50);
         }
 
         if (currentLifespan <= 0) {
             player.displayClientMessage(
-                    Component.literal("寿元耗尽，油尽灯枯...")
+                    Component.literal("Lifespan exhausted. Your flame flickers and dies...")
                             .withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD), false);
             player.hurt(player.damageSources().starve(), Float.MAX_VALUE);
         }
@@ -92,7 +92,7 @@ public class LifespanManager {
         warnedThresholds.remove(player.getUUID());
 
         player.displayClientMessage(
-                Component.literal("突破成功！寿元增加 " + bonus + "，当前寿元: " + data.getLifespan())
+                Component.literal("Breakthrough successful! Lifespan increased by " + bonus + "，Current lifespan: " + data.getLifespan())
                         .withStyle(ChatFormatting.GREEN), false);
     }
 
@@ -102,7 +102,7 @@ public class LifespanManager {
 
         if (amount >= 10) {
             player.displayClientMessage(
-                    Component.literal("消耗寿元 " + amount + "，剩余: " + data.getLifespan())
+                    Component.literal("Lifespan consumed " + amount + "，Remaining: " + data.getLifespan())
                             .withStyle(ChatFormatting.GRAY), true);
         }
     }

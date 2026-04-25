@@ -20,7 +20,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-// 酒坛，右键用空瓶取酒，共16次使用次数
+// Wine Jar: Right-click with an empty bottle to collect wine. Has 16 uses.
 public class WineJarBlock extends Block {
 
     public static final MapCodec<WineJarBlock> CODEC = simpleCodec(WineJarBlock::new);

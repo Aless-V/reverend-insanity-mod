@@ -25,7 +25,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-// 蛊虫架，存放蛊虫的功能性家具方块
+// Gu Rack: A functional furniture block for storing Gu insects.
 public class GuShelfBlock extends HorizontalDirectionalBlock implements EntityBlock {
 
     public static final MapCodec<GuShelfBlock> CODEC = simpleCodec(GuShelfBlock::new);

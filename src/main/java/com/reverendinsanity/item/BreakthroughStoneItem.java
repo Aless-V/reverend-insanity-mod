@@ -47,26 +47,26 @@ public class BreakthroughStoneItem extends Item {
 
             if (!aperture.isOpened()) {
                 player.displayClientMessage(
-                        Component.literal("尚未开窍，无法使用突破石").withStyle(ChatFormatting.RED), true);
+                        Component.literal("Aperture not yet opened. Cannot use Breakthrough Stone.").withStyle(ChatFormatting.RED), true);
                 return InteractionResultHolder.fail(stack);
             }
 
             if (aperture.getSubRank() != SubRank.PEAK) {
                 player.displayClientMessage(
-                        Component.literal("未达巅峰境界，无法进行大境界突破").withStyle(ChatFormatting.RED), true);
+                        Component.literal("Have not reached the peak sub-rank. Cannot perform a major rank breakthrough.").withStyle(ChatFormatting.RED), true);
                 return InteractionResultHolder.fail(stack);
             }
 
             Rank nextRank = aperture.getRank().next();
             if (nextRank == null) {
                 player.displayClientMessage(
-                        Component.literal("已达最高境界").withStyle(ChatFormatting.RED), true);
+                        Component.literal("You have reached the highest rank.").withStyle(ChatFormatting.RED), true);
                 return InteractionResultHolder.fail(stack);
             }
 
             if (!aperture.getAptitude().canAdvanceTo(nextRank)) {
                 player.displayClientMessage(
-                        Component.literal("资质不足，无法突破至" + nextRank.getDisplayName())
+                        Component.literal("Insufficient talent. Cannot break through to " + nextRank.getDisplayName())
                                 .withStyle(ChatFormatting.RED), true);
                 return InteractionResultHolder.fail(stack);
             }
@@ -75,7 +75,7 @@ public class BreakthroughStoneItem extends Item {
 
             if (TribulationManager.isInTribulation(sp)) {
                 player.displayClientMessage(
-                        Component.literal("天劫进行中，无法再次使用突破石").withStyle(ChatFormatting.RED), true);
+                        Component.literal("Heavenly tribulation in progress. Cannot use another Breakthrough Stone.").withStyle(ChatFormatting.RED), true);
                 return InteractionResultHolder.fail(stack);
             }
 
@@ -91,9 +91,9 @@ public class BreakthroughStoneItem extends Item {
             stack.shrink(1);
 
             if (success && aperture.tryAdvanceRank()) {
-                String msg = "大境界突破成功！晋升为 "
+                String msg = "Major rank breakthrough successful! Ascending to "
                         + aperture.getRank().getDisplayName() + "·"
-                        + aperture.getSubRank().getDisplayName() + " 蛊师！";
+                        + aperture.getSubRank().getDisplayName() + " Gu Master!";
                 player.displayClientMessage(
                         Component.literal(msg).withStyle(ChatFormatting.GOLD), false);
 
@@ -115,9 +115,9 @@ public class BreakthroughStoneItem extends Item {
                 if (rankLevel >= 3) AdvancementHelper.grant(sp, "rank3");
             } else {
                 player.displayClientMessage(
-                        Component.literal("突破失败！空窍震荡...").withStyle(ChatFormatting.DARK_RED), false);
+                        Component.literal("Breakthrough failed! Aperture destabilized...").withStyle(ChatFormatting.DARK_RED), false);
                 player.displayClientMessage(
-                        Component.literal("经脉受创，短时间内实力大减").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC), false);
+                        Component.literal("Your meridians are wounded. Strength greatly reduced for a short time.").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC), false);
 
                 ResourceLocation modId = ResourceLocation.fromNamespaceAndPath("reverend_insanity", "breakthrough_failure");
                 GuMasterData gData = sp.getData(ModAttachments.GU_MASTER_DATA.get());
@@ -165,9 +165,9 @@ public class BreakthroughStoneItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
-        tooltipComponents.add(Component.literal("右键使用尝试大境界突破").withStyle(ChatFormatting.YELLOW));
-        tooltipComponents.add(Component.literal("需要巅峰小境界").withStyle(ChatFormatting.GRAY));
-        tooltipComponents.add(Component.literal("突破有失败风险").withStyle(ChatFormatting.RED));
-        tooltipComponents.add(Component.literal("三转以上突破将触发天劫").withStyle(ChatFormatting.DARK_PURPLE));
+        tooltipComponents.add(Component.literal("Right-click to attempt a major rank breakthrough.").withStyle(ChatFormatting.YELLOW));
+        tooltipComponents.add(Component.literal("Peak sub-rank required.").withStyle(ChatFormatting.GRAY));
+        tooltipComponents.add(Component.literal("Breakthrough carries a risk of failure.").withStyle(ChatFormatting.RED));
+        tooltipComponents.add(Component.literal("Breakthroughs beyond Rank 3 will trigger a heavenly tribulation.").withStyle(ChatFormatting.DARK_PURPLE));
     }
 }

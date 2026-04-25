@@ -103,8 +103,8 @@ public class ModBusEvents {
             MoveEffectRegistry.registerDefaults();
             GuAbilityRegistry.registerDefaults();
             RefinementRecipe.registerDefaults();
-            ReverendInsanity.LOGGER.info("蛊虫注册完成: {} 种", GuRegistry.getAll().size());
-            ReverendInsanity.LOGGER.info("炼蛊配方注册完成: {} 种", RefinementRecipe.getAllRecipes().size());
+            ReverendInsanity.LOGGER.info("Gu insects registered: {} total.", GuRegistry.getAll().size());
+            ReverendInsanity.LOGGER.info("Gu refining recipes registered: {} total.", RefinementRecipe.getAllRecipes().size());
         });
     }
 

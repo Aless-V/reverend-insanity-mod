@@ -77,8 +77,8 @@ public class TribulationManager {
         player.setGlowingTag(true);
 
         String msg = targetRank == Rank.RANK_4
-                ? "天劫降临！在60秒内存活即可突破至四转！"
-                : "大天劫降临！在90秒内存活即可突破至五转！";
+                ? "Heavenly Tribulation descends! Survive for 60 seconds to break through to Rank 4!" 
+                : "Great Heavenly Tribulation descends! Survive for 90 seconds to break through to Rank 5!";
         player.displayClientMessage(
                 Component.literal(msg).withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD), false);
     }
@@ -128,7 +128,7 @@ public class TribulationManager {
                             10, 1, 1, 1, 0.1);
                     if (state.ticksElapsed == voidPhaseStart) {
                         player.displayClientMessage(
-                                Component.literal("虚空波动开始！坚持住！")
+                                Component.literal("Void fluctuation begins! Hold on!")
                                         .withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.BOLD), false);
                     }
                 }
@@ -138,7 +138,7 @@ public class TribulationManager {
         if (state.ticksElapsed % 200 == 0) {
             int secondsLeft = (state.duration - state.ticksElapsed) / 20;
             player.displayClientMessage(
-                    Component.literal("天劫进行中... 剩余 " + secondsLeft + " 秒")
+                    Component.literal("Heavenly Tribulation in progress... " + secondsLeft + " seconds remaining")
                             .withStyle(ChatFormatting.YELLOW), true);
         }
     }
@@ -152,7 +152,7 @@ public class TribulationManager {
         player.setGlowingTag(false);
 
         player.displayClientMessage(
-                Component.literal("渡劫失败！天劫之力将你击溃...")
+                Component.literal("Tribulation failed! The power of the heavenly tribulation has overwhelmed you...")
                         .withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD), false);
 
         ServerLevel level = player.serverLevel();
@@ -189,9 +189,9 @@ public class TribulationManager {
         aperture.setRank(state.targetRank);
         aperture.setSubRank(SubRank.INITIAL);
 
-        String msg = "渡劫成功！晋升为 "
+        String msg = "Tribulation overcome! Advancing to "
                 + aperture.getRank().getDisplayName() + "·"
-                + aperture.getSubRank().getDisplayName() + " 蛊师！";
+                + aperture.getSubRank().getDisplayName() + " Gu Master!";
         player.displayClientMessage(
                 Component.literal(msg).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD), false);
 

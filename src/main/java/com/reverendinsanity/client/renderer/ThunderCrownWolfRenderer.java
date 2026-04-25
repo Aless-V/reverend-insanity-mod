@@ -7,7 +7,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;
 
-// 雷冠头狼渲染器
+// Thunder Crown Alpha Wolf Renderer
 public class ThunderCrownWolfRenderer extends MobRenderer<ThunderCrownWolfEntity, QuadrupedModel<ThunderCrownWolfEntity>> {
 
     private static final ResourceLocation TEXTURE =

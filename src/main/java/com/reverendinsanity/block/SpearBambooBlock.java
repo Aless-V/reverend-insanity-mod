@@ -14,7 +14,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-// 矛竹，尖锐的竹子，实体穿过时造成伤害并减速
+// Spear Bamboo: Sharp bamboo that damages and slows entities that pass through it.
 public class SpearBambooBlock extends BushBlock {
 
     public static final MapCodec<SpearBambooBlock> CODEC = simpleCodec(SpearBambooBlock::new);

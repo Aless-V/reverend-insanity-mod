@@ -9,7 +9,7 @@ import java.util.Random;
 // 改良杀招：在原始杀招基础上的增强版本
 public class ImprovedMove {
 
-    private static final String[] LEVEL_NAMES = {"初", "良", "精", "极", "完美"};
+    private static final String[] LEVEL_NAMES = {"Basic", "Good", "Fine", "Extreme", "Perfect"};
     private static final Random RANDOM = new Random();
 
     private final ResourceLocation baseMoveId;

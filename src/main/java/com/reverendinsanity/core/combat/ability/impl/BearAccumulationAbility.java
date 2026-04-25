@@ -13,7 +13,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 
-// 棕熊本力蛊：永久积累力量+0.6，上限20
+// Brown Bear Innate Power Gu: Permanently increases strength by +0.6. Cap: 20.
 public class BearAccumulationAbility extends GuAbility {
 
     public BearAccumulationAbility() {
@@ -25,13 +25,13 @@ public class BearAccumulationAbility extends GuAbility {
         GuMasterData data = player.getData(ModAttachments.GU_MASTER_DATA.get());
         float current = data.getPermanentStat("strength");
         if (current >= 20.0f) {
-            player.sendSystemMessage(Component.literal("§c棕熊本力已达上限"));
+            player.sendSystemMessage(Component.literal("§cBrown Bear's base strength has reached its limit."));
             return;
         }
         data.addPermanentStat("strength", 0.6f);
         PermanentStatApplier.refresh(player);
         float total = data.getPermanentStat("strength");
-        player.sendSystemMessage(Component.literal("§6棕熊本力灌注！力量+0.6 (当前: " + String.format("%.1f", total) + ")"));
+        player.sendSystemMessage(Component.literal("§6Brown Bear's innate power infused! Strength +0.6 (Current: " + String.format("%.1f", total) + ")"));
 
         VfxHelper.spawn(player, VfxType.AURA_RING,
             player.getX(), player.getY(), player.getZ(),

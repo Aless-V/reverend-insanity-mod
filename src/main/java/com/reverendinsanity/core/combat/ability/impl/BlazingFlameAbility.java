@@ -11,7 +11,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 
-// 烈焰蛊技能：发射强化火弹，引燃更久+更高伤害（二转）
+// Blaze Gu Skill: Fires enhanced fire charges. Longer ignition duration and higher damage. (Rank 2)
 public class BlazingFlameAbility extends GuAbility {
 
     public BlazingFlameAbility() {

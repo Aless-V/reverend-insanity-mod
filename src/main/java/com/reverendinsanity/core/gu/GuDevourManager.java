@@ -41,7 +41,7 @@ public class GuDevourManager {
 
         if (feedType.rank() > targetType.rank()) {
             player.displayClientMessage(
-                    Component.literal("低转蛊虫无法吞噬高转蛊虫").withStyle(ChatFormatting.RED), true);
+                    Component.literal("A low-rank Gu insect cannot devour a high-rank Gu insect").withStyle(ChatFormatting.RED), true);
             return false;
         }
 
@@ -65,7 +65,7 @@ public class GuDevourManager {
                 SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.PLAYERS, 0.7f, 1.3f);
 
         player.displayClientMessage(
-                Component.literal(feedType.displayName() + " 被吞噬！" + targetType.displayName() + " 熟练度 +" + (int) profGain)
+                Component.literal(feedType.displayName() + " has been devoured! " + targetType.displayName() + " proficiency +" + (int) profGain)
                         .withStyle(ChatFormatting.DARK_PURPLE), false);
 
         return true;

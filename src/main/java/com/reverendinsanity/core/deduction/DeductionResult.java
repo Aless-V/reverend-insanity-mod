@@ -12,11 +12,11 @@ public record DeductionResult(
     String message
 ) {
     public enum Outcome {
-        GREAT_SUCCESS("大成功"),
-        SUCCESS("成功"),
-        PARTIAL("部分成功"),
-        FAILURE("失败"),
-        DISCOVERY("意外发现");
+        GREAT_SUCCESS("Great Success"),
+        SUCCESS("Success"),
+        PARTIAL("Partial Success"),
+        FAILURE("Failure"),
+        DISCOVERY("Discovery");
 
         private final String displayName;
         Outcome(String displayName) { this.displayName = displayName; }

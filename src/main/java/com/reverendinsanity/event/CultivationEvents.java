@@ -121,19 +121,19 @@ public class CultivationEvents {
             SubRank currentSub = aperture.getSubRank();
             if (currentSub.next() == null) {
                 player.displayClientMessage(
-                        Component.literal("已达巅峰小境界，需使用突破石进行大境界突破"), true);
+                        Component.literal("You have reached the peak sub-rank. Use a Breakthrough Stone to advance to the next major rank."), true);
                 return;
             }
 
             float cost = aperture.getMaxEssence() * 0.3f;
             if (aperture.getCurrentEssence() < cost) {
                 player.displayClientMessage(
-                        Component.literal("真元不足，无法突破（需要 " + (int) cost + " 真元）"), true);
+                        Component.literal("Insufficient Primeval Essence. Cannot break through (Requires " + (int) cost + " PE)."), true);
                 return;
             }
 
             if (aperture.tryAdvanceSubRank()) {
-                String msg = "突破成功！境界提升至 "
+                String msg = "Breakthrough successful! Cultivation elevated to "
                         + aperture.getRank().getDisplayName() + "·"
                         + aperture.getSubRank().getDisplayName();
                 player.displayClientMessage(Component.literal(msg), false);
@@ -356,7 +356,7 @@ public class CultivationEvents {
                 player.level().playSound(null, player.blockPosition(),
                     SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, 0.5f, 1.5f);
                 player.displayClientMessage(
-                    Component.literal("元石自动碎裂，恢复 " + (int) restoreAmount + " 真元")
+                    Component.literal("Essence Stone automatically shatters, restoring " + (int) restoreAmount + " Primeval Essence.")
                         .withStyle(ChatFormatting.GREEN), true);
                 return;
             }
@@ -367,14 +367,14 @@ public class CultivationEvents {
         for (GuInstance gu : aperture.getStoredGu()) {
             if (!gu.isAlive()) {
                 GuType type = GuRegistry.get(gu.getTypeId());
-                String name = type != null ? type.displayName() : "蛊虫";
+                String name = type != null ? type.displayName() : "Gu";
                 player.displayClientMessage(
-                    Component.literal(name + " 已饿死！").withStyle(ChatFormatting.DARK_RED), false);
+                    Component.literal(name + " starved to death!").withStyle(ChatFormatting.DARK_RED), false);
             } else if (gu.getHunger() < 30f) {
                 GuType type = GuRegistry.get(gu.getTypeId());
-                String name = type != null ? type.displayName() : "蛊虫";
+                String name = type != null ? type.displayName() : "Gu";
                 player.displayClientMessage(
-                    Component.literal(name + " 饥饿警告！(" + String.format("%.0f", gu.getHunger()) + "%)")
+                    Component.literal(name + " hunger warning!(" + String.format("%.0f", gu.getHunger()) + "%)")
                         .withStyle(ChatFormatting.RED), true);
             }
         }

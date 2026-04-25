@@ -98,163 +98,163 @@ public class PathReactionRegistry {
     }
 
     static {
-        reg(pair(DaoPath.ICE, DaoPath.WIND), "冰风龙卷",
+        reg(pair(DaoPath.ICE, DaoPath.WIND), "Ice Wind Tornado",
             ReactionType.VORTEX_FREEZE, 1.3f, 0xFF88DDEE, VfxType.TORNADO, null);
 
-        reg(pair(DaoPath.LIGHT, DaoPath.STRENGTH), "太古光拳",
+        reg(pair(DaoPath.LIGHT, DaoPath.STRENGTH), "Primordial Light Fist",
             ReactionType.GIANT_STRIKE, 1.5f, 0xFFFFDD88, VfxType.GLOW_BURST, null);
 
-        reg(pair(DaoPath.EARTH, DaoPath.STRENGTH), "山岳重击",
+        reg(pair(DaoPath.EARTH, DaoPath.STRENGTH), "Mountain Strike",
             ReactionType.GIANT_STRIKE, 1.4f, 0xFFAA8844, VfxType.IMPACT_BURST, null);
 
-        reg(pair(DaoPath.SWORD, DaoPath.STRENGTH), "拳心剑气",
+        reg(pair(DaoPath.SWORD, DaoPath.STRENGTH), "Fist Heart Sword Qi",
             ReactionType.PIERCING_STRIKE, 1.3f, 0xFFDDDDFF, VfxType.ENERGY_BEAM, null);
 
-        reg(pair(DaoPath.METAL, DaoPath.STRENGTH), "金刚穿甲",
+        reg(pair(DaoPath.METAL, DaoPath.STRENGTH), "Vajra Armor-Piercer",
             ReactionType.PIERCING_STRIKE, 1.4f, 0xFFCCCC66, VfxType.ENERGY_BEAM, null);
 
-        reg(pair(DaoPath.SOUL, DaoPath.FIRE), "魂焰",
+        reg(pair(DaoPath.SOUL, DaoPath.FIRE), "Soul Flame",
             ReactionType.SOUL_FIRE, 1.3f, 0xFFCC44FF, null, null);
 
-        reg(pair(DaoPath.ICE, DaoPath.FIRE), "寒热冲击",
+        reg(pair(DaoPath.ICE, DaoPath.FIRE), "Thermal Shock",
             ReactionType.ICE_FIRE_SHOCK, 1.5f, 0xFFFF88CC, VfxType.GLOW_BURST, null);
 
-        reg(pair(DaoPath.BLOOD, DaoPath.WIND), "血雨漫天",
+        reg(pair(DaoPath.BLOOD, DaoPath.WIND), "Blood Rain",
             ReactionType.BLOOD_RAIN, 1.2f, 0xFFCC2222, null, null);
 
-        reg(pair(DaoPath.BLOOD, DaoPath.WATER), "血潮",
+        reg(pair(DaoPath.BLOOD, DaoPath.WATER), "Blood Tide",
             ReactionType.BLOOD_RAIN, 1.2f, 0xFFAA2244, null, null);
 
-        reg(pair(DaoPath.DARK, DaoPath.SOUL), "暗魂侵蚀",
+        reg(pair(DaoPath.DARK, DaoPath.SOUL), "Dark Soul Erosion",
             ReactionType.DARK_SOUL_DRAIN, 1.4f, 0xFF442266, VfxType.SHADOW_FADE, null);
 
-        reg(pair(DaoPath.ENSLAVE, DaoPath.SOUL), "精神支配",
+        reg(pair(DaoPath.ENSLAVE, DaoPath.SOUL), "Mental Domination",
             ReactionType.MIND_DOMINATE, 1.3f, 0xFF8844AA, VfxType.PULSE_WAVE, KillerMove.MoveType.CONTROL);
 
-        reg(pair(DaoPath.WIND, DaoPath.TRANSFORMATION), "蝠翼飞行",
+        reg(pair(DaoPath.WIND, DaoPath.TRANSFORMATION), "Bat Wing Flight",
             ReactionType.FLIGHT_DASH, 1.2f, 0xFF88CCAA, VfxType.IMPACT_BURST, KillerMove.MoveType.MOVEMENT);
 
-        reg(pair(DaoPath.TRANSFORMATION, DaoPath.EARTH), "大地形态",
+        reg(pair(DaoPath.TRANSFORMATION, DaoPath.EARTH), "Earth Form",
             ReactionType.EARTH_FORM, 1.3f, 0xFF886622, VfxType.AURA_RING, KillerMove.MoveType.BUFF);
 
-        reg(pair(DaoPath.TRANSFORMATION, DaoPath.WIND), "疾风形态",
+        reg(pair(DaoPath.TRANSFORMATION, DaoPath.WIND), "Gale Form",
             ReactionType.WIND_FORM, 1.3f, 0xFF88CCAA, VfxType.AURA_RING, KillerMove.MoveType.BUFF);
 
-        reg(pair(DaoPath.STRENGTH, DaoPath.ENSLAVE), "分身协攻",
+        reg(pair(DaoPath.STRENGTH, DaoPath.ENSLAVE), "Avatar Coordinated Attack",
             ReactionType.CLONE_ARMY, 1.4f, 0xFFCC8844, null, null);
 
-        reg(pair(DaoPath.STEAL, DaoPath.SOUL), "偷魂夺魄",
+        reg(pair(DaoPath.STEAL, DaoPath.SOUL), "Soul Reaving",
             ReactionType.STEAL_BUFF, 1.2f, 0xFF666688, VfxType.SHADOW_FADE, null);
 
-        reg(pair(DaoPath.STEAL, DaoPath.BLOOD), "偷命",
+        reg(pair(DaoPath.STEAL, DaoPath.BLOOD), "Steal Life",
             ReactionType.STEAL_BUFF, 1.2f, 0xFF884444, VfxType.SHADOW_FADE, null);
 
-        reg(pair(DaoPath.LIGHTNING, DaoPath.STAR), "星雷交击",
+        reg(pair(DaoPath.LIGHTNING, DaoPath.STAR), "Stellar Lightning Strike",
             ReactionType.THUNDER_RAIN, 1.4f, 0xFFFFFF88, VfxType.SKY_STRIKE, null);
 
-        reg(pair(DaoPath.BONE, DaoPath.SWORD), "白骨飞剑",
+        reg(pair(DaoPath.BONE, DaoPath.SWORD), "White Bone Flying Sword",
             ReactionType.BONE_BLADE, 1.3f, 0xFFDDDDCC, VfxType.SLASH_ARC, null);
 
-        reg(pair(DaoPath.BONE, DaoPath.BLADE), "白骨战刀",
+        reg(pair(DaoPath.BONE, DaoPath.BLADE), "White Bone Battle Saber",
             ReactionType.BONE_BLADE, 1.3f, 0xFFDDDDCC, VfxType.SLASH_ARC, null);
 
-        reg(pair(DaoPath.DREAM, DaoPath.ILLUSION), "梦幻双重",
+        reg(pair(DaoPath.DREAM, DaoPath.ILLUSION), "Phantasmal Duplicate",
             ReactionType.DREAM_ILLUSION, 1.3f, 0xFFCC88EE, VfxType.DOME_FIELD, null);
 
-        reg(pair(DaoPath.POISON, DaoPath.FIRE), "毒焰",
+        reg(pair(DaoPath.POISON, DaoPath.FIRE), "Venomous Blaze",
             ReactionType.POISON_FIRE, 1.3f, 0xFF88CC22, VfxType.GLOW_BURST, null);
 
-        reg(pair(DaoPath.WATER, DaoPath.ICE), "冰封万里",
+        reg(pair(DaoPath.WATER, DaoPath.ICE), "Glacier's Embrace",
             ReactionType.WATER_ICE_SEAL, 1.3f, 0xFF88CCFF, VfxType.DOME_FIELD, null);
 
-        reg(pair(DaoPath.HEAVEN, DaoPath.RULE), "天罚裁决",
+        reg(pair(DaoPath.HEAVEN, DaoPath.RULE), "Heaven's Verdict",
             ReactionType.HEAVEN_RULE, 1.5f, 0xFFFFEEDD, VfxType.SKY_STRIKE, null);
 
-        reg(pair(DaoPath.DARK, DaoPath.SPACE), "暗漩",
+        reg(pair(DaoPath.DARK, DaoPath.SPACE), "Dark Vortex",
             ReactionType.CORROSIVE_BURST, 1.6f, 0xFF110022, VfxType.BLACK_HOLE, null);
 
-        reg(pair(DaoPath.WIND, DaoPath.LIGHTNING), "风雷吼",
+        reg(pair(DaoPath.WIND, DaoPath.LIGHTNING), "Tempest Roar",
             ReactionType.STORM_FUSION, 1.4f, 0xFF88CCFF, VfxType.TORNADO, null);
 
-        reg(pair(DaoPath.BLOOD, DaoPath.FIRE), "血肉盛炎",
+        reg(pair(DaoPath.BLOOD, DaoPath.FIRE), "Sanguine Inferno",
             ReactionType.BLOOD_FLAME, 1.3f, 0xFFCC2200, null, null);
 
-        reg(pair(DaoPath.SOUL, DaoPath.METAL), "灼魂太金",
+        reg(pair(DaoPath.SOUL, DaoPath.METAL), "Soul-Scorching Supreme Gold",
             ReactionType.SOUL_RADIANCE, 1.5f, 0xFFFFCC44, VfxType.GLOW_BURST, null);
 
-        reg(pair(DaoPath.SOUND, DaoPath.ICE), "碧玉歌",
+        reg(pair(DaoPath.SOUND, DaoPath.ICE), "Jade Song",
             ReactionType.CRYSTALLIZE, 1.3f, 0xFF44DDCC, VfxType.DOME_FIELD, KillerMove.MoveType.CONTROL);
 
-        reg(pair(DaoPath.STRENGTH, DaoPath.TRANSFORMATION), "六臂天尸王",
+        reg(pair(DaoPath.STRENGTH, DaoPath.TRANSFORMATION), "Six-Armed Celestial Corpse King",
             ReactionType.BEAST_SHIFT, 1.5f, 0xFFBB6633, VfxType.AURA_RING, KillerMove.MoveType.BUFF);
 
-        reg(pair(DaoPath.LUCK, DaoPath.TIME), "流年不利",
+        reg(pair(DaoPath.LUCK, DaoPath.TIME), "Ill-Fated Times",
             ReactionType.FATE_MANIPULATION, 1.3f, 0xFFDD99FF, VfxType.PULSE_WAVE, null);
 
-        reg(pair(DaoPath.WISDOM, DaoPath.SOUL), "魂智共鸣",
+        reg(pair(DaoPath.WISDOM, DaoPath.SOUL), "Soul-Wisdom Resonance",
             ReactionType.MIND_SOUL_SYNERGY, 1.4f, 0xFF9988DD, VfxType.GLOW_BURST, null);
 
-        reg(pair(DaoPath.STAR, DaoPath.FIRE), "星火遁",
+        reg(pair(DaoPath.STAR, DaoPath.FIRE), "Meteor Escape",
             ReactionType.STAR_FIRE_ESCAPE, 1.3f, 0xFFFF8844, VfxType.IMPACT_BURST, KillerMove.MoveType.MOVEMENT);
 
-        reg(pair(DaoPath.WOOD, DaoPath.BLOOD), "飞花溅血",
+        reg(pair(DaoPath.WOOD, DaoPath.BLOOD), "Blood Petal Dance",
             ReactionType.WOOD_BLOOD_BLOOM, 1.3f, 0xFFDD4488, VfxType.GLOW_BURST, null);
 
-        reg(pair(DaoPath.SOUND, DaoPath.SWORD), "长空音刃",
+        reg(pair(DaoPath.SOUND, DaoPath.SWORD), "Skyrend Sound Blade",
             ReactionType.SOUND_BLADE, 1.3f, 0xFFAABBEE, VfxType.ENERGY_BEAM, null);
 
-        reg(pair(DaoPath.QI, DaoPath.TRANSFORMATION), "龙人变化",
+        reg(pair(DaoPath.QI, DaoPath.TRANSFORMATION), "Dragonkin Shift",
             ReactionType.PHASE_SHIFT, 1.5f, 0xFF66AACC, VfxType.AURA_RING, KillerMove.MoveType.BUFF);
 
-        reg(pair(DaoPath.FOOD, DaoPath.SOUL), "吃心",
+        reg(pair(DaoPath.FOOD, DaoPath.SOUL), "Heart Devour",
             ReactionType.SOUL_DEVOUR, 1.4f, 0xFF662244, VfxType.SHADOW_FADE, null);
 
-        reg(pair(DaoPath.PAINT, DaoPath.HUMAN), "安居乐业",
+        reg(pair(DaoPath.PAINT, DaoPath.HUMAN), "Peaceful Prosperity",
             ReactionType.MURAL_PRISON, 1.3f, 0xFFEEBB88, VfxType.PULSE_WAVE, KillerMove.MoveType.CONTROL);
 
-        reg(pair(DaoPath.WIND, DaoPath.HUMAN), "送友风",
+        reg(pair(DaoPath.WIND, DaoPath.HUMAN), "Breeze of Departure",
             ReactionType.FORCED_BANISH, 1.2f, 0xFF88DDAA, VfxType.IMPACT_BURST, KillerMove.MoveType.CONTROL);
 
-        reg(pair(DaoPath.FORMATION, DaoPath.EARTH), "自动构筑",
+        reg(pair(DaoPath.FORMATION, DaoPath.EARTH), "Automated Construction",
             ReactionType.AUTO_CONSTRUCT, 1.3f, 0xFFBB9966, VfxType.AURA_RING, KillerMove.MoveType.DEFENSE);
 
-        reg(pair(DaoPath.KILL, DaoPath.SOUL), "杀魂",
+        reg(pair(DaoPath.KILL, DaoPath.SOUL), "Soul Slayer",
             ReactionType.SOUL_REAP, 1.5f, 0xFFAA1133, VfxType.SHADOW_FADE, null);
 
-        reg(pair(DaoPath.KILL, DaoPath.DARK), "暗杀",
+        reg(pair(DaoPath.KILL, DaoPath.DARK), "Assassination",
             ReactionType.SHADOW_KILL, 1.4f, 0xFF220011, VfxType.SHADOW_FADE, null);
 
-        reg(pair(DaoPath.SHADOW, DaoPath.DARK), "影暗融合",
+        reg(pair(DaoPath.SHADOW, DaoPath.DARK), "Shadow-Dark Fusion",
             ReactionType.SHADOW_MERGE, 1.3f, 0xFF110033, VfxType.SHADOW_FADE, KillerMove.MoveType.BUFF);
 
-        reg(pair(DaoPath.SHADOW, DaoPath.LIGHT), "光影分身",
+        reg(pair(DaoPath.SHADOW, DaoPath.LIGHT), "Phantom Double",
             ReactionType.LIGHT_SHADOW_SPLIT, 1.4f, 0xFFBBAA88, VfxType.GLOW_BURST, null);
 
-        reg(pair(DaoPath.MOON, DaoPath.SOUL), "月魂",
+        reg(pair(DaoPath.MOON, DaoPath.SOUL), "Lunar Spirit",
             ReactionType.MOON_SOUL, 1.3f, 0xFFBBCCFF, VfxType.GLOW_BURST, null);
 
-        reg(pair(DaoPath.MOON, DaoPath.LIGHT), "月华",
+        reg(pair(DaoPath.MOON, DaoPath.LIGHT), "Lunar Radiance",
             ReactionType.MOONLIGHT_DOMAIN, 1.4f, 0xFFDDEEFF, VfxType.DOME_FIELD, null);
 
-        reg(pair(DaoPath.VOID, DaoPath.SPACE), "虚空崩塌",
+        reg(pair(DaoPath.VOID, DaoPath.SPACE), "Spatial Collapse",
             ReactionType.VOID_COLLAPSE, 1.6f, 0xFF220044, VfxType.BLACK_HOLE, null);
 
-        reg(pair(DaoPath.CHARM, DaoPath.ILLUSION), "魅幻双重",
+        reg(pair(DaoPath.CHARM, DaoPath.ILLUSION), "Seductive Mirage",
             ReactionType.CHARM_ILLUSION, 1.3f, 0xFFEE88CC, VfxType.DOME_FIELD, KillerMove.MoveType.CONTROL);
 
-        reg(pair(DaoPath.SOLDIER, DaoPath.FORMATION), "军阵",
+        reg(pair(DaoPath.SOLDIER, DaoPath.FORMATION), "Battle Formation",
             ReactionType.BATTLE_FORMATION, 1.4f, 0xFF886644, VfxType.AURA_RING, KillerMove.MoveType.DEFENSE);
 
-        reg(pair(DaoPath.FLIGHT, DaoPath.WIND), "御空冲锋",
+        reg(pair(DaoPath.FLIGHT, DaoPath.WIND), "Aerial Assault",
             ReactionType.SKY_CHARGE, 1.3f, 0xFF88DDCC, VfxType.IMPACT_BURST, KillerMove.MoveType.MOVEMENT);
 
-        reg(pair(DaoPath.CLOUD, DaoPath.WATER), "云海",
+        reg(pair(DaoPath.CLOUD, DaoPath.WATER), "Cloud Ocean",
             ReactionType.CLOUD_SEA, 1.3f, 0xFFCCDDEE, VfxType.DOME_FIELD, null);
 
-        reg(pair(DaoPath.YIN_YANG, DaoPath.LIGHTNING), "阴阳雷",
+        reg(pair(DaoPath.YIN_YANG, DaoPath.LIGHTNING), "Yin-Yang Thunder",
             ReactionType.YIN_YANG_THUNDER, 1.4f, 0xFFDDCC88, VfxType.SKY_STRIKE, null);
 
-        reg(pair(DaoPath.RESTRICTION, DaoPath.SPACE), "虚空封禁",
+        reg(pair(DaoPath.RESTRICTION, DaoPath.SPACE), "Spatial Sealing",
             ReactionType.VOID_SEAL, 1.5f, 0xFF442255, VfxType.DOME_FIELD, KillerMove.MoveType.CONTROL);
     }
 }

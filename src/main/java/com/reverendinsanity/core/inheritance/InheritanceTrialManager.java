@@ -66,7 +66,7 @@ public class InheritanceTrialManager {
         if (!aperture.isOpened()) return;
         if (aperture.getCurrentEssence() < aperture.getMaxEssence() * 0.3f) {
             player.displayClientMessage(
-                    Component.literal("真元不足，无法触发传承试炼").withStyle(ChatFormatting.RED), true);
+                    Component.literal("Insufficient Primeval Essence. Cannot trigger the inheritance trial.").withStyle(ChatFormatting.RED), true);
             return;
         }
 
@@ -81,7 +81,7 @@ public class InheritanceTrialManager {
         aperture.consumeEssence(aperture.getMaxEssence() * 0.2f);
 
         player.displayClientMessage(
-                Component.literal("【传承试炼】古蛊仙的意志苏醒...试炼开始！")
+                Component.literal("【Inheritance Trial】The will of an ancient Gu Immortal awakens... The trial begins!")
                         .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD), false);
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.WARDEN_SONIC_BOOM, SoundSource.HOSTILE, 0.6f, 0.3f);
@@ -91,7 +91,7 @@ public class InheritanceTrialManager {
 
     private static void tickActiveTrial(ServerPlayer player, TrialState state) {
         if (!isInInheritanceGround(player)) {
-            failTrial(player, "离开了传承之地，试炼终止！");
+            failTrial(player, " left the inheritance ground. Trial terminated!");
             return;
         }
 
@@ -108,7 +108,7 @@ public class InheritanceTrialManager {
             if (waitTicks < WAVE_INTERVAL) {
                 if (waitTicks == 0) {
                     player.displayClientMessage(
-                            Component.literal("第" + state.wave + "波清除！准备下一波...")
+                            Component.literal("Wave " + state.wave + " cleared! Preparing for the next wave...")
                                     .withStyle(ChatFormatting.YELLOW), true);
                 }
                 return;
@@ -125,7 +125,7 @@ public class InheritanceTrialManager {
         int count = 3 + wave * 2;
 
         player.displayClientMessage(
-                Component.literal("【第" + (wave + 1) + "波】" + count + "个守卫现身！")
+                Component.literal("【Wave " + (wave + 1) + "】" + count + " guardians appear!")
                         .withStyle(ChatFormatting.RED), false);
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.RAID_HORN.value(), SoundSource.HOSTILE, 0.8f, 1.0f + wave * 0.2f);
@@ -182,14 +182,14 @@ public class InheritanceTrialManager {
         aperture.regenerateEssence(aperture.getMaxEssence() * 0.5f);
 
         player.displayClientMessage(
-                Component.literal("【传承试炼通关】")
+                Component.literal("【Inheritance Trial cleared】")
                         .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD), false);
         player.displayClientMessage(
-                Component.literal("获得 " + rewardPath1.getDisplayName() + " 道痕+" + marks1
-                        + "，" + rewardPath2.getDisplayName() + " 道痕+" + marks2)
+                Component.literal("Acquired " + rewardPath1.getDisplayName() + " Dao Marks +" + marks1
+                        + "，" + rewardPath2.getDisplayName() + " Dao Marks +" + marks2)
                         .withStyle(ChatFormatting.AQUA), false);
         player.displayClientMessage(
-                Component.literal("真元恢复50%").withStyle(ChatFormatting.GREEN), false);
+                Component.literal("Primeval Essence restored by 50%").withStyle(ChatFormatting.GREEN), false);
 
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1.0f, 1.0f);
@@ -208,11 +208,11 @@ public class InheritanceTrialManager {
         cooldowns.put(player.getUUID(), (long)(player.tickCount + COOLDOWN_TICKS / 2));
 
         player.displayClientMessage(
-                Component.literal("【传承试炼失败】" + reason).withStyle(ChatFormatting.RED), false);
+                Component.literal("【Inheritance Trial failed】" + reason).withStyle(ChatFormatting.RED), false);
     }
 
     public static void onPlayerDeath(ServerPlayer player) {
-        failTrial(player, "死亡，试炼终止。");
+        failTrial(player, " has died. The trial is terminated.");
     }
 
     public static void onPlayerLogout(ServerPlayer player) {

@@ -9,7 +9,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.PushReaction;
 
-// 灵泉方块，天地自然形成的灵气汇聚之地，附近蛊师真元恢复加速
+// Spirit Spring Block: A naturally formed gathering place of spiritual energy. Nearby Gu Masters recover Primeval Essence faster.
 public class SpiritSpringBlock extends Block {
 
     public static final MapCodec<SpiritSpringBlock> CODEC = simpleCodec(SpiritSpringBlock::new);

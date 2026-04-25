@@ -20,7 +20,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
-// 炼蛊炉方块实体，存储最多6个物品
+// Gu Refining Furnace block entity, stores up to 6 items.
 public class RefinementCauldronBlockEntity extends BlockEntity {
 
     private NonNullList<ItemStack> items = NonNullList.withSize(6, ItemStack.EMPTY);

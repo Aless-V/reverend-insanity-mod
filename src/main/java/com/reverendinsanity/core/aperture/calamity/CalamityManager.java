@@ -10,7 +10,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import java.util.*;
 
-// 灾劫管理器：调度灾劫周期、生成灾劫、管理活跃灾劫
+// Tribulation Manager: Schedules tribulation cycles, generates tribulations, and manages active tribulations.
 public class CalamityManager {
 
     private static final int EARTH_DISASTER_INTERVAL = 3 * 24000;
@@ -52,8 +52,8 @@ public class CalamityManager {
 
         if (earthTimer == EARTH_DISASTER_INTERVAL - WARNING_TICKS) {
             player.displayClientMessage(
-                Component.literal("[仙窍] ").withStyle(ChatFormatting.GOLD)
-                    .append(Component.literal("隐约感到天地灵气紊乱，地灾将至...").withStyle(ChatFormatting.YELLOW)),
+                Component.literal("[Immortal Aperture] ").withStyle(ChatFormatting.GOLD)
+                    .append(Component.literal("You faintly sense the spiritual energy of heaven and earth growing chaotic. An earthly tribulation approaches...").withStyle(ChatFormatting.YELLOW)),
                 false
             );
             player.playNotifySound(SoundEvents.WARDEN_NEARBY_CLOSER, SoundSource.WEATHER, 0.6f, 0.5f);
@@ -61,8 +61,8 @@ public class CalamityManager {
 
         if (heavenTimer == HEAVENLY_TRIBULATION_INTERVAL - WARNING_TICKS) {
             player.displayClientMessage(
-                Component.literal("[仙窍] ").withStyle(ChatFormatting.DARK_RED)
-                    .append(Component.literal("天空中乌云翻涌，天劫即将降临!").withStyle(ChatFormatting.RED)),
+                Component.literal("[Immortal Aperture] ").withStyle(ChatFormatting.DARK_RED)
+                    .append(Component.literal("Dark clouds churn in the sky. A heavenly tribulation is about to descend!").withStyle(ChatFormatting.RED)),
                 false
             );
             player.playNotifySound(SoundEvents.WARDEN_ROAR, SoundSource.WEATHER, 0.8f, 0.4f);
@@ -106,8 +106,8 @@ public class CalamityManager {
 
         ChatFormatting color = type.isHeavenlyTribulation() ? ChatFormatting.DARK_RED : ChatFormatting.GOLD;
         player.displayClientMessage(
-            Component.literal("[仙窍] ").withStyle(color)
-                .append(Component.literal(type.getCategory().getDisplayName() + "降临: " + type.getDisplayName() + "!").withStyle(color)),
+            Component.literal("[Immortal Aperture] ").withStyle(color)
+                .append(Component.literal(type.getCategory().getDisplayName() + "Descending: " + type.getDisplayName() + "!").withStyle(color)),
             false
         );
         player.playNotifySound(
@@ -124,16 +124,16 @@ public class CalamityManager {
         if (random.nextFloat() < 0.3f) {
             aperture.addBreach();
             player.displayClientMessage(
-                Component.literal("[仙窍] ").withStyle(ChatFormatting.DARK_PURPLE)
-                    .append(Component.literal("灾劫过后，仙窍出现裂缝漏洞!").withStyle(ChatFormatting.LIGHT_PURPLE)),
+                Component.literal("[Immortal Aperture] ").withStyle(ChatFormatting.DARK_PURPLE)
+                    .append(Component.literal("Following the calamity, your Immortal Aperture has developed cracks and vulnerabilities!").withStyle(ChatFormatting.LIGHT_PURPLE)),
                 false
             );
         }
 
         if (aperture.getIntegrity() <= 0) {
             player.displayClientMessage(
-                Component.literal("[仙窍] ").withStyle(ChatFormatting.DARK_RED)
-                    .append(Component.literal("仙窍严重损毁! 品质跌落!").withStyle(ChatFormatting.RED)),
+                Component.literal("[Immortal Aperture] ").withStyle(ChatFormatting.DARK_RED)
+                    .append(Component.literal("Critical damage to Immortal Aperture! Grade diminished!").withStyle(ChatFormatting.RED)),
                 false
             );
         } else {
@@ -144,8 +144,8 @@ public class CalamityManager {
                 aperture.addDaoMark(rewardPath, markReward);
 
                 player.displayClientMessage(
-                    Component.literal("[仙窍] ").withStyle(ChatFormatting.GREEN)
-                        .append(Component.literal("天劫已过! 仙窍获得" + rewardPath.getDisplayName() + "道痕" + markReward + "点").withStyle(ChatFormatting.AQUA)),
+                    Component.literal("[Immortal Aperture] ").withStyle(ChatFormatting.GREEN)
+                        .append(Component.literal("The heavenly tribulation has passed! Immortal Aperture gains: " + rewardPath.getDisplayName() + " Dao Marks +" + markReward).withStyle(ChatFormatting.AQUA)),
                     false
                 );
             } else {
@@ -155,16 +155,16 @@ public class CalamityManager {
                 aperture.addDaoMark(rewardPath, markReward);
 
                 player.displayClientMessage(
-                    Component.literal("[仙窍] ").withStyle(ChatFormatting.GREEN)
-                        .append(Component.literal("地灾已过! 仙窍获得" + rewardPath.getDisplayName() + "道痕" + markReward + "点").withStyle(ChatFormatting.YELLOW)),
+                    Component.literal("[Immortal Aperture] ").withStyle(ChatFormatting.GREEN)
+                        .append(Component.literal("The earthly tribulation has passed! Immortal Aperture gains: " + rewardPath.getDisplayName() + " Dao Marks +" + markReward).withStyle(ChatFormatting.YELLOW)),
                     false
                 );
             }
         }
 
         player.displayClientMessage(
-            Component.literal("[仙窍] ").withStyle(ChatFormatting.GRAY)
-                .append(Component.literal("仙窍完整度: " + String.format("%.1f", aperture.getIntegrity()) + "% | 总损伤: " + String.format("%.1f", totalDamage)).withStyle(ChatFormatting.GRAY)),
+            Component.literal("[Immortal Aperture] ").withStyle(ChatFormatting.GRAY)
+                .append(Component.literal("Immortal Aperture Integrity: " + String.format("%.1f", aperture.getIntegrity()) + "% | Total Damage: " + String.format("%.1f", totalDamage)).withStyle(ChatFormatting.GRAY)),
             false
         );
     }

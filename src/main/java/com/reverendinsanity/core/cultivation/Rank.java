@@ -2,15 +2,15 @@ package com.reverendinsanity.core.cultivation;
 
 // 蛊师境界，一到九转，对应凡(1-5)和仙(6-9)
 public enum Rank {
-    RANK_1(1, false, "一转", 100),
-    RANK_2(2, false, "二转", 300),
-    RANK_3(3, false, "三转", 800),
-    RANK_4(4, false, "四转", 2000),
-    RANK_5(5, false, "五转", 5000),
-    RANK_6(6, true,  "六转", 15000),
-    RANK_7(7, true,  "七转", 50000),
-    RANK_8(8, true,  "八转", 200000),
-    RANK_9(9, true,  "九转", 1000000);
+    RANK_1(1, false, "Rank 1", 100),
+    RANK_2(2, false, "Rank 2", 300),
+    RANK_3(3, false, "Rank 3", 800),
+    RANK_4(4, false, "Rank 4", 2000),
+    RANK_5(5, false, "Rank 5", 5000),
+    RANK_6(6, true,  "Rank 6", 15000),
+    RANK_7(7, true,  "Rank 7", 50000),
+    RANK_8(8, true,  "Rank 8", 200000),
+    RANK_9(9, true,  "Rank 9", 1000000);
 
     private final int level;
     private final boolean immortal;

@@ -29,9 +29,9 @@ public class GamblingStoneItem extends Item {
     }
 
     public enum Grade {
-        LOW("低档蛊石", 0.75f, 0.18f, 0.07f, 0.00f),
-        MEDIUM("中档蛊石", 0.65f, 0.20f, 0.13f, 0.02f),
-        HIGH("高档蛊石", 0.55f, 0.20f, 0.20f, 0.05f);
+        LOW("Low-Grade Gu Stone", 0.75f, 0.18f, 0.07f, 0.00f),
+        MEDIUM("Medium-Grade Gu Stone", 0.65f, 0.20f, 0.13f, 0.02f),
+        HIGH("High-Grade Gu Stone", 0.55f, 0.20f, 0.20f, 0.05f);
 
         private final String displayName;
         private final float emptyChance;
@@ -77,11 +77,11 @@ public class GamblingStoneItem extends Item {
         float aliveThreshold = deadThreshold + grade.aliveChance + fortuneBonus * 0.5f;
 
         if (roll < emptyThreshold) {
-            sp.displayClientMessage(Component.literal("\u00a77打开蛊石...一块普通石头。"), false);
+            sp.displayClientMessage(Component.literal("§7Opening the Gu stone... Just an ordinary rock."), false);
         } else if (roll < deadThreshold) {
             int xp = 10 + sp.getRandom().nextInt(21);
             sp.giveExperiencePoints(xp);
-            sp.displayClientMessage(Component.literal("\u00a7e打开蛊石...发现一只死蛊虫的残骸。"), false);
+            sp.displayClientMessage(Component.literal("§eOpening the Gu stone... You find the remains of a dead Gu insect."), false);
         } else if (roll < aliveThreshold) {
             int minRank = 1;
             int maxRank = grade == Grade.LOW ? 1 : 2;
@@ -90,9 +90,9 @@ public class GamblingStoneItem extends Item {
                 if (!sp.getInventory().add(result)) {
                     sp.drop(result, false);
                 }
-                sp.displayClientMessage(Component.literal("\u00a7a打开蛊石...发现了一只" + result.getHoverName().getString() + "！"), false);
+                sp.displayClientMessage(Component.literal("§aOpening the Gu stone... You find a " + result.getHoverName().getString() + "！"), false);
             } else {
-                sp.displayClientMessage(Component.literal("\u00a77打开蛊石...一块普通石头。"), false);
+                sp.displayClientMessage(Component.literal("§7Opening the Gu stone... Just an ordinary rock."), false);
             }
         } else {
             int minRank = grade == Grade.HIGH ? 3 : 2;
@@ -103,11 +103,11 @@ public class GamblingStoneItem extends Item {
                     sp.drop(result, false);
                 }
                 level.playSound(null, player.blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1.0f, 1.2f);
-                sp.displayClientMessage(Component.literal("\u00a76\u00a7l打开蛊石...竟然是" + result.getHoverName().getString() + "！大赚！"), false);
+                sp.displayClientMessage(Component.literal("§6§lOpening the Gu stone... It's actually " + result.getHoverName().getString() + "! What a jackpot!"), false);
             } else {
                 int xp = 10 + sp.getRandom().nextInt(21);
                 sp.giveExperiencePoints(xp);
-                sp.displayClientMessage(Component.literal("\u00a7e打开蛊石...发现一只死蛊虫的残骸。"), false);
+                sp.displayClientMessage(Component.literal("§eOpening the Gu stone... You find the remains of a dead Gu insect."), false);
             }
         }
 
@@ -118,16 +118,16 @@ public class GamblingStoneItem extends Item {
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag flag) {
         tooltipComponents.add(Component.literal(grade.getDisplayName()).withStyle(ChatFormatting.YELLOW));
-        tooltipComponents.add(Component.literal("右键开石，看看运气如何").withStyle(ChatFormatting.GRAY));
+        tooltipComponents.add(Component.literal("Right-click to open the stone and test your luck.").withStyle(ChatFormatting.GRAY));
         switch (grade) {
-            case LOW -> tooltipComponents.add(Component.literal("可能出1转蛊虫").withStyle(ChatFormatting.WHITE));
+            case LOW -> tooltipComponents.add(Component.literal("May yield Rank 1 Gu insects.").withStyle(ChatFormatting.WHITE));
             case MEDIUM -> {
-                tooltipComponents.add(Component.literal("可能出1-2转蛊虫").withStyle(ChatFormatting.GREEN));
-                tooltipComponents.add(Component.literal("小概率珍稀2-3转").withStyle(ChatFormatting.AQUA));
+                tooltipComponents.add(Component.literal("May yield Rank 1-2 Gu insects.").withStyle(ChatFormatting.GREEN));
+                tooltipComponents.add(Component.literal("Small chance of rare Rank 2-3 Gu insects.").withStyle(ChatFormatting.AQUA));
             }
             case HIGH -> {
-                tooltipComponents.add(Component.literal("可能出2转蛊虫").withStyle(ChatFormatting.GREEN));
-                tooltipComponents.add(Component.literal("较高概率珍稀3转").withStyle(ChatFormatting.GOLD));
+                tooltipComponents.add(Component.literal("May yield Rank 2 Gu insects.").withStyle(ChatFormatting.GREEN));
+                tooltipComponents.add(Component.literal("Moderately high chance of rare Rank 3 Gu insects.").withStyle(ChatFormatting.GOLD));
             }
         }
     }

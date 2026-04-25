@@ -100,7 +100,7 @@ public class DreamExplorationManager {
         activeManifests.put(player.getUUID(), manifest);
 
         player.displayClientMessage(
-                Component.literal("远处出现了朦胧的梦境外显...").withStyle(ChatFormatting.LIGHT_PURPLE),
+                Component.literal("A hazy dream realm manifestation appears in the distance...").withStyle(ChatFormatting.LIGHT_PURPLE),
                 false
         );
         level.playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -177,7 +177,7 @@ public class DreamExplorationManager {
 
         if (timer % 20 == 0) {
             player.displayClientMessage(
-                    Component.literal("梦境如烟，轻轻一卷...").withStyle(ChatFormatting.LIGHT_PURPLE),
+                    Component.literal("The dream realm drifts like smoke, curling softly...").withStyle(ChatFormatting.LIGHT_PURPLE),
                     true
             );
         }
@@ -207,7 +207,7 @@ public class DreamExplorationManager {
 
         if (aperture.getCurrentEssence() < cost) {
             player.displayClientMessage(
-                    Component.literal("真元不足，被梦境弹出...").withStyle(ChatFormatting.RED),
+                    Component.literal("Insufficient Primeval Essence. Ejected from the dream realm...").withStyle(ChatFormatting.RED),
                     false
             );
             activeManifests.remove(uuid);
@@ -238,7 +238,7 @@ public class DreamExplorationManager {
         activeDreamers.put(uuid, state);
 
         player.displayClientMessage(
-                Component.literal("被梦境卷入，意识沉入梦中...").withStyle(ChatFormatting.LIGHT_PURPLE),
+                Component.literal("Drawn into the dream realm, your consciousness sinks into slumber...").withStyle(ChatFormatting.LIGHT_PURPLE),
                 false
         );
         ServerLevel level = player.serverLevel();
@@ -280,7 +280,7 @@ public class DreamExplorationManager {
         activeDreamers.put(uuid, state);
 
         player.displayClientMessage(
-                Component.literal("意识沉入梦境...").withStyle(ChatFormatting.LIGHT_PURPLE),
+                Component.literal("Consciousness sinks into the dream...").withStyle(ChatFormatting.LIGHT_PURPLE),
                 false
         );
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -350,7 +350,7 @@ public class DreamExplorationManager {
                 }
                 data.addDaoMarks(randomPath, amount);
                 player.displayClientMessage(
-                        Component.literal("梦中见证古老传承..." + randomPath.getDisplayName() + " 道痕+" + amount)
+                        Component.literal("Witnessing an ancient inheritance in the dream..." + randomPath.getDisplayName() + " Dao Marks +" + amount)
                                 .withStyle(ChatFormatting.AQUA),
                         false
                 );
@@ -360,7 +360,7 @@ public class DreamExplorationManager {
                 float recovered = aperture.getMaxEssence() * 0.3f;
                 aperture.regenerateEssence(recovered);
                 player.displayClientMessage(
-                        Component.literal("梦境中真元缓缓恢复...+" + (int) recovered)
+                        Component.literal("Primeval Essence slowly recovers within the dream...+" + (int) recovered)
                                 .withStyle(ChatFormatting.GREEN),
                         false
                 );
@@ -368,12 +368,12 @@ public class DreamExplorationManager {
             }
             case RECIPE_VISION -> {
                 String[] recipes = {
-                        "梦境中隐约看见：月光蛊可用月兰花瓣在月光下炼化...",
-                        "恍惚间感悟：铁骨蛊需以兽骨和元石为引...",
-                        "梦中有声音低语：四味酒虫需集齐四种美酒...",
-                        "传承记忆涌来：高阶蛊虫需要对应道路的材料...",
-                        "古蛊师的记忆：融合同道路蛊虫可引发道共鸣...",
-                        "朦胧中的启示：杀招推演需要足够的道痕积累..."
+                        "In the dream, you vaguely see: Moonlight Gu can be refined using moon orchid petals under moonlight...",
+                        "In a trance, you realize: Iron Bone Gu requires beast bones and essence stones as catalysts...",
+                        "A voice whispers in the dream: Four-Flavor Wine Gu requires gathering four types of fine wine...",
+                        "Inheritance memories surge forth: High-rank Gu insects require materials aligned with their corresponding Path...",
+                        "Memories of an ancient Gu Master: Merging Gu insects of the same Path can trigger Path resonance...",
+                        "A hazy revelation: Killer Move deduction requires sufficient Dao Mark accumulation..."
                 };
                 String recipe = recipes[player.getRandom().nextInt(recipes.length)];
                 player.displayClientMessage(
@@ -389,7 +389,7 @@ public class DreamExplorationManager {
                 }
                 player.hurt(player.damageSources().magic(), damage);
                 player.displayClientMessage(
-                        Component.literal("噩梦侵袭！精神受到冲击！")
+                        Component.literal("Nightmare assault! Your mind is struck!")
                                 .withStyle(ChatFormatting.DARK_RED),
                         false
                 );
@@ -410,7 +410,7 @@ public class DreamExplorationManager {
                 }
                 data.addDaoMarks(primaryPath, 25);
                 player.displayClientMessage(
-                        Component.literal("顿悟！对" + primaryPath.getDisplayName() + "的理解加深！道痕+25")
+                        Component.literal("Epiphany! Your understanding of the " + primaryPath.getDisplayName() + " deepens! Dao Marks +25")
                                 .withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD),
                         false
                 );
@@ -467,7 +467,7 @@ public class DreamExplorationManager {
 
         if (interrupted) {
             player.displayClientMessage(
-                    Component.literal("梦境被打断！意识强制回归！")
+                    Component.literal("The dream realm is disrupted! Your consciousness is forcibly returned!")
                             .withStyle(ChatFormatting.RED),
                     false
             );
@@ -475,7 +475,7 @@ public class DreamExplorationManager {
                     SoundEvents.GLASS_BREAK, SoundSource.PLAYERS, 0.5f, 0.8f);
         } else {
             player.displayClientMessage(
-                    Component.literal("从梦境中安全醒来。")
+                    Component.literal("You wake safely from the dream realm.")
                             .withStyle(ChatFormatting.LIGHT_PURPLE),
                     false
             );

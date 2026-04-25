@@ -7,7 +7,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;
 
-// 山地蜘蛛渲染器
+// Mountain Spider Renderer
 public class MountainSpiderRenderer extends MobRenderer<MountainSpiderEntity, SpiderModel<MountainSpiderEntity>> {
 
     private static final ResourceLocation TEXTURE =

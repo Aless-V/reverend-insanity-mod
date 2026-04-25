@@ -136,9 +136,9 @@ public class FormlessHandEntity extends Mob {
 
         sl.playSound(null, player.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.HOSTILE, 1.2f, 1.8f);
         GuType guType = GuRegistry.get(stolen.getTypeId());
-        String guName = guType != null ? guType.displayName() : "\u86ca\u866b";
+        String guName = guType != null ? guType.displayName() : "Gu";
         player.sendSystemMessage(Component.literal(
-            "\u00a79\u00a7l[\u65e0\u76f8\u624b] \u00a7b\u6de1\u84dd\u8272\u7684\u624b\u4f38\u5165\u4f60\u7684\u7a7a\u7a8d\uff0c\u6293\u4f4f\u4e86" + guName + "\uff01"));
+            "§9§l[Faceless Hand] §bA pale blue hand reaches into your aperture and grasps " + guName + "!"));
 
         sl.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, player.getX(), player.getY() + 1.5, player.getZ(),
             40 + fingerCount * 10, 1.0, 1.5, 1.0, 0.03);
@@ -174,9 +174,9 @@ public class FormlessHandEntity extends Mob {
             ServerPlayer player = findTarget(sl);
             if (player != null) {
                 GuType guType = stolenGuData != null ? GuRegistry.get(ResourceLocation.parse(stolenGuData.getString("type"))) : null;
-                String guName = guType != null ? guType.displayName() : "\u86ca\u866b";
+                String guName = guType != null ? guType.displayName() : "Gu";
                 player.sendSystemMessage(Component.literal(
-                    "\u00a79\u00a7l[\u65e0\u76f8\u624b] \u00a7c\u4f60\u7684" + guName + "\u88ab\u5077\u8d70\u4e86\uff01"));
+                    "§9§l[Faceless Hand] §cYour " + guName + " has been stolen!"));
                 VfxHelper.spawn(player, VfxType.SHADOW_FADE, player.getX(), player.getY() + 1, player.getZ(),
                     0, 1, 0, 0xFFCC0044, 1.5f, 25);
             }
@@ -207,9 +207,9 @@ public class FormlessHandEntity extends Mob {
         data.getAperture().addGu(returned);
 
         GuType guType = GuRegistry.get(returned.getTypeId());
-        String guName = guType != null ? guType.displayName() : "\u86ca\u866b";
+        String guName = guType != null ? guType.displayName() : "Gu";
         player.sendSystemMessage(Component.literal(
-            "\u00a79\u00a7l[\u65e0\u76f8\u624b] \u00a7a" + guName + "\u4ece\u7834\u788e\u7684\u624b\u4e2d\u98de\u56de\u4e86\u4f60\u7684\u7a7a\u7a8d\uff01"));
+            "§9§l[Faceless Hand] §a" + guName + " flies back into your aperture from the shattered hand!"));
 
         sl.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, player.getX(), player.getY() + 1.5, player.getZ(),
             20, 0.5, 1.0, 0.5, 0.02);

@@ -43,7 +43,7 @@ public class FormationArrayManager {
         Level level = player.level();
 
         if (!checkCrossPattern(level, pos)) {
-            player.displayClientMessage(Component.literal("阵法石不足，需要十字排列五块阵法石"), true);
+            player.displayClientMessage(Component.literal("Insufficient Formation Stones. Requires five Formation Stones arranged in a cross pattern."), true);
             return false;
         }
 
@@ -54,18 +54,18 @@ public class FormationArrayManager {
         Aperture aperture = data.getAperture();
 
         if (type == FormationType.GRAND && aperture.getRank().getLevel() < 2) {
-            player.displayClientMessage(Component.literal("境界不足，天地大阵需要二转以上"), true);
+            player.displayClientMessage(Component.literal("Insufficient cultivation rank. The Heaven and Earth Grand Formation requires Rank 2 or above."), true);
             return false;
         }
 
         if (aperture.findGuInstance(guId) == null) {
-            player.displayClientMessage(Component.literal("空窍中没有对应的阵道蛊虫"), true);
+            player.displayClientMessage(Component.literal("No corresponding Formation Path Gu insect in your aperture."), true);
             return false;
         }
 
         for (ActiveFormation af : activeFormations) {
             if (af.center.equals(pos)) {
-                player.displayClientMessage(Component.literal("此处已有活跃阵法"), true);
+                player.displayClientMessage(Component.literal("An active formation already exists here."), true);
                 return false;
             }
         }
@@ -81,7 +81,7 @@ public class FormationArrayManager {
         setCrossActive(level, pos, true);
 
         level.playSound(null, pos, SoundEvents.BEACON_ACTIVATE, SoundSource.BLOCKS, 1.0f, 1.2f);
-        player.displayClientMessage(Component.literal(type.displayName + "布阵成功！"), true);
+        player.displayClientMessage(Component.literal(type.displayName + "Formation successfully deployed!"), true);
         return true;
     }
 
@@ -241,9 +241,9 @@ public class FormationArrayManager {
     }
 
     public enum FormationType {
-        TRAP("困阵", "trap_formation_gu", 600, 8, 0xCC2222),
-        SHIELD("盾阵", "formation_shield_gu", 600, 8, 0x4488CC),
-        GRAND("天地大阵", "grand_formation_gu", 800, 12, 0xCCCC44);
+        TRAP("Trapping Formation", "trap_formation_gu", 600, 8, 0xCC2222),
+        SHIELD("Shield Formation", "formation_shield_gu", 600, 8, 0x4488CC),
+        GRAND("Heaven and Earth Grand Formation", "grand_formation_gu", 800, 12, 0xCCCC44);
 
         final String displayName;
         final String guIdStr;

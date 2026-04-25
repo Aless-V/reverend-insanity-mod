@@ -31,7 +31,7 @@ public class GuDamageManager {
                 GuType type = gu.getType();
                 if (type != null) {
                     player.displayClientMessage(
-                            Component.literal(type.displayName() + " 受损！效果降低50%")
+                            Component.literal(type.displayName() + " Damaged! Effect reduced by 50%")
                                     .withStyle(ChatFormatting.RED), false);
                 }
                 break;
@@ -64,7 +64,7 @@ public class GuDamageManager {
         float cost = type != null ? type.rank() * 50f : 50f;
         if (!aperture.consumeEssence(cost)) {
             player.displayClientMessage(
-                    Component.literal("真元不足，修复需要 " + (int) cost + " 真元")
+                    Component.literal("Insufficient Primeval Essence. Repair requires " + (int) cost + " Primeval Essence")
                             .withStyle(ChatFormatting.RED), true);
             return false;
         }
@@ -72,7 +72,7 @@ public class GuDamageManager {
         gu.setDamaged(false);
         if (type != null) {
             player.displayClientMessage(
-                    Component.literal(type.displayName() + " 修复成功！")
+                    Component.literal(type.displayName() + " Repair successful!")
                             .withStyle(ChatFormatting.GREEN), false);
         }
         return true;

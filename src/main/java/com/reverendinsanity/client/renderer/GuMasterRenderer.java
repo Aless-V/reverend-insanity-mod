@@ -9,7 +9,7 @@ import net.minecraft.resources.ResourceLocation;
 
 import java.util.Set;
 
-// NPC蛊师渲染器：根据道路选择战斗原型贴图，魔道优先
+// NPC Gu Master Renderer: Selects combat prototype texture based on Path; demonic path takes priority.
 public class GuMasterRenderer extends HumanoidMobRenderer<GuMasterEntity, PlayerModel<GuMasterEntity>> {
 
     private static final ResourceLocation TEX_MELEE =

@@ -11,7 +11,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
-// 蛊架方块实体，存储展示蛊虫物品
+// Gu Frame block entity, stores and displays Gu insect items.
 public class GuShelfBlockEntity extends BlockEntity {
 
     private ItemStack displayItem = ItemStack.EMPTY;

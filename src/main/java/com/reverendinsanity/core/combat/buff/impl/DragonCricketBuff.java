@@ -35,7 +35,7 @@ public class DragonCricketBuff extends GuBuff {
     @Override
     public float modifyIncomingDamage(ServerPlayer player, DamageSource source, float amount) {
         if (player.getRandom().nextFloat() < 0.25f) {
-            player.displayClientMessage(Component.literal("闪避！"), true);
+            player.displayClientMessage(Component.literal("Dodge!"), true);
             return 0f;
         }
         return amount;

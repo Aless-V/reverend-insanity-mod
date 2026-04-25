@@ -12,8 +12,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import java.util.*;
 
-// 仙窍：六转以上蛊师的个人小世界，原著还原
-// 天地二气、仙元石产出、光阴支流、发展度、漏洞、灾劫
+// Immortal Aperture: The personal miniature world of Gu Immortals Rank 6 and above. Faithful to the original novel.
+// Heaven and Earth Qi, Immortal Essence Stone production, Time Stream Branch, Development Level, Flaws, Tribulations.
 public class ImmortalAperture {
 
     private boolean formed = false;

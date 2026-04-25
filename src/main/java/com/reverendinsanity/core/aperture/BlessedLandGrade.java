@@ -5,14 +5,14 @@ import com.reverendinsanity.core.cultivation.Aptitude;
 import com.reverendinsanity.core.cultivation.GuMasterData;
 import com.reverendinsanity.core.path.DaoPath;
 
-// 福地等级：原著还原
-// 小福地方圆至多300万亩(1:5)，中等400-600万亩(1:16)，上等700-900万亩(1:33)，特等1000万+(1:38)
-// size = 岛屿直径(格)，featureRadius = 中心特征放置半径
+// Blessed Land Rank: Faithful to the original novel
+// Small Blessed Land: Up to 3 million mu (1:5 scale), Medium: 4-6 million mu (1:16), Large: 7-9 million mu (1:33), Special: 10+ million mu (1:38)
+// size = island diameter (blocks), featureRadius = central feature placement radius
 public enum BlessedLandGrade {
-    LOWER("下等福地", 3000, 2, 0.5f, 5, 1000, 128),
-    MIDDLE("中等福地", 6000, 4, 1.0f, 16, 2500, 200),
-    UPPER("上等福地", 10000, 8, 1.5f, 33, 5000, 300),
-    SUPREME("特等福地", 16000, 15, 2.0f, 38, 10000, 400);
+    LOWER("Lower Blessed Land", 3000, 2, 0.5f, 5, 1000, 128),
+    MIDDLE("Middle Blessed Land", 6000, 4, 1.0f, 16, 2500, 200),
+    UPPER("Upper Blessed Land", 10000, 8, 1.5f, 33, 5000, 300),
+    SUPREME("Supreme Blessed Land", 16000, 15, 2.0f, 38, 10000, 400);
 
     private final String displayName;
     private final int size;

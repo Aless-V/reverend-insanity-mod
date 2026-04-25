@@ -41,7 +41,7 @@ public class DisplacementAbility extends GuAbility {
                 player.teleportTo(target.x, target.y, target.z);
                 player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                     SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 1.0f, 1.0f);
-                player.displayClientMessage(Component.literal("移形蛊催动，空间挪移"), true);
+                player.displayClientMessage(Component.literal("Shift Gu activated. Spatial displacement."), true);
                 VfxHelper.spawn(player, VfxType.RIPPLE,
                     player.getX(), player.getY(), player.getZ(),
                     0f, 1f, 0f,
@@ -51,6 +51,6 @@ public class DisplacementAbility extends GuAbility {
         }
 
         aperture.regenerateEssence(20f);
-        player.displayClientMessage(Component.literal("移形失败，前方无法到达"), true);
+        player.displayClientMessage(Component.literal("Shift failed. Destination unreachable."), true);
     }
 }

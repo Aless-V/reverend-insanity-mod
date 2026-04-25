@@ -31,7 +31,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.BlockHitResult;
 
-// 福地之种，四转以上蛊师的个人修炼空间核心方块
+// Blessed Land Seed, the core block of a personal cultivation space for Gu Masters of Rank 4 and above.
 public class BlessedLandBlock extends BaseEntityBlock {
 
     public static final MapCodec<BlessedLandBlock> CODEC = simpleCodec(BlessedLandBlock::new);
@@ -69,12 +69,12 @@ public class BlessedLandBlock extends BaseEntityBlock {
         if (!(be instanceof BlessedLandBlockEntity blessed)) return InteractionResult.PASS;
 
         if (blessed.getOwnerUUID() == null || !blessed.getOwnerUUID().equals(sp.getUUID())) {
-            sp.displayClientMessage(Component.literal("这不是你的福地").withStyle(ChatFormatting.RED), true);
+            sp.displayClientMessage(Component.literal("This is not your Blessed Land.").withStyle(ChatFormatting.RED), true);
             return InteractionResult.SUCCESS;
         }
 
         if (!blessed.isActive()) {
-            sp.displayClientMessage(Component.literal("此福地已失效").withStyle(ChatFormatting.GRAY), true);
+            sp.displayClientMessage(Component.literal("This Blessed Land is no longer valid.").withStyle(ChatFormatting.GRAY), true);
             return InteractionResult.SUCCESS;
         }
 
@@ -86,20 +86,20 @@ public class BlessedLandBlock extends BaseEntityBlock {
             if (!immortalAp.isFormed()) {
                 immortalAp.form(aperture, data);
                 sp.displayClientMessage(
-                    Component.literal("仙窍开辟成功！" + immortalAp.getGrade().getDisplayName() + "！")
+                    Component.literal("Immortal Aperture successfully opened! " + immortalAp.getGrade().getDisplayName() + "！")
                         .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD), false);
                 AdvancementHelper.grant(sp, "form_immortal_aperture");
             }
             ServerPayloadHandler.syncImmortalApertureToClient(sp, data);
         } else {
             sp.displayClientMessage(
-                Component.literal("[ 福地状态 ]").withStyle(ChatFormatting.GOLD), false);
+                Component.literal("[ Blessed Land Status ]").withStyle(ChatFormatting.GOLD), false);
             sp.displayClientMessage(
-                Component.literal("真元回复: 5倍加速").withStyle(ChatFormatting.GREEN), false);
+                Component.literal("Primeval Essence Recovery: 5x Speed").withStyle(ChatFormatting.GREEN), false);
             sp.displayClientMessage(
-                Component.literal("范围: " + BlessedLandBlockEntity.RADIUS + "格").withStyle(ChatFormatting.AQUA), false);
+                Component.literal("Range: " + BlessedLandBlockEntity.RADIUS + "blocks").withStyle(ChatFormatting.AQUA), false);
             sp.displayClientMessage(
-                Component.literal("效果: 周围敌对生物缓慢衰弱").withStyle(ChatFormatting.YELLOW), false);
+                Component.literal("Effect: Surrounding hostile mobs gradually weaken.").withStyle(ChatFormatting.YELLOW), false);
         }
 
         return InteractionResult.SUCCESS;
@@ -114,7 +114,7 @@ public class BlessedLandBlock extends BaseEntityBlock {
         Aperture aperture = data.getAperture();
 
         if (!aperture.isOpened() || aperture.getRank().getLevel() < 4) {
-            player.displayClientMessage(Component.literal("境界不足，需四转以上方可开辟福地"), true);
+            player.displayClientMessage(Component.literal("Rank insufficient. You must be Rank 4 or higher to establish a Blessed Land."), true);
             level.destroyBlock(pos, true);
             return;
         }
@@ -126,7 +126,7 @@ public class BlessedLandBlock extends BaseEntityBlock {
         }
 
         AdvancementHelper.grant(player, "create_blessed_land");
-        player.displayClientMessage(Component.literal("福地开辟成功！灵气开始汇聚..."), false);
+        player.displayClientMessage(Component.literal("Blessed Land successfully established! Spiritual energy begins to converge..."), false);
     }
 
     @Override

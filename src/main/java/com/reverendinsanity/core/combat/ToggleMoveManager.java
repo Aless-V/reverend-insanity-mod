@@ -50,7 +50,7 @@ public class ToggleMoveManager {
             activeMoves.computeIfAbsent(uuid, k -> ConcurrentHashMap.newKeySet()).add(move.id());
             combat.setMoveCooldown(move.id(), 0);
             player.displayClientMessage(
-                Component.literal("「" + move.displayName() + "」持续开启").withStyle(ChatFormatting.GREEN), true);
+                Component.literal("「" + move.displayName() + "」Now continuously active").withStyle(ChatFormatting.GREEN), true);
             return true;
         }
         return false;
@@ -64,7 +64,7 @@ public class ToggleMoveManager {
             if (moves.isEmpty()) activeMoves.remove(uuid);
         }
         player.displayClientMessage(
-            Component.literal("「" + move.displayName() + "」已关闭").withStyle(ChatFormatting.YELLOW), true);
+            Component.literal("「" + move.displayName() + "」Deactivated").withStyle(ChatFormatting.YELLOW), true);
     }
 
     public static void tickPlayer(ServerPlayer player) {
@@ -91,7 +91,7 @@ public class ToggleMoveManager {
                 } else {
                     toRemove.add(moveId);
                     player.displayClientMessage(
-                        Component.literal("真元耗尽，「" + move.displayName() + "」自动关闭")
+                        Component.literal("Primeval Essence exhausted，「" + move.displayName() + "」automatically deactivated")
                             .withStyle(ChatFormatting.RED), false);
                 }
             }

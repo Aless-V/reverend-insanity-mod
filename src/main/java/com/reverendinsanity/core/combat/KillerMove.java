@@ -36,14 +36,14 @@ public record KillerMove(
     }
 
     public enum MoveType {
-        ATTACK("攻击"),
-        DEFENSE("防御"),
-        MOVEMENT("移动"),
-        CONTROL("控制"),
-        HEAL("治疗"),
-        BUFF("增益"),
-        DEBUFF("减益"),
-        ULTIMATE("必杀");
+        ATTACK("Attack"),
+        DEFENSE("Defense"),
+        MOVEMENT("Movement"),
+        CONTROL("Control"),
+        HEAL("Heal"),
+        BUFF("Buff"),
+        DEBUFF("Debuff"),
+        ULTIMATE("Ultimate");
 
         private final String displayName;
         MoveType(String displayName) { this.displayName = displayName; }

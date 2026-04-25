@@ -50,7 +50,7 @@ public class ServerPayloadHandler {
             CombatState combatState = data.getCombatState();
 
             if (!aperture.isOpened()) {
-                player.displayClientMessage(Component.literal("空窍未开，无法催动蛊虫"), true);
+                player.displayClientMessage(Component.literal("Aperture not opened. Cannot activate Gu insects"), true);
                 return;
             }
 
@@ -65,20 +65,20 @@ public class ServerPayloadHandler {
 
             int slotIndex = payload.slotIndex();
             if (slotIndex < 0 || slotIndex >= availableAbilities.size()) {
-                player.displayClientMessage(Component.literal("该技能栏位无蛊虫"), true);
+                player.displayClientMessage(Component.literal("No Gu insect in this skill slot"), true);
                 return;
             }
 
             GuAbility ability = availableAbilities.get(slotIndex);
             if (ability.execute(player, aperture, combatState)) {
                 GuType guType = GuRegistry.get(ability.getGuTypeId());
-                String name = guType != null ? guType.displayName() : "蛊虫";
-                player.displayClientMessage(Component.literal(name + " 催动成功"), true);
+                String name = guType != null ? guType.displayName() : "Gu";
+                player.displayClientMessage(Component.literal(name + " Activation successful"), true);
             } else {
                 if (combatState.isAbilityOnCooldown(ability.getGuTypeId())) {
-                    player.displayClientMessage(Component.literal("技能冷却中"), true);
+                    player.displayClientMessage(Component.literal("Skill on cooldown"), true);
                 } else {
-                    player.displayClientMessage(Component.literal("真元不足"), true);
+                    player.displayClientMessage(Component.literal("Insufficient Primeval Essence"), true);
                 }
             }
         });
@@ -93,37 +93,37 @@ public class ServerPayloadHandler {
             CombatState combatState = data.getCombatState();
 
             if (!aperture.isOpened()) {
-                player.displayClientMessage(Component.literal("空窍未开"), true);
+                player.displayClientMessage(Component.literal("Aperture not opened"), true);
                 return;
             }
 
             List<ResourceLocation> equipped = combatState.getEquippedMoves();
             int slot = payload.slotIndex();
             if (slot < 0 || slot >= equipped.size()) {
-                player.displayClientMessage(Component.literal("杀招栏位为空"), true);
+                player.displayClientMessage(Component.literal("Killer Move slot is empty"), true);
                 return;
             }
 
             KillerMove move = KillerMoveRegistry.get(equipped.get(slot));
             if (move == null) {
-                player.displayClientMessage(Component.literal("杀招不存在"), true);
+                player.displayClientMessage(Component.literal("Killer Move does not exist"), true);
                 return;
             }
 
             if (KillerMoveExecutor.execute(player, aperture, combatState, move)) {
-                player.displayClientMessage(Component.literal("杀招「" + move.displayName() + "」施展成功！"), false);
+                player.displayClientMessage(Component.literal("Killer Move「" + move.displayName() + "」successfully executed!"), false);
                 AdvancementHelper.grant(player, "first_killer_move");
             } else {
                 if (!move.canUse(aperture.getRank())) {
-                    player.displayClientMessage(Component.literal("境界不足，无法施展此杀招"), true);
+                    player.displayClientMessage(Component.literal("Insufficient cultivation rank, Cannot execute this Killer Move"), true);
                 } else if (aperture.getCurrentEssence() < move.essenceCost()) {
-                    player.displayClientMessage(Component.literal("真元不足"), true);
+                    player.displayClientMessage(Component.literal("Insufficient Primeval Essence"), true);
                 } else if (aperture.getThoughts() < move.thoughtsCost()) {
-                    player.displayClientMessage(Component.literal("念头不足，无法驱动杀招"), true);
+                    player.displayClientMessage(Component.literal("Insufficient Thoughts, Cannot drive the Killer Move"), true);
                 } else if (combatState.isMoveCooldown(move.id())) {
-                    player.displayClientMessage(Component.literal("杀招冷却中"), true);
+                    player.displayClientMessage(Component.literal("Killer Move on cooldown"), true);
                 } else {
-                    player.displayClientMessage(Component.literal("缺少必要蛊虫"), true);
+                    player.displayClientMessage(Component.literal("Missing required Gu insect"), true);
                 }
             }
         });
@@ -193,10 +193,10 @@ public class ServerPayloadHandler {
             ResourceLocation moveId = ResourceLocation.parse(payload.moveId());
             if (payload.equip()) {
                 combatState.equipMove(moveId);
-                player.displayClientMessage(Component.literal("杀招已装备"), true);
+                player.displayClientMessage(Component.literal("Killer Move equipped"), true);
             } else {
                 combatState.unequipMove(moveId);
-                player.displayClientMessage(Component.literal("杀招已卸下"), true);
+                player.displayClientMessage(Component.literal("Killer Move unequipped"), true);
             }
 
             handleOpenAperture(new OpenAperturePayload(), context);
@@ -211,20 +211,20 @@ public class ServerPayloadHandler {
             Aperture aperture = data.getAperture();
 
             if (!aperture.isOpened()) {
-                player.displayClientMessage(Component.literal("空窍未开"), true);
+                player.displayClientMessage(Component.literal("Aperture not opened"), true);
                 return;
             }
 
             List<GuInstance> guList = aperture.getStoredGu();
             int idx = payload.guIndex();
             if (idx < 0 || idx >= guList.size()) {
-                player.displayClientMessage(Component.literal("无效的蛊虫索引"), true);
+                player.displayClientMessage(Component.literal("Invalid Gu insect index"), true);
                 return;
             }
 
             GuInstance gu = guList.get(idx);
             if (!gu.isAlive()) {
-                player.displayClientMessage(Component.literal("蛊虫已死，无法喂养"), true);
+                player.displayClientMessage(Component.literal("Gu insect is dead, Cannot feed"), true);
                 return;
             }
 
@@ -239,17 +239,17 @@ public class ServerPayloadHandler {
             }
 
             if (!hasPrimevalStone) {
-                player.displayClientMessage(Component.literal("缺少元石，无法喂养"), true);
+                player.displayClientMessage(Component.literal("Insufficient Essence Stones, Cannot feed"), true);
                 return;
             }
 
             if (gu.feed()) {
-                player.displayClientMessage(Component.literal("喂养成功！饥饿度: " + (int)gu.getHunger() + "%"), true);
+                player.displayClientMessage(Component.literal("Feeding successful! Hunger level: " + (int)gu.getHunger() + "%"), true);
                 player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                     net.minecraft.sounds.SoundEvents.GENERIC_EAT, net.minecraft.sounds.SoundSource.PLAYERS, 0.5f, 1.2f);
                 AdvancementHelper.grant(player, "feed_gu");
             } else {
-                player.displayClientMessage(Component.literal("蛊虫饱食，无需喂养"), true);
+                player.displayClientMessage(Component.literal("Gu insect is full, No need to feed"), true);
             }
 
             handleOpenAperture(new OpenAperturePayload(), context);
@@ -272,8 +272,8 @@ public class ServerPayloadHandler {
             GuType type = GuRegistry.get(guList.get(idx).getTypeId());
             GuInstance removed = aperture.removeGuAt(idx);
             if (removed != null) {
-                String name = type != null ? type.displayName() : "蛊虫";
-                player.displayClientMessage(Component.literal(name + " 已从窍穴中丢弃"), true);
+                String name = type != null ? type.displayName() : "Gu";
+                player.displayClientMessage(Component.literal(name + " Discarded from the aperture"), true);
             }
 
             handleOpenAperture(new OpenAperturePayload(), context);
@@ -355,13 +355,13 @@ public class ServerPayloadHandler {
             try {
                 targetPath = DaoPath.valueOf(payload.targetPath());
             } catch (Exception e) {
-                player.displayClientMessage(Component.literal("无效的道"), true);
+                player.displayClientMessage(Component.literal("Invalid Path"), true);
                 return;
             }
 
             MoveBlueprint blueprint = new MoveBlueprint(coreGuId, supportIds, targetPath);
             if (DeductionManager.startDeduction(player, blueprint)) {
-                player.displayClientMessage(Component.literal("开始推演杀招...").withStyle(net.minecraft.ChatFormatting.GOLD), false);
+                player.displayClientMessage(Component.literal("Starting Killer Move deduction...").withStyle(net.minecraft.ChatFormatting.GOLD), false);
             }
         });
     }
@@ -370,7 +370,7 @@ public class ServerPayloadHandler {
         context.enqueueWork(() -> {
             if (!(context.player() instanceof ServerPlayer player)) return;
             DeductionManager.cancelDeduction(player.getUUID());
-            player.displayClientMessage(Component.literal("推演已取消"), true);
+            player.displayClientMessage(Component.literal("Deduction canceled"), true);
         });
     }
 
@@ -383,24 +383,24 @@ public class ServerPayloadHandler {
 
             if (!immortalAp.isFormed()) {
                 if (!data.getAperture().getRank().isImmortal()) {
-                    player.displayClientMessage(Component.literal("境界不足，无法开辟仙窍"), true);
+                    player.displayClientMessage(Component.literal("Insufficient cultivation rank, Cannot open the Immortal Aperture"), true);
                     return;
                 }
                 immortalAp.form(data.getAperture(), data);
                 player.displayClientMessage(
-                    Component.literal("仙窍开辟成功！" + immortalAp.getGrade().getDisplayName() + "！")
+                    Component.literal("Immortal Aperture successfully opened! " + immortalAp.getGrade().getDisplayName() + "！")
                         .withStyle(net.minecraft.ChatFormatting.GOLD, net.minecraft.ChatFormatting.BOLD), false);
                 AdvancementHelper.grant(player, "form_immortal_aperture");
             }
 
             if (player.level().dimension().equals(com.reverendinsanity.world.dimension.ModDimensions.APERTURE_DIM)) {
-                player.displayClientMessage(Component.literal("你已在仙窍之中"), true);
+                player.displayClientMessage(Component.literal("You are already inside the Immortal Aperture"), true);
                 return;
             }
 
             com.reverendinsanity.world.dimension.ApertureDimensionManager.enterAperture(player);
             player.displayClientMessage(
-                Component.literal("进入仙窍·" + immortalAp.getGrade().getDisplayName())
+                Component.literal("Entering Immortal Aperture · " + immortalAp.getGrade().getDisplayName())
                     .withStyle(net.minecraft.ChatFormatting.AQUA, net.minecraft.ChatFormatting.BOLD), false);
         });
     }
@@ -410,13 +410,13 @@ public class ServerPayloadHandler {
             if (!(context.player() instanceof ServerPlayer player)) return;
 
             if (!player.level().dimension().equals(com.reverendinsanity.world.dimension.ModDimensions.APERTURE_DIM)) {
-                player.displayClientMessage(Component.literal("你不在仙窍中"), true);
+                player.displayClientMessage(Component.literal("You are not inside the Immortal Aperture"), true);
                 return;
             }
 
             com.reverendinsanity.world.dimension.ApertureDimensionManager.exitAperture(player);
             player.displayClientMessage(
-                Component.literal("离开仙窍，返回原处").withStyle(net.minecraft.ChatFormatting.GREEN), false);
+                Component.literal("Leaving the Immortal Aperture, Returning to your original location").withStyle(net.minecraft.ChatFormatting.GREEN), false);
         });
     }
 
@@ -428,7 +428,7 @@ public class ServerPayloadHandler {
             ImmortalAperture immortalAp = data.getImmortalAperture();
 
             if (!CalamityManager.isInCalamity(player.getUUID())) {
-                player.displayClientMessage(Component.literal("当前没有灾劫"), true);
+                player.displayClientMessage(Component.literal("No active tribulations"), true);
                 return;
             }
 
@@ -436,10 +436,10 @@ public class ServerPayloadHandler {
             if (immortalAp.consumeQi(amount)) {
                 CalamityManager.resistCalamity(player.getUUID(), amount);
                 player.displayClientMessage(
-                    Component.literal("消耗天地二气抵抗灾劫，减免伤害" + String.format("%.1f", amount))
+                    Component.literal("Consume Heaven and Earth Qi to resist tribulations and reduce damage " + String.format("%.1f", amount))
                         .withStyle(net.minecraft.ChatFormatting.GREEN), true);
             } else {
-                player.displayClientMessage(Component.literal("天地二气不足"), true);
+                player.displayClientMessage(Component.literal("Insufficient Heaven and Earth Qi"), true);
             }
         });
     }
@@ -454,7 +454,7 @@ public class ServerPayloadHandler {
             if (!immortalAp.isFormed() && data.getAperture().getRank().isImmortal()) {
                 immortalAp.form(data.getAperture(), data);
                 player.displayClientMessage(
-                    Component.literal("仙窍开辟成功！" + immortalAp.getGrade().getDisplayName() + "！")
+                    Component.literal("Immortal Aperture successfully opened!" + immortalAp.getGrade().getDisplayName() + "！")
                         .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD), false);
                 AdvancementHelper.grant(player, "form_immortal_aperture");
             }
@@ -493,11 +493,11 @@ public class ServerPayloadHandler {
                         player.drop(stack, false);
                     }
                     player.displayClientMessage(
-                        Component.literal("提取了 " + extracted + "个 " + resType.getDisplayName())
+                        Component.literal("Extracted " + extracted + " " + resType.getDisplayName())
                             .withStyle(ChatFormatting.GREEN), true);
                 }
             } else {
-                player.displayClientMessage(Component.literal("该资源不足"), true);
+                player.displayClientMessage(Component.literal("Insufficient resources"), true);
             }
 
             syncImmortalApertureToClient(player, data);
@@ -518,10 +518,10 @@ public class ServerPayloadHandler {
 
             if (after > before) {
                 player.displayClientMessage(
-                    Component.literal("仙窍修复: " + String.format("%.1f", before) + "% → " + String.format("%.1f", after) + "%")
+                    Component.literal("Immortal Aperture Repair: " + String.format("%.1f", before) + "% → " + String.format("%.1f", after) + "%")
                         .withStyle(ChatFormatting.GREEN), true);
             } else {
-                player.displayClientMessage(Component.literal("天地二气不足，无法修复"), true);
+                player.displayClientMessage(Component.literal("Insufficient Heaven and Earth Qi. Cannot repair."), true);
             }
 
             syncImmortalApertureToClient(player, data);
@@ -539,10 +539,10 @@ public class ServerPayloadHandler {
             if (ap.getBreachCount() > 0) {
                 ap.repairBreach();
                 player.displayClientMessage(
-                    Component.literal("[仙窍] 修复一处漏洞").withStyle(ChatFormatting.GREEN), false);
+                    Component.literal("[Immortal Aperture] Repaired a flaw").withStyle(ChatFormatting.GREEN), false);
             } else {
                 player.displayClientMessage(
-                    Component.literal("[仙窍] 无漏洞需要修复").withStyle(ChatFormatting.GRAY), true);
+                    Component.literal("[Immortal Aperture] No flaws need repair").withStyle(ChatFormatting.GRAY), true);
             }
 
             syncImmortalApertureToClient(player, data);
@@ -624,12 +624,12 @@ public class ServerPayloadHandler {
 
     private static String buildMoveDescription(KillerMove move) {
         StringBuilder sb = new StringBuilder();
-        sb.append(move.primaryPath().getDisplayName()).append("\u9053 | ");
-        sb.append("\u5a01\u529b:").append(String.format("%.0f", move.power()));
-        sb.append(" \u51b7\u5374:").append(move.cooldownTicks() / 20).append("s");
+        sb.append(move.primaryPath().getDisplayName()).append("Path | ");
+        sb.append("Power:").append(String.format("%.0f", move.power()));
+        sb.append(" Cooldown:").append(move.cooldownTicks() / 20).append("s");
         GuType coreType = GuRegistry.get(move.coreGu());
         if (coreType != null) {
-            sb.append(" | \u6838\u5fc3:").append(coreType.displayName());
+            sb.append(" | Core:").append(coreType.displayName());
         }
         if (!move.supportGu().isEmpty()) {
             sb.append("+");
@@ -651,16 +651,16 @@ public class ServerPayloadHandler {
             switch (payload.action()) {
                 case DefenseActionPayload.SHIELD -> {
                     if (com.reverendinsanity.core.combat.DefenseManager.activateShield(player)) {
-                        player.displayClientMessage(Component.literal("\u771f\u5143\u62a4\u76fe\u5f00\u542f\uff01").withStyle(ChatFormatting.AQUA), true);
+                        player.displayClientMessage(Component.literal("Primeval Essence shield activated!").withStyle(ChatFormatting.AQUA), true);
                     } else {
-                        player.displayClientMessage(Component.literal("\u65e0\u6cd5\u5f00\u542f\u62a4\u76fe\uff08\u771f\u5143\u4e0d\u8db3\u6216\u5df2\u6fc0\u6d3b\uff09"), true);
+                        player.displayClientMessage(Component.literal("Cannot activate shield (Insufficient Primeval Essence or already active)"), true);
                     }
                 }
                 case DefenseActionPayload.DODGE -> {
                     if (com.reverendinsanity.core.combat.DefenseManager.activateDodge(player)) {
-                        player.displayClientMessage(Component.literal("\u7d27\u6025\u95ea\u907f\uff01").withStyle(ChatFormatting.GREEN), true);
+                        player.displayClientMessage(Component.literal("Emergency dodge!").withStyle(ChatFormatting.GREEN), true);
                     } else {
-                        player.displayClientMessage(Component.literal("\u95ea\u907f\u51b7\u5374\u4e2d\u6216\u771f\u5143\u4e0d\u8db3"), true);
+                        player.displayClientMessage(Component.literal("Dodge on cooldown or insufficient Primeval Essence"), true);
                     }
                 }
             }
@@ -682,11 +682,11 @@ public class ServerPayloadHandler {
                         case CODEX -> handleOpenCodex(new OpenCodexPayload(), context);
                         case SECLUSION -> {
                             if (SeclusionManager.isInSeclusion(player)) {
-                                player.displayClientMessage(Component.literal("已在闭关中，移动即可中断"), true);
+                                player.displayClientMessage(Component.literal("Already in seclusion. Move to interrupt."), true);
                             } else if (SeclusionManager.enterSeclusion(player)) {
-                                player.displayClientMessage(Component.literal("进入闭关状态...").withStyle(ChatFormatting.AQUA), false);
+                                player.displayClientMessage(Component.literal("Entering seclusion state...").withStyle(ChatFormatting.AQUA), false);
                             } else {
-                                player.displayClientMessage(Component.literal("无法进入闭关"), true);
+                                player.displayClientMessage(Component.literal("Cannot enter seclusion."), true);
                             }
                         }
                     }

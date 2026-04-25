@@ -16,7 +16,7 @@ import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-// 月桂花作物，在月光下生长
+// Moonorchid Crop: Grows in moonlight.
 public class MoonOrchidBlock extends CropBlock {
 
     public static final int MAX_AGE = 5;

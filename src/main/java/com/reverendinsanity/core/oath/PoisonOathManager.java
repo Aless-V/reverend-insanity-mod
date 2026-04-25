@@ -16,9 +16,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PoisonOathManager {
 
     public enum OathType {
-        KILL_VOW("杀伐毒誓", 1200, 0.3f, "在限时内击杀目标"),
-        PROTECTION_VOW("守护毒誓", 2400, 0.2f, "保持满HP持续时间"),
-        ASCETIC_VOW("苦修毒誓", 6000, 0.15f, "不使用任何杀招");
+        KILL_VOW("Killing Oath", 1200, 0.3f, "Kill the target within the time limit"),
+        PROTECTION_VOW("Guardian Oath", 2400, 0.2f, "Stay at full HP during the duration"),
+        ASCETIC_VOW("Ascetic Oath", 6000, 0.15f, "Do not use any Killer Moves");
 
         public final String displayName;
         public final int duration;
@@ -41,7 +41,7 @@ public class PoisonOathManager {
     public static boolean makeOath(ServerPlayer player, OathType type) {
         UUID uuid = player.getUUID();
         if (activeOaths.containsKey(uuid)) {
-            player.displayClientMessage(Component.literal("已有毒誓生效中").withStyle(ChatFormatting.RED), true);
+            player.displayClientMessage(Component.literal("A poison oath is already active.").withStyle(ChatFormatting.RED), true);
             return false;
         }
 
@@ -49,7 +49,7 @@ public class PoisonOathManager {
         applyBonus(player, type);
 
         player.displayClientMessage(
-                Component.literal("立下" + type.displayName + "！" + type.description + " (" + (type.duration / 20) + "秒)")
+                Component.literal("Sworn the " + type.displayName + "！" + type.description + " (" + (type.duration / 20) + " seconds)")
                         .withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.BOLD), false);
         return true;
     }
@@ -82,7 +82,7 @@ public class PoisonOathManager {
         if (oath != null && oath.type == OathType.ASCETIC_VOW) {
             oath.violated = true;
             player.displayClientMessage(
-                    Component.literal("苦修毒誓违背！使用了杀招！").withStyle(ChatFormatting.RED), false);
+                    Component.literal("Ascetic Oath broken! A Killer Move was used!").withStyle(ChatFormatting.RED), false);
         }
     }
 
@@ -94,7 +94,7 @@ public class PoisonOathManager {
             removeBonus(player);
             activeOaths.remove(uuid);
             player.displayClientMessage(
-                    Component.literal("杀伐毒誓完成！").withStyle(ChatFormatting.GREEN), false);
+                    Component.literal("Killing Oath fulfilled!").withStyle(ChatFormatting.GREEN), false);
         }
     }
 
@@ -104,7 +104,7 @@ public class PoisonOathManager {
         data.setLuck(data.getLuck() + 0.05f);
 
         player.displayClientMessage(
-                Component.literal(type.displayName + "履行完毕！真元恢复20%，气运微升")
+                Component.literal(type.displayName + "Oath fulfilled! Primeval Essence restored by 20%. Luck slightly increased.")
                         .withStyle(ChatFormatting.GREEN), false);
     }
 
@@ -117,7 +117,7 @@ public class PoisonOathManager {
         data.consumeLifespan(50);
 
         player.displayClientMessage(
-                Component.literal("【毒誓反噬】" + type.displayName + "违背！受到惩罚：生命-30%、真元-50%、气运降低、寿元-50")
+                Component.literal("【Poison Oath Backlash】" + type.displayName + " broken! Punishment inflicted: Health -30%, Primeval Essence -50%, Luck reduced, Lifespan -50.")
                         .withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD), false);
     }
 

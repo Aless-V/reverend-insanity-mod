@@ -33,7 +33,7 @@ public class SealManager {
         UUID uuid = player.getUUID();
         Integer cd = cooldowns.get(uuid);
         if (cd != null && cd > 0) {
-            player.displayClientMessage(Component.literal("封印冷却中...").withStyle(ChatFormatting.GRAY), true);
+            player.displayClientMessage(Component.literal("Seal on cooldown...").withStyle(ChatFormatting.GRAY), true);
             return false;
         }
 
@@ -44,7 +44,7 @@ public class SealManager {
         int rank = aperture.getRank().getLevel();
         float cost = 30f + rank * 20f;
         if (!aperture.consumeEssence(cost)) {
-            player.displayClientMessage(Component.literal("真元不足").withStyle(ChatFormatting.RED), true);
+            player.displayClientMessage(Component.literal("Insufficient Primeval Essence").withStyle(ChatFormatting.RED), true);
             return false;
         }
 
@@ -73,7 +73,7 @@ public class SealManager {
                 SoundEvents.BELL_BLOCK, SoundSource.PLAYERS, 1.0f, 0.5f);
 
         player.displayClientMessage(
-                Component.literal("封印！" + target.getName().getString() + " 被封印 " + (duration / 20) + " 秒")
+                Component.literal("Seal！" + target.getName().getString() + " has been sealed for " + (duration / 20) + " seconds")
                         .withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.BOLD), false);
 
         com.reverendinsanity.core.heavenwill.HeavenWillManager.addAttention(player, 2f);

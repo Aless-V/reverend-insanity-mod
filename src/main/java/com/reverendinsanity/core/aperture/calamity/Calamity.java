@@ -16,7 +16,7 @@ import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.level.block.Blocks;
 import java.util.Random;
 
-// 灾劫实例：一次正在发生的灾劫
+// Tribulation Instance: A tribulation that is currently occurring.
 public class Calamity {
 
     private final CalamityType type;

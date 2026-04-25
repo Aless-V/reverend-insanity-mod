@@ -25,18 +25,18 @@ public class HeavenFragmentItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.literal(heavenType.getDisplayName() + "碎片").withStyle(ChatFormatting.GOLD));
-        tooltip.add(Component.literal("太古九天之" + heavenType.getDisplayName() + "的残片").withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.literal(heavenType.getDisplayName() + "Fragment").withStyle(ChatFormatting.GOLD));
+        tooltip.add(Component.literal("Fragment of " + heavenType.getDisplayName() + " of the Ancient Nine Heavens").withStyle(ChatFormatting.GRAY));
         String desc = switch (heavenType) {
-            case WHITE -> "净化之力，可涤除蛊虫杂质";
-            case RED -> "毁灭之炎，蕴含破坏性真元";
-            case ORANGE -> "星萤之光，照亮前路";
-            case YELLOW -> "宝黄天的商道气运";
-            case GREEN -> "勃勃生机，万物生长之力";
-            case CYAN -> "竹海灵韵，坚韧不拔之意";
-            case BLUE -> "星辰之海，蕴含星道真意";
-            case PURPLE -> "紫气东来，神秘莫测之力";
-            case BLACK -> "虚无深渊，吞噬一切之力";
+            case WHITE -> "Power of Purification — can cleanse impurities from Gu insects.";
+            case RED -> "Flame of Destruction — contains destructive Primeval Essence.";
+            case ORANGE -> "Starlight Firefly's Glow — illuminates the path ahead.";
+            case YELLOW -> "Commercial Path fortune from the Treasure Yellow Heaven.";
+            case GREEN -> "Vital, flourishing energy — the power of all growth.";
+            case CYAN -> "Spiritual resonance of the Bamboo Sea — the essence of resilience.";
+            case BLUE -> "Sea of Stars — contains the true meaning of the Star Path.";
+            case PURPLE -> "Purple mist comes from the east — a mysterious and unfathomable power.";
+            case BLACK -> "Void Abyss — the power to devour everything.";
         };
         tooltip.add(Component.literal(desc).withStyle(ChatFormatting.DARK_PURPLE));
     }

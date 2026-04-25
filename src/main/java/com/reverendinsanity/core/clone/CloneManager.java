@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-// 分身系统：虚影分身增强战斗，概率闪避+额外伤害+速度提升
+// Avatar System: Phantom avatar enhances combat, providing chance to dodge, bonus damage, and increased speed.
 public class CloneManager {
 
     private static final Map<UUID, Integer> cloneTicks = new ConcurrentHashMap<>();
@@ -42,7 +42,7 @@ public class CloneManager {
 
         Integer cd = cooldowns.get(uuid);
         if (cd != null && cd > 0) {
-            player.displayClientMessage(Component.literal("分身杀招冷却中...").withStyle(ChatFormatting.GRAY), true);
+            player.displayClientMessage(Component.literal("Avatar Killer Move on cooldown...").withStyle(ChatFormatting.GRAY), true);
             return false;
         }
 
@@ -52,7 +52,7 @@ public class CloneManager {
 
         float cost = aperture.getMaxEssence() * ESSENCE_COST_RATIO;
         if (!aperture.consumeEssence(cost)) {
-            player.displayClientMessage(Component.literal("真元不足").withStyle(ChatFormatting.RED), true);
+            player.displayClientMessage(Component.literal("Insufficient Primeval Essence").withStyle(ChatFormatting.RED), true);
             return false;
         }
 
@@ -68,7 +68,7 @@ public class CloneManager {
         applyModifiers(player);
 
         player.displayClientMessage(
-                Component.literal("分身！").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD), false);
+                Component.literal("Avatar!").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD), false);
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.ILLUSIONER_MIRROR_MOVE, SoundSource.PLAYERS, 1.0f, 1.0f);
 
@@ -115,7 +115,7 @@ public class CloneManager {
         if (!cloneTicks.containsKey(player.getUUID())) return false;
         if (player.getRandom().nextFloat() < DODGE_CHANCE) {
             player.displayClientMessage(
-                    Component.literal("分身替身！").withStyle(ChatFormatting.AQUA), true);
+                    Component.literal("Avatar Decoy!").withStyle(ChatFormatting.AQUA), true);
             if (player.level() instanceof ServerLevel level) {
                 level.sendParticles(
                         new DustParticleOptions(new Vector3f(0.3f, 0.6f, 1.0f), 1.5f),
@@ -142,7 +142,7 @@ public class CloneManager {
         removeModifiers(player);
         cooldowns.put(uuid, COOLDOWN);
         player.displayClientMessage(
-                Component.literal("分身消散").withStyle(ChatFormatting.GRAY), true);
+                Component.literal("Avatar Dissipates").withStyle(ChatFormatting.GRAY), true);
     }
 
     private static void applyModifiers(ServerPlayer player) {

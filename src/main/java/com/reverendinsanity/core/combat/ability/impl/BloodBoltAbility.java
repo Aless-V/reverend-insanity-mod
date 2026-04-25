@@ -10,7 +10,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 
-// 血蛊技能：消耗HP发射自追踪血弹
+// Blood Gu Skill: Consumes HP to fire homing blood projectiles.
 public class BloodBoltAbility extends GuAbility {
 
     public BloodBoltAbility() {

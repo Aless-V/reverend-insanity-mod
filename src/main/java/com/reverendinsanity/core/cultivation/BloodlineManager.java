@@ -16,13 +16,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public class BloodlineManager {
 
     public enum Bloodline {
-        NONE("无", 0),
-        BEAR_STRENGTH("熊力血脉", 1),
-        WOLF_SPEED("狼速血脉", 2),
-        TURTLE_DEFENSE("龟甲血脉", 3),
-        EAGLE_SIGHT("鹰眼血脉", 4),
-        SERPENT_VENOM("蛇毒血脉", 5),
-        DRAGON_MIGHT("龙威血脉", 6);
+        NONE("None", 0),
+        BEAR_STRENGTH("Bear Strength Bloodline", 1),
+        WOLF_SPEED("Wolf Speed Bloodline", 2),
+        TURTLE_DEFENSE("Turtle Defense Bloodline", 3),
+        EAGLE_SIGHT("Eagle Sight Bloodline", 4),
+        SERPENT_VENOM("Serpent Venom Bloodline", 5),
+        DRAGON_MIGHT("Dragon Migth Bloodline", 6);
 
         public final String displayName;
         public final int id;
@@ -66,7 +66,7 @@ public class BloodlineManager {
         applyBloodlineModifiers(player, assigned);
 
         player.displayClientMessage(
-                Component.literal("血脉觉醒：" + assigned.displayName + "！")
+                Component.literal("Bloodline Awakened：" + assigned.displayName + "！")
                         .withStyle(assigned == Bloodline.DRAGON_MIGHT ? ChatFormatting.GOLD : ChatFormatting.GREEN), false);
     }
 

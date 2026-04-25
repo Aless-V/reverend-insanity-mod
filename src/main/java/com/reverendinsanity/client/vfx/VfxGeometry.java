@@ -5,7 +5,7 @@ import net.minecraft.client.Camera;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
-// 静态几何体绘制工具类，为VFX系统提供各种形状的顶点数据
+// Static Geometry Drawing Utility Class: Provides vertex data for various shapes to the VFX system.
 public class VfxGeometry {
 
     public static void drawBillboard(VertexConsumer consumer, Matrix4f matrix, Camera camera,

@@ -10,7 +10,7 @@ import com.reverendinsanity.core.gu.GuRegistry;
 import com.reverendinsanity.registry.ModAttachments;
 import net.minecraft.server.level.ServerPlayer;
 
-// 黑鬃蛊技能：力道2转毛发变甲，+6护甲+4韧性，非绕甲*0.85，近战反弹1.5伤害
+// Black Mane Gu Skill: Strength Path Rank 2 — Mane Armor. +6 Armor +4 Toughness. Non-armor-piercing damage reduced by 15% (×0.85). Reflects 1.5 damage to melee attackers.
 public class BlackBristleAbility extends GuAbility {
 
     public BlackBristleAbility() {

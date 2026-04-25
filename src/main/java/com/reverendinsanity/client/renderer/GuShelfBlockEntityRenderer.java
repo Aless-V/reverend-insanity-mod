@@ -11,7 +11,7 @@ import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 
-// 蛊架方块实体渲染器，展示浮空旋转的蛊虫物品
+// Gu Rack Block Entity Renderer: Displays floating, spinning Gu insect items.
 public class GuShelfBlockEntityRenderer implements BlockEntityRenderer<GuShelfBlockEntity> {
 
     private final ItemRenderer itemRenderer;

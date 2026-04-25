@@ -40,7 +40,7 @@ public class SeclusionManager {
         ));
 
         player.displayClientMessage(
-                Component.literal("进入闭关...保持不动以获得修炼加成")
+                Component.literal("Entering seclusion... Remain still to gain cultivation bonuses.")
                         .withStyle(ChatFormatting.LIGHT_PURPLE), false);
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 0.5f, 1.5f);
@@ -89,7 +89,7 @@ public class SeclusionManager {
         if (state.ticksInSeclusion % 600 == 0 && state.ticksInSeclusion > 0) {
             int minutes = state.ticksInSeclusion / 1200;
             player.displayClientMessage(
-                    Component.literal("闭关中... " + (minutes > 0 ? minutes + "分钟" : "30秒"))
+                    Component.literal("In seclusion... " + (minutes > 0 ? minutes + "minutes" : "30 seconds"))
                             .withStyle(ChatFormatting.LIGHT_PURPLE), true);
         }
     }
@@ -102,13 +102,13 @@ public class SeclusionManager {
         if (successful) {
             int seconds = state.ticksInSeclusion / 20;
             player.displayClientMessage(
-                    Component.literal("闭关结束！修炼 " + seconds + " 秒，道痕和真元获得大量提升")
+                    Component.literal("Seclusion ended! Cultivated for " + seconds + " seconds. Dao Marks and Primeval Essence greatly enhanced")
                             .withStyle(ChatFormatting.GREEN), false);
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                     SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.8f, 1.2f);
         } else {
             player.displayClientMessage(
-                    Component.literal("闭关中断").withStyle(ChatFormatting.GRAY), true);
+                    Component.literal("eclusion interrupted").withStyle(ChatFormatting.GRAY), true);
         }
     }
 

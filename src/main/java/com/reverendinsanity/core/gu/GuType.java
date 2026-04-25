@@ -24,14 +24,14 @@ public record GuType(
     }
 
     public enum GuCategory {
-        ATTACK("攻杀"),
-        DEFENSE("防御"),
-        MOVEMENT("移动"),
-        DETECTION("侦查"),
-        SUPPORT("辅助"),
-        HEALING("治疗"),
-        ENSLAVE("奴役"),
-        SPECIAL("特殊");
+        ATTACK("Attack"),
+        DEFENSE("Defense"),
+        MOVEMENT("Movement"),
+        DETECTION("Detection"),
+        SUPPORT("Support"),
+        HEALING("Healing"),
+        ENSLAVE("Enslave"),
+        SPECIAL("Special");
 
         private final String displayName;
         GuCategory(String displayName) { this.displayName = displayName; }

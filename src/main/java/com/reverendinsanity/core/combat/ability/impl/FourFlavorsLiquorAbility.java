@@ -42,7 +42,7 @@ public class FourFlavorsLiquorAbility extends GuAbility {
     protected void onActivate(ServerPlayer player, Aperture aperture) {
         float restoreAmount = aperture.getMaxEssence() * 0.5f;
         aperture.regenerateEssence(restoreAmount);
-        player.displayClientMessage(Component.literal("四味酒虫催动，恢复 " + (int) restoreAmount + " 真元"), true);
+        player.displayClientMessage(Component.literal("Four-Flavor Wine Gu activated. Restored " + (int) restoreAmount + " Primeval Essence"), true);
 
         VfxHelper.spawn(player, VfxType.HEAL_SPIRAL,
             player.getX(), player.getY(), player.getZ(),

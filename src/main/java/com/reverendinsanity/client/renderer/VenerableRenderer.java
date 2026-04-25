@@ -10,7 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 import java.util.EnumMap;
 import java.util.Map;
 
-// 十大尊者渲染器：根据尊者类型选择不同贴图
+// Ten Great Venerables Renderer: Uses distinct textures per Venerable.
 public class VenerableRenderer extends HumanoidMobRenderer<VenerableEntity, PlayerModel<VenerableEntity>> {
 
     private static final Map<VenerableType, ResourceLocation> TEXTURES = new EnumMap<>(VenerableType.class);

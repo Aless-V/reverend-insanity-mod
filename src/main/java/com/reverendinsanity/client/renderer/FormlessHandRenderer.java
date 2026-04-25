@@ -5,7 +5,7 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 
-// 无相手渲染器：纯粒子效果，不渲染实体模型
+// Faceless Hand Renderer: Pure particle effect, does not render entity model.
 public class FormlessHandRenderer extends EntityRenderer<FormlessHandEntity> {
 
     public FormlessHandRenderer(EntityRendererProvider.Context context) {

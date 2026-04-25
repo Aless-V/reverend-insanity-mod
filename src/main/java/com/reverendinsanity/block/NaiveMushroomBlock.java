@@ -14,7 +14,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 import java.util.List;
 
-// 天真蘑菇：发光的装饰性蘑菇，可以放在石头/泥土/苔藓上
+// Naive Mushroom: A glowing decorative mushroom that can be placed on stone, dirt, or moss.
 public class NaiveMushroomBlock extends BushBlock {
 
     public static final MapCodec<NaiveMushroomBlock> CODEC = simpleCodec(NaiveMushroomBlock::new);

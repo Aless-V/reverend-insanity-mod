@@ -43,7 +43,7 @@ public class VenerableSpawnEggItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.literal("\u00A75\u4E5D\u8F6C\u5C0A\u8005").withStyle(net.minecraft.ChatFormatting.DARK_PURPLE));
-        tooltip.add(Component.literal("\u00A77" + venerableType.displayNameCN));
+        tooltip.add(Component.literal("§5Rank 9 Venerable").withStyle(net.minecraft.ChatFormatting.DARK_PURPLE));
+        tooltip.add(Component.literal("§7" + venerableType.displayNameCN));
     }
 }

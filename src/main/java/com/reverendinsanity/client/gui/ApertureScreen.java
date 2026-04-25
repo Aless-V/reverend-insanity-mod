@@ -12,7 +12,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import java.util.ArrayList;
 import java.util.List;
 
-// 空窍管理界面：查看蛊虫、喂养、装备/卸下杀招
+// Aperture Management Interface: View Gu insects, feed, equip/unequip killer moves.
 public class ApertureScreen extends Screen {
 
     private static final int PANEL_W = 380;
@@ -33,7 +33,7 @@ public class ApertureScreen extends Screen {
     private int scrollOffset = 0;
 
     public ApertureScreen() {
-        super(Component.literal("空窍管理"));
+        super(Component.literal("Aperture Management Interface"));
     }
 
     @Override
@@ -87,25 +87,25 @@ public class ApertureScreen extends Screen {
     }
 
     private void renderTitleBar(GuiGraphics graphics, int px, int py) {
-        String[] subRankNames = {"初阶", "中阶", "上阶", "巅峰"};
+        String[] subRankNames = {"Initial", "Middle", "Upper", "Peak"};
         String subRank = ClientDataCache.getSubRankIndex() >= 0 && ClientDataCache.getSubRankIndex() < 4
             ? subRankNames[ClientDataCache.getSubRankIndex()] : "?";
         String info = ClientDataCache.isOpened()
-            ? ClientDataCache.getRankLevel() + "转" + subRank + " [" + ClientDataCache.getAptitudeName() + "]"
-            : "空窍未开";
-        graphics.drawCenteredString(this.font, "\u2014 \u7A7A\u7A8D\u7BA1\u7406 \u2014", px + PANEL_W / 2, py + 6, TITLE_COLOR);
+            ? ClientDataCache.getRankLevel() + "Rank" + subRank + " [" + ClientDataCache.getAptitudeName() + "]"
+            : "Aperture not yet opened.";
+        graphics.drawCenteredString(this.font, "— Aperture Management —", px + PANEL_W / 2, py + 6, TITLE_COLOR);
         graphics.drawCenteredString(this.font, info, px + PANEL_W / 2, py + 18, TEXT_COLOR);
     }
 
     private void renderGuList(GuiGraphics graphics, int mouseX, int mouseY, int px, int py) {
         int guX = px + 8;
         int guY = py + 34;
-        graphics.drawString(this.font, "\u86CA\u866B", guX, guY, TITLE_COLOR);
+        graphics.drawString(this.font, "Gu Insects", guX, guY, TITLE_COLOR);
         guY += 14;
 
         List<SyncApertureContentsPayload.GuInfo> guList = ClientDataCache.getGuList();
         if (guList == null || guList.isEmpty()) {
-            graphics.drawString(this.font, "\u7A8D\u7A74\u7A7A\u7A7A\u5982\u4E5F...", guX, guY, 0xFF666666);
+            graphics.drawString(this.font, "The aperture is empty...", guX, guY, 0xFF666666);
             return;
         }
 
@@ -124,7 +124,7 @@ public class ApertureScreen extends Screen {
             }
 
             int nameColor = gu.alive() ? (gu.refined() ? 0xFFAAFFAA : 0xFFCCCC66) : 0xFF666666;
-            String label = gu.displayName() + " " + gu.rank() + "\u8F6C";
+            String label = gu.displayName() + " " + gu.rank() + "Rank";
             graphics.drawString(this.font, label, guX, yy, nameColor);
 
             String pathLabel = gu.categoryName();
@@ -156,7 +156,7 @@ public class ApertureScreen extends Screen {
                 graphics.fill(btnX, btnY, btnX + btnW, btnY + btnH, btnColor);
                 graphics.fill(btnX, btnY, btnX + btnW, btnY + 1, 0xFF55DD55);
                 graphics.fill(btnX, btnY, btnX + 1, btnY + btnH, 0xFF55DD55);
-                graphics.drawCenteredString(this.font, "\u5582\u517B", btnX + btnW / 2, btnY + 3, 0xFFFFFFFF);
+                graphics.drawCenteredString(this.font, "Feed", btnX + btnW / 2, btnY + 3, 0xFFFFFFFF);
             }
 
             if (hoverEntry && gu.alive()) {
@@ -177,7 +177,7 @@ public class ApertureScreen extends Screen {
     private void renderEquippedMoves(GuiGraphics graphics, int mouseX, int mouseY, int px, int py) {
         int moveX = px + LEFT_PANEL_W + 18;
         int moveY = py + 34;
-        graphics.drawString(this.font, "\u5DF2\u88C5\u5907\u6740\u62DB", moveX, moveY, TITLE_COLOR);
+        graphics.drawString(this.font, "Equipped Killer Moves", moveX, moveY, TITLE_COLOR);
         moveY += 14;
 
         List<SyncApertureContentsPayload.MoveInfo> equipped = ClientDataCache.getEquippedMoveList();
@@ -190,25 +190,25 @@ public class ApertureScreen extends Screen {
 
                 graphics.drawString(this.font, move.displayName(), moveX, yy, 0xFFFF6666);
 
-                String unequipText = "[\u5378\u4E0B]";
+                String unequipText = "[Unequip]";
                 int unequipX = moveX + RIGHT_PANEL_W - 10 - this.font.width(unequipText) - 4;
                 boolean hoverUnequip = mouseX >= unequipX && mouseX < unequipX + this.font.width(unequipText) && mouseY >= yy && mouseY < yy + 12;
                 graphics.drawString(this.font, unequipText, unequipX, yy, hoverUnequip ? 0xFFFF4444 : 0xFFAA4444);
 
-                graphics.drawString(this.font, move.moveType() + " " + (int)move.essenceCost() + "\u771F\u5143", moveX, yy + 11, DIM_TEXT);
+                graphics.drawString(this.font, move.moveType() + " " + (int)move.essenceCost() + "Primeval Essence", moveX, yy + 11, DIM_TEXT);
                 if (!move.description().isEmpty()) {
                     graphics.drawString(this.font, move.description(), moveX, yy + 21, 0xFF666699);
                 }
             }
         } else {
-            graphics.drawString(this.font, "\u672A\u88C5\u5907\u6740\u62DB", moveX, moveY, 0xFF666666);
+            graphics.drawString(this.font, "Unequipped Killer Moves", moveX, moveY, 0xFF666666);
         }
     }
 
     private void renderAvailableMoves(GuiGraphics graphics, int mouseX, int mouseY, int px, int py) {
         int moveX = px + LEFT_PANEL_W + 18;
         int availY = py + 110;
-        graphics.drawString(this.font, "\u53EF\u88C5\u5907\u6740\u62DB", moveX, availY, TITLE_COLOR);
+        graphics.drawString(this.font, "Available Killer Moves", moveX, availY, TITLE_COLOR);
         availY += 14;
 
         List<SyncApertureContentsPayload.MoveInfo> equipped = ClientDataCache.getEquippedMoveList();
@@ -226,12 +226,12 @@ public class ApertureScreen extends Screen {
 
                 graphics.drawString(this.font, move.displayName(), moveX, yy, canEquip ? 0xFF66FF66 : 0xFF666666);
                 if (canEquip) {
-                    String equipText = "[\u88C5\u5907]";
+                    String equipText = "[Equip]";
                     int equipX = moveX + RIGHT_PANEL_W - 10 - this.font.width(equipText) - 4;
                     boolean hoverEquip = mouseX >= equipX && mouseX < equipX + this.font.width(equipText) && mouseY >= yy && mouseY < yy + 12;
                     graphics.drawString(this.font, equipText, equipX, yy, hoverEquip ? 0xFF44FF44 : 0xFF448844);
                 }
-                graphics.drawString(this.font, move.moveType() + " " + (int)move.essenceCost() + "\u771F\u5143", moveX, yy + 11, DIM_TEXT);
+                graphics.drawString(this.font, move.moveType() + " " + (int)move.essenceCost() + "Primeval Essence", moveX, yy + 11, DIM_TEXT);
                 if (hover && !move.description().isEmpty()) {
                     renderTooltipBox(graphics, mouseX, mouseY, move.description());
                 }
@@ -242,13 +242,13 @@ public class ApertureScreen extends Screen {
 
     private void renderGuTooltip(GuiGraphics graphics, int mouseX, int mouseY, SyncApertureContentsPayload.GuInfo gu) {
         List<String> lines = new ArrayList<>();
-        lines.add(gu.displayName() + " " + gu.rank() + "\u8F6C" + (gu.refined() ? " \u00A7a[\u5DF2\u70BC\u5316]\u00A7r" : " \u00A77[\u672A\u70BC\u5316]\u00A7r"));
-        lines.add("\u9053\u8DEF: " + gu.pathName() + "  \u7C7B\u578B: " + gu.categoryName());
-        lines.add("\u9965\u997F\u5EA6: " + (int) gu.hunger() + "%");
-        lines.add("\u719F\u7EC3\u5EA6: " + (int) gu.proficiency() + "%");
-        if (gu.proficiency() >= 100) lines.add("\u00A7e\u5927\u5E08\u7EA7 - \u771F\u5143\u8017\u964D\u4F4E\u00A7r");
-        else if (gu.proficiency() >= 75) lines.add("\u00A7b\u7CBE\u901A - \u51B7\u5374\u7F29\u77ED\u00A7r");
-        else if (gu.proficiency() >= 50) lines.add("\u00A7a\u719F\u7EC3 - \u6548\u679C\u589E\u5F3A\u00A7r");
+        lines.add(gu.displayName() + " " + gu.rank() + "Rank" + (gu.refined() ? " §a[Refined]§r" : " §7[Unrefined]§r"));
+        lines.add("Path: " + gu.pathName() + "  Type: " + gu.categoryName());
+        lines.add("Hunger: " + (int) gu.hunger() + "%");
+        lines.add("Proficiency: " + (int) gu.proficiency() + "%");
+        if (gu.proficiency() >= 100) lines.add("§eMaster Level - Primeval Essence Cost Reduced§r");
+        else if (gu.proficiency() >= 75) lines.add("§bProficient - Cooldown Shortened§r");
+        else if (gu.proficiency() >= 50) lines.add("§aSkilled - Effect Enhanced§r");
 
         int maxW = 0;
         for (String line : lines) maxW = Math.max(maxW, this.font.width(line));
@@ -290,7 +290,7 @@ public class ApertureScreen extends Screen {
         bottomY += 4;
 
         int barW = 130;
-        graphics.drawString(this.font, "\u771F\u5143", px + 8, bottomY, 0xFFAAFFAA);
+        graphics.drawString(this.font, "Primeval Essence", px + 8, bottomY, 0xFFAAFFAA);
         int eBarX = px + 35;
         graphics.fill(eBarX, bottomY, eBarX + barW, bottomY + 8, 0xFF222222);
         float eRatio = ClientDataCache.getMaxEssence() > 0 ? ClientDataCache.getCurrentEssence() / ClientDataCache.getMaxEssence() : 0;
@@ -306,7 +306,7 @@ public class ApertureScreen extends Screen {
         graphics.drawString(this.font, (int) ClientDataCache.getCurrentEssence() + "/" + (int) ClientDataCache.getMaxEssence(), eBarX + barW + 4, bottomY, TEXT_COLOR);
 
         int tBarX = px + 210;
-        graphics.drawString(this.font, "\u5FF5\u5934", tBarX - 25, bottomY, 0xFFAAAAFF);
+        graphics.drawString(this.font, "Thoughts", tBarX - 25, bottomY, 0xFFAAAAFF);
         graphics.fill(tBarX, bottomY, tBarX + barW, bottomY + 8, 0xFF222222);
         float tRatio = ClientDataCache.getMaxThoughts() > 0 ? ClientDataCache.getThoughts() / ClientDataCache.getMaxThoughts() : 0;
         graphics.fill(tBarX, bottomY, tBarX + (int)(barW * tRatio), bottomY + 8, 0xFF6688CC);
@@ -317,8 +317,8 @@ public class ApertureScreen extends Screen {
         int total = guList != null ? guList.size() : 0;
         long alive = guList != null ? guList.stream().filter(SyncApertureContentsPayload.GuInfo::alive).count() : 0;
         int maxCapacity = getMaxGuCapacity(ClientDataCache.getRankLevel());
-        graphics.drawString(this.font, "\u86CA\u866B: " + alive + "/" + maxCapacity + "\u53EA | \u6B7B\u4EA1: " + (total - alive) + "\u53EA", px + 8, bottomY, DIM_TEXT);
-        graphics.drawString(this.font, "\u53F3\u952E\u86CA\u866B\u53EF\u4E22\u5F03", px + PANEL_W - 100, bottomY, 0xFF554444);
+        graphics.drawString(this.font, "Gu Insects: " + alive + "/" + maxCapacity + " | Dead: " + (total - alive), px + 8, bottomY, DIM_TEXT);
+        graphics.drawString(this.font, "Right-click Gu insect to discard.", px + PANEL_W - 100, bottomY, 0xFF554444);
     }
 
     private static int getMaxGuCapacity(int rank) {
@@ -438,7 +438,7 @@ public class ApertureScreen extends Screen {
         for (int i = 0; i < equipped.size(); i++) {
             SyncApertureContentsPayload.MoveInfo move = equipped.get(i);
             int yy = moveY + i * 26;
-            String unequipText = "[\u5378\u4E0B]";
+            String unequipText = "[Unequip]";
             int unequipX = moveX + RIGHT_PANEL_W - 10 - this.font.width(unequipText) - 4;
             if (mouseX >= unequipX && mouseX < unequipX + this.font.width(unequipText) && mouseY >= yy && mouseY < yy + 12) {
                 PacketDistributor.sendToServer(new EquipMovePayload(move.moveId(), false));
@@ -464,7 +464,7 @@ public class ApertureScreen extends Screen {
             boolean isEquipped = equipped != null && equipped.stream().anyMatch(e -> e.moveId().equals(move.moveId()));
             if (isEquipped) continue;
             int yy = availY + drawn * 26;
-            String equipText = "[\u88C5\u5907]";
+            String equipText = "[Equip]";
             int equipX = moveX + RIGHT_PANEL_W - 10 - this.font.width(equipText) - 4;
             if (mouseX >= equipX && mouseX < equipX + this.font.width(equipText) && mouseY >= yy && mouseY < yy + 12) {
                 PacketDistributor.sendToServer(new EquipMovePayload(move.moveId(), true));

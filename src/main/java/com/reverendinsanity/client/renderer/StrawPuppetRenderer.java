@@ -7,7 +7,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;
 
-// 草人傀儡渲染器
+// Straw Puppet Renderer
 public class StrawPuppetRenderer extends MobRenderer<StrawPuppetEntity, PlayerModel<StrawPuppetEntity>> {
 
     private static final ResourceLocation TEXTURE =

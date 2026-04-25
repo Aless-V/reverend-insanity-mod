@@ -73,7 +73,7 @@ public class DeductionSession {
 
         if (cancelled) {
             return new DeductionResult(
-                DeductionResult.Outcome.FAILURE, null, 0, 5f, "推演被取消"
+                DeductionResult.Outcome.FAILURE, null, 0, 5f, "Deduction canceled"
             );
         }
 
@@ -92,7 +92,7 @@ public class DeductionSession {
             return new DeductionResult(
                 DeductionResult.Outcome.FAILURE, null, 0,
                 10f + blueprint.getGuCount() * 2f,
-                "推演失败，蛊虫组合未能产生共鸣"
+                "Deduction failed. Gu insect combination failed to resonate."
             );
         }
     }
@@ -103,14 +103,14 @@ public class DeductionSession {
             return new DeductionResult(
                 DeductionResult.Outcome.GREAT_SUCCESS, matched, improveLevel,
                 30f + blueprint.getGuCount() * 5f,
-                "大成功！领悟了" + matched.displayName() + "的精妙之处"
+                "Great success! You have grasped the subtle essence of " + matched.displayName() + "."
             );
         }
         KillerMove generated = generateRandomMove(random);
         return new DeductionResult(
             DeductionResult.Outcome.GREAT_SUCCESS, generated, 1,
             35f + blueprint.getGuCount() * 5f,
-            "大成功！创造出全新杀招：" + generated.displayName()
+            "Great success! Created a brand new Killer Move: " + generated.displayName()
         );
     }
 
@@ -119,14 +119,14 @@ public class DeductionSession {
             return new DeductionResult(
                 DeductionResult.Outcome.SUCCESS, matched, 0,
                 20f + blueprint.getGuCount() * 3f,
-                "成功推演出杀招：" + matched.displayName()
+                "Successfully deduced Killer Move: " + matched.displayName()
             );
         }
         KillerMove generated = generateRandomMove(random);
         return new DeductionResult(
             DeductionResult.Outcome.SUCCESS, generated, 0,
             25f + blueprint.getGuCount() * 3f,
-            "推演成功，领悟新杀招：" + generated.displayName()
+            "Deduction successful. Comprehended a new Killer Move: " + generated.displayName()
         );
     }
 
@@ -135,13 +135,13 @@ public class DeductionSession {
             return new DeductionResult(
                 DeductionResult.Outcome.PARTIAL, matched, 0,
                 15f + blueprint.getGuCount() * 2f,
-                "部分成功，勉强领悟" + matched.displayName() + "的残缺版本"
+                "Partial success. Barely comprehended a flawed version of " + matched.displayName() + "."
             );
         }
         return new DeductionResult(
             DeductionResult.Outcome.PARTIAL, null, 0,
             15f + blueprint.getGuCount() * 2f,
-            "部分成功，隐约有所感悟但未能凝实"
+            "Partial success. You vaguely sense something but cannot solidify it into form."
         );
     }
 
@@ -150,7 +150,7 @@ public class DeductionSession {
         return new DeductionResult(
             DeductionResult.Outcome.DISCOVERY, generated, 0,
             40f + blueprint.getGuCount() * 5f,
-            "意外发现！蛊虫产生了意想不到的共鸣：" + generated.displayName()
+            "Unexpected discovery! The Gu insects produced an unforeseen resonance: " + generated.displayName()
         );
     }
 
@@ -212,7 +212,7 @@ public class DeductionSession {
             return stacks.get(stacks.size() - 1).description();
         }
 
-        return blueprint.targetPath().getDisplayName() + "之" + moveType.getDisplayName();
+        return blueprint.targetPath().getDisplayName() + "of" + moveType.getDisplayName();
     }
 
     public UUID getPlayerId() { return playerId; }

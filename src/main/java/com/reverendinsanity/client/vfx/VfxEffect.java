@@ -1,6 +1,6 @@
 package com.reverendinsanity.client.vfx;
 
-// 活跃的VFX效果实例，存储位置、方向、颜色、缩放、持续时间等
+// Active VFX effect instance, stores position, direction, color, scale, duration, etc.
 public class VfxEffect {
 
     private final VfxType type;

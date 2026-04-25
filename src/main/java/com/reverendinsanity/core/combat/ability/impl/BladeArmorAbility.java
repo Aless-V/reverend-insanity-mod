@@ -12,7 +12,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 
-// 刀铠蛊技能：刀意凛然——+30%攻击力、10%伤害减免，400tick
+// Blade Armor Gu Skill: Blade Intent Manifest — +30% Attack Damage, 10% Damage Reduction, 400 ticks.
 public class BladeArmorAbility extends GuAbility {
 
     public BladeArmorAbility() {

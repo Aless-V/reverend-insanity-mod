@@ -15,22 +15,22 @@ import java.util.List;
 public class LoreScrollItem extends Item {
 
     private static final String[] LORE_TEXTS = {
-        "人是万物之灵，蛊是天地真精。",
-        "所谓修炼，不过是人与天争命。",
-        "真正的强者，从来不会抱怨命运的不公。",
-        "弱肉强食，适者生存，这便是蛊师世界的法则。",
-        "甲等资质又如何？没有机缘和努力，一切都是空谈。",
-        "空窍之中，元海无边，修为无止境。",
-        "每一只蛊虫，都是天地间的造化奇物。",
-        "春秋蝉逆转时光，可世间哪有真正的回头路？",
-        "福地之中别有洞天，仙家气象万千。",
-        "大道三千，条条通天，不过殊途同归。",
-        "蛊虫不是工具，它们也有自己的灵性。",
-        "一转铜元翠绿，二转铁元绯红，三转银元白银，四转金元灿金。",
-        "元石乃天地精华凝结，修炼之根本。",
-        "蛊师之道，在于炼蛊、养蛊、用蛊三位一体。",
-        "杀招之威，在于蛊虫配合、真元调控、时机把握。",
-        "十万大山，蛊师世界的真正舞台。"
+        "Humans are the spirit of all things; Gu are the true essence of heaven and earth.",
+        "So-called cultivation is nothing more than humanity struggling against heaven.",
+        "True强者 never complain about the injustice of fate.",
+        "The strong prey on the weak. The fittest survive. Such is the law of the Gu Master's world.",
+        "What does A Grade talent matter? Without opportunity and effort, it's all empty talk.",
+        "Within the aperture lies an endless sea of Essence. Cultivation knows no bounds.",
+        "Every Gu insect is a miraculous wonder born of heaven and earth.",
+        "The Spring Autumn Cicada reverses time — yet in this world, is there truly a path to turn back?",
+        "Within a Blessed Land lies a hidden world, brimming with celestial magnificence.",
+        "Three thousand Paths, each leading to the heavens — yet all converge to the same destination.",
+        "Gu insects are not mere tools. They possess their own spirituality.",
+        "Rank 1 is bronze-green; Rank 2, crimson iron; Rank 3, silver-white; Rank 4, brilliant gold.",
+        "Essence Stones are the condensed essence of heaven and earth — the foundation of cultivation.",
+        "The way of the Gu Master lies in the trinity of refining Gu, raising Gu, and using Gu.",
+        "The power of a Killer Move lies in Gu coordination, PE control, and perfect timing.",
+        "The vast mountains — the true stage of the Gu Master's world."
     };
 
     public LoreScrollItem(Properties properties) {
@@ -43,7 +43,7 @@ public class LoreScrollItem extends Item {
         if (!level.isClientSide()) {
             String lore = LORE_TEXTS[level.getRandom().nextInt(LORE_TEXTS.length)];
             player.displayClientMessage(
-                Component.literal("【蛊师手记】").withStyle(ChatFormatting.GOLD)
+                Component.literal("【Gu Master's Journal】").withStyle(ChatFormatting.GOLD)
                     .append(Component.literal(lore).withStyle(ChatFormatting.ITALIC, ChatFormatting.YELLOW)),
                 false);
         }
@@ -52,6 +52,6 @@ public class LoreScrollItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.literal("右键阅读蛊师先辈的修炼感悟").withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.literal("Right-click to read the cultivation insights of past Gu Masters.").withStyle(ChatFormatting.GRAY));
     }
 }

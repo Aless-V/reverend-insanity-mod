@@ -27,7 +27,7 @@ public class MeritManager {
         int current = meritPoints.getOrDefault(uuid, 0);
         meritPoints.put(uuid, current + amount);
         player.displayClientMessage(
-            Component.literal("+" + amount + " 战功").withStyle(ChatFormatting.GOLD), true);
+            Component.literal("+" + amount + " War Merits").withStyle(ChatFormatting.GOLD), true);
     }
 
     public static int getMerit(ServerPlayer player) {
@@ -50,7 +50,7 @@ public class MeritManager {
         int merit = meritPoints.getOrDefault(player.getUUID(), 0);
         if (merit > 0) {
             player.displayClientMessage(
-                Component.literal("兽潮结束！你获得了" + merit + "战功。").withStyle(ChatFormatting.GOLD), false);
+                Component.literal("Beast Tide ended! You gained " + merit + "War Merits.").withStyle(ChatFormatting.GOLD), false);
         }
     }
 

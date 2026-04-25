@@ -25,7 +25,7 @@ public class VitalityLeafAbility extends GuAbility {
             aperture.removeGu(guInst);
         }
 
-        player.displayClientMessage(Component.literal("生机叶消融，伤口愈合"), true);
+        player.displayClientMessage(Component.literal("Vitality Leaf dissolves. Wounds heal."), true);
 
         VfxHelper.spawn(player, VfxType.HEAL_SPIRAL,
             player.getX(), player.getY(), player.getZ(),

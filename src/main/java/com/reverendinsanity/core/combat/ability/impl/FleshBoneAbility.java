@@ -20,7 +20,7 @@ public class FleshBoneAbility extends GuAbility {
     @Override
     protected void onActivate(ServerPlayer player, Aperture aperture) {
         player.heal(16f);
-        player.displayClientMessage(Component.literal("肉骨蛊催动，血肉再生"), true);
+        player.displayClientMessage(Component.literal("Flesh Bone Gu activated. Flesh regenerates."), true);
 
         VfxHelper.spawn(player, VfxType.HEAL_SPIRAL,
             player.getX(), player.getY(), player.getZ(),

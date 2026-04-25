@@ -32,7 +32,7 @@ public class TrapManager {
 
         float cost = 20f + aperture.getRank().getLevel() * 10f;
         if (!aperture.consumeEssence(cost)) {
-            player.displayClientMessage(Component.literal("真元不足").withStyle(ChatFormatting.RED), true);
+            player.displayClientMessage(Component.literal("Insufficient Primeval Essence").withStyle(ChatFormatting.RED), true);
             return false;
         }
 
@@ -49,7 +49,7 @@ public class TrapManager {
         traps.add(new Trap(pos, damage, radius, 6000));
 
         player.displayClientMessage(
-                Component.literal("陷阱布置！(" + traps.size() + "/" + MAX_TRAPS + ")")
+                Component.literal("Trap Set！(" + traps.size() + "/" + MAX_TRAPS + ")")
                         .withStyle(ChatFormatting.DARK_GREEN), true);
 
         player.level().playSound(null, pos.getX(), pos.getY(), pos.getZ(),
@@ -112,7 +112,7 @@ public class TrapManager {
 
         if (ownerPlayer != null) {
             ownerPlayer.displayClientMessage(
-                    Component.literal("陷阱触发！命中 " + targets.size() + " 个目标")
+                    Component.literal("Trap triggered！Hit " + targets.size() + " targets")
                             .withStyle(ChatFormatting.GOLD), true);
         }
     }

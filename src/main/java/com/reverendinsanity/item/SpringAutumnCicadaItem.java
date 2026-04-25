@@ -32,14 +32,14 @@ public class SpringAutumnCicadaItem extends Item {
             Aperture aperture = data.getAperture();
 
             if (!aperture.isOpened()) {
-                player.displayClientMessage(Component.literal("空窍未开，无法寄居"), true);
+                player.displayClientMessage(Component.literal("Aperture not opened. Cannot house Gu insects"), true);
                 return InteractionResultHolder.fail(stack);
             }
 
             ResourceLocation cicadaId = GuRegistry.id("spring_autumn_cicada");
             for (GuInstance gu : aperture.getStoredGu()) {
                 if (gu.getTypeId().equals(cicadaId)) {
-                    player.displayClientMessage(Component.literal("空窍中已有春秋蝉"), true);
+                    player.displayClientMessage(Component.literal("The Spring Autumn Cicada is already in your aperture"), true);
                     return InteractionResultHolder.fail(stack);
                 }
             }
@@ -50,7 +50,7 @@ public class SpringAutumnCicadaItem extends Item {
 
             stack.shrink(1);
             player.displayClientMessage(
-                Component.literal("春秋蝉寄居空窍，时光之力环绕周身..."),
+                Component.literal("The Spring Autumn Cicada resides in your aperture. The power of time swirls around you..."),
                 false
             );
             return InteractionResultHolder.success(stack);
@@ -60,8 +60,8 @@ public class SpringAutumnCicadaItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
-        tooltipComponents.add(Component.literal("六转仙蛊\u00b7宙道").withStyle(ChatFormatting.LIGHT_PURPLE));
-        tooltipComponents.add(Component.literal("重生之蛊，死后将消耗自身保全蛊师").withStyle(ChatFormatting.RED));
-        tooltipComponents.add(Component.literal("右键使用直接寄居空窍").withStyle(ChatFormatting.YELLOW));
+        tooltipComponents.add(Component.literal("Rank 6 Immortal Gu · Time Path").withStyle(ChatFormatting.LIGHT_PURPLE));
+        tooltipComponents.add(Component.literal("The Gu of Rebirth. Upon the Gu Master's death, this Gu will be consumed to save its master's life").withStyle(ChatFormatting.RED));
+        tooltipComponents.add(Component.literal("Right-click to directly house this Gu in your aperture").withStyle(ChatFormatting.YELLOW));
     }
 }

@@ -52,7 +52,7 @@ public class ApertureInvasionManager {
         BlessedLandGrade grade = ap.getGrade();
         int count = getInvasionCount(grade, level.getRandom());
 
-        player.sendSystemMessage(Component.literal("\u00a74\u00a7l你的福地正在遭受入侵！"));
+        player.sendSystemMessage(Component.literal("§4§lYour Blessed Land is under invasion!"));
         level.playSound(null, player.blockPosition(), SoundEvents.WITHER_SPAWN, SoundSource.HOSTILE, 1.5f, 0.8f);
 
         DaoPath counterPath = getCounterPath(island.primaryPath);

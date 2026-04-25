@@ -7,7 +7,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.HumanoidMobRenderer;
 import net.minecraft.resources.ResourceLocation;
 
-// 远古蛊仙残魂渲染器：使用标准玩家模型渲染人形BOSS
+// Ancient Gu Immortal Remnant Soul Renderer: Renders a humanoid BOSS using the standard player model.
 public class AncientGuImmortalRenderer extends HumanoidMobRenderer<AncientGuImmortalEntity, PlayerModel<AncientGuImmortalEntity>> {
 
     private static final ResourceLocation TEXTURE =

@@ -13,7 +13,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-// 仙窍出口传送台：右键离开仙窍维度
+// Immortal Aperture Exit Teleport Pad: Right-click to leave the Immortal Aperture dimension.
 public class ApertureExitPortalBlock extends Block {
 
     public ApertureExitPortalBlock(Properties properties) {
@@ -26,7 +26,7 @@ public class ApertureExitPortalBlock extends Block {
             if (level.dimension().equals(ModDimensions.APERTURE_DIM)) {
                 PacketDistributor.sendToServer(new ExitAperturePayload());
             } else {
-                player.displayClientMessage(Component.literal("此传送台只能在仙窍内使用"), true);
+                player.displayClientMessage(Component.literal("This teleport pad can only be used within the Immortal Aperture."), true);
             }
             return InteractionResult.SUCCESS;
         }

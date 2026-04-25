@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-// VFX管理器单例，负责更新和渲染所有活跃的VFX效果
+// VFX Manager Singleton: Responsible for updating and rendering all active VFX effects.
 public class VfxManager {
 
     private static final VfxManager INSTANCE = new VfxManager();

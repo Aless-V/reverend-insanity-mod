@@ -43,7 +43,7 @@ public class DaoMarkTracker {
             if (marks >= REALM_THRESHOLDS[i] && currentRealm.getTier() < REALM_VALUES[i].getTier()) {
                 aperture.setPathRealm(path, REALM_VALUES[i]);
                 player.displayClientMessage(
-                    Component.literal(path.getDisplayName() + " 境界提升至 " + REALM_VALUES[i].getDisplayName() + "！")
+                    Component.literal(path.getDisplayName() + " cultivation elevated to " + REALM_VALUES[i].getDisplayName() + "！")
                         .withStyle(ChatFormatting.GOLD),
                     false
                 );

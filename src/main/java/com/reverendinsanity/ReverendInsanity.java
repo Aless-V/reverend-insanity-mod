@@ -21,6 +21,6 @@ public class ReverendInsanity {
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {
-        LOGGER.info("人是万物之灵，蛊是天地真精。蛊真人模组加载完成。");
+        LOGGER.info("Humans are the spirit of all things; Gu are the true essence of heaven and earth. Reverend Insanity mod loaded successfully.");
     }
 }

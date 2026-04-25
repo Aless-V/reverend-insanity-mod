@@ -12,7 +12,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import java.util.ArrayList;
 import java.util.List;
 
-// 转轮式交互菜单：动态显示系统动作+蛊虫技能+杀招
+// Radial Interaction Menu: Dynamically displays system actions, Gu insect skills, and Killer Moves.
 public class RadialMenuScreen extends Screen {
 
     private static final int OUTER_RADIUS = 100;
@@ -31,20 +31,20 @@ public class RadialMenuScreen extends Screen {
     private int hoveredIndex = -1;
 
     public RadialMenuScreen() {
-        super(Component.literal("蛊师菜单"));
+        super(Component.literal("Gu Master Interface"));
         buildEntries();
     }
 
     private void buildEntries() {
         entries.clear();
 
-        entries.add(new RadialEntry("空窍", COLOR_SYSTEM, RadialMenuPayload.TYPE_SYSTEM, 0));
+        entries.add(new RadialEntry("Aperture", COLOR_SYSTEM, RadialMenuPayload.TYPE_SYSTEM, 0));
         if (ClientDataCache.getRankLevel() >= 6) {
-            entries.add(new RadialEntry("仙窍", COLOR_SYSTEM, RadialMenuPayload.TYPE_SYSTEM, 1));
+            entries.add(new RadialEntry("Immortal Aperture", COLOR_SYSTEM, RadialMenuPayload.TYPE_SYSTEM, 1));
         }
-        entries.add(new RadialEntry("图鉴", COLOR_SYSTEM, RadialMenuPayload.TYPE_SYSTEM, 2));
-        entries.add(new RadialEntry("推演", COLOR_SYSTEM, RadialMenuPayload.TYPE_SYSTEM, 3));
-        entries.add(new RadialEntry("闭关", COLOR_SYSTEM, RadialMenuPayload.TYPE_SYSTEM, 4));
+        entries.add(new RadialEntry("Codex", COLOR_SYSTEM, RadialMenuPayload.TYPE_SYSTEM, 2));
+        entries.add(new RadialEntry("Deduction", COLOR_SYSTEM, RadialMenuPayload.TYPE_SYSTEM, 3));
+        entries.add(new RadialEntry("Closed-Door Cultivation", COLOR_SYSTEM, RadialMenuPayload.TYPE_SYSTEM, 4));
 
         List<SyncApertureContentsPayload.GuInfo> guList = ClientDataCache.getGuList();
         for (int i = 0; i < guList.size(); i++) {
@@ -55,7 +55,7 @@ public class RadialMenuScreen extends Screen {
         List<SyncApertureContentsPayload.MoveInfo> moveList = ClientDataCache.getEquippedMoveList();
         for (int i = 0; i < moveList.size(); i++) {
             SyncApertureContentsPayload.MoveInfo move = moveList.get(i);
-            entries.add(new RadialEntry("杀·" + move.displayName(), COLOR_MOVE, RadialMenuPayload.TYPE_MOVE, i));
+            entries.add(new RadialEntry("Kill·" + move.displayName(), COLOR_MOVE, RadialMenuPayload.TYPE_MOVE, i));
         }
     }
 
@@ -103,9 +103,9 @@ public class RadialMenuScreen extends Screen {
             graphics.drawString(this.font, name, cx - tw / 2, cy + OUTER_RADIUS + 15, TEXT_COLOR, true);
 
             String typeLabel = switch (entry.actionType) {
-                case RadialMenuPayload.TYPE_SYSTEM -> "[系统]";
-                case RadialMenuPayload.TYPE_ABILITY -> "[技能]";
-                case RadialMenuPayload.TYPE_MOVE -> "[杀招]";
+                case RadialMenuPayload.TYPE_SYSTEM -> "[System]";
+                case RadialMenuPayload.TYPE_ABILITY -> "[Abilities]";
+                case RadialMenuPayload.TYPE_MOVE -> "[Killer Moves]";
                 default -> "";
             };
             int tlw = this.font.width(typeLabel);
@@ -172,7 +172,7 @@ public class RadialMenuScreen extends Screen {
                 }
             }
         }
-        String title = "蛊";
+        String title = "Gu";
         int tw = this.font.width(title);
         graphics.drawString(this.font, title, cx - tw / 2, cy - 4, 0xFFFFD700, true);
     }

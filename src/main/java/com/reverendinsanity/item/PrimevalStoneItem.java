@@ -30,13 +30,13 @@ public class PrimevalStoneItem extends Item {
 
             if (!aperture.isOpened()) {
                 player.displayClientMessage(
-                        Component.literal("空窍未开").withStyle(ChatFormatting.RED), true);
+                        Component.literal("Aperture not opened").withStyle(ChatFormatting.RED), true);
                 return InteractionResultHolder.fail(stack);
             }
 
             if (aperture.getCurrentEssence() >= aperture.getMaxEssence()) {
                 player.displayClientMessage(
-                        Component.literal("真元已满").withStyle(ChatFormatting.YELLOW), true);
+                        Component.literal("Primeval Essence is full").withStyle(ChatFormatting.YELLOW), true);
                 return InteractionResultHolder.fail(stack);
             }
 
@@ -44,7 +44,7 @@ public class PrimevalStoneItem extends Item {
             aperture.regenerateEssence(restoreAmount);
             stack.shrink(1);
             player.displayClientMessage(
-                    Component.literal("元石碎裂，恢复 " + (int) restoreAmount + " 真元")
+                    Component.literal("Essence Stone shatters, restoring " + (int) restoreAmount + " Primeval Essence")
                             .withStyle(ChatFormatting.GREEN), true);
             return InteractionResultHolder.success(stack);
         }
@@ -53,7 +53,7 @@ public class PrimevalStoneItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
-        tooltipComponents.add(Component.literal("右键使用恢复20%最大真元").withStyle(ChatFormatting.YELLOW));
-        tooltipComponents.add(Component.literal("蛊师修炼必备之物").withStyle(ChatFormatting.GRAY));
+        tooltipComponents.add(Component.literal("Right-click to restore 20% of maximum Primeval Essence").withStyle(ChatFormatting.YELLOW));
+        tooltipComponents.add(Component.literal("An essential item for Gu Master cultivation").withStyle(ChatFormatting.GRAY));
     }
 }

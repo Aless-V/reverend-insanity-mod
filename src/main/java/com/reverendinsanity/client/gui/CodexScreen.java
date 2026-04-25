@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-// 蛊虫图鉴界面：按大道分类展示已发现和未发现的蛊虫
+// Gu Insect Codex Interface: Shows discovered and undiscovered Gu insects, sorted by Path.
 public class CodexScreen extends Screen {
 
     private static final int BG_COLOR = 0xCC000000;
@@ -26,7 +26,7 @@ public class CodexScreen extends Screen {
     private List<RenderLine> renderLines = new ArrayList<>();
 
     public CodexScreen() {
-        super(Component.literal("蛊虫图鉴"));
+        super(Component.literal("Gu Insect Codex"));
     }
 
     @Override
@@ -81,8 +81,8 @@ public class CodexScreen extends Screen {
         int total = entries.size();
         int discovered = ClientDataCache.getCodexDiscoveredCount();
 
-        graphics.drawCenteredString(this.font, "— 蛊虫图鉴 —", px + panelW / 2, py + 5, TITLE_COLOR);
-        graphics.drawCenteredString(this.font, "已发现: " + discovered + " / " + total, px + panelW / 2, py + 17, TEXT_COLOR);
+        graphics.drawCenteredString(this.font, "— Gu Insect Codex —", px + panelW / 2, py + 5, TITLE_COLOR);
+        graphics.drawCenteredString(this.font, "Discovered: " + discovered + " / " + total, px + panelW / 2, py + 17, TEXT_COLOR);
 
         int contentX = px + 8;
         int contentY = py + 32;
@@ -103,7 +103,7 @@ public class CodexScreen extends Screen {
                         SyncCodexPayload.CodexEntry entry = line.entry;
                         if (entry.discovered()) {
                             int rankColor = getRankColor(entry.rank());
-                            String label = entry.displayName() + "  " + entry.rank() + "转 " + entry.categoryName();
+                            String label = entry.displayName() + "  " + entry.rank() + "Rank " + entry.categoryName();
                             graphics.drawString(this.font, label, contentX + 6, y + 2, rankColor);
                         } else {
                             graphics.drawString(this.font, "???", contentX + 6, y + 2, UNDISCOVERED_COLOR);

@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-// 伤害浮动数字客户端渲染器
+// Damage Float Number Client Renderer
 public class DamageNumberRenderer {
 
     private static final List<DamageEntry> entries = new ArrayList<>();

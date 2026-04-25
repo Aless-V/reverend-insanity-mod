@@ -25,13 +25,13 @@ public class BoarAccumulationAbility extends GuAbility {
         GuMasterData data = player.getData(ModAttachments.GU_MASTER_DATA.get());
         float current = data.getPermanentStat("strength");
         if (current >= 10.0f) {
-            player.sendSystemMessage(Component.literal("§c黑豕之力已达上限"));
+            player.sendSystemMessage(Component.literal("§cBlack Boar's strength has reached its limit."));
             return;
         }
         data.addPermanentStat("strength", 0.3f);
         PermanentStatApplier.refresh(player);
         float total = data.getPermanentStat("strength");
-        player.sendSystemMessage(Component.literal("§6黑豕之力灌注！力量+0.3 (当前: " + String.format("%.1f", total) + ")"));
+        player.sendSystemMessage(Component.literal("§6Black Boar's strength infused! Strength +0.3 (Current: " + String.format("%.1f", total) + ")"));
 
         VfxHelper.spawn(player, VfxType.AURA_RING,
             player.getX(), player.getY(), player.getZ(),

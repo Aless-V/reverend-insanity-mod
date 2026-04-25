@@ -10,11 +10,11 @@ public class FactionReputation {
     private final Map<Faction, Integer> reputation = new EnumMap<>(Faction.class);
 
     public enum ReputationTier {
-        HOSTILE("敌对", -1000, -500),
-        UNFRIENDLY("不友好", -499, -100),
-        NEUTRAL("中立", -99, 99),
-        FRIENDLY("友好", 100, 499),
-        HONORED("崇敬", 500, 1000);
+        HOSTILE("Hostile", -1000, -500),
+        UNFRIENDLY("Unfriendly", -499, -100),
+        NEUTRAL("Neutral", -99, 99),
+        FRIENDLY("Friendly", 100, 499),
+        HONORED("Honored", 500, 1000);
 
         private final String displayName;
         private final int min, max;

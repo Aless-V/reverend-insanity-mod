@@ -7,7 +7,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;
 
-// 野蛊渲染器：缩小渲染，使用统一贴图
+// Wild Gu Renderer: Renders at reduced scale, uses unified texture.
 public class WildGuRenderer extends MobRenderer<WildGuEntity, WildGuModel> {
 
     private static final ResourceLocation TEXTURE =

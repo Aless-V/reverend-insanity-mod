@@ -8,7 +8,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import java.util.List;
 
-// 修炼状态HUD：显示境界、真元、念头、道痕、蛊虫、杀招、气运、增益信息
+// Cultivation Status HUD: Displays rank, Primeval Essence, Thoughts, Dao Marks, Gu insects, Killer Moves, Luck, and buff information.
 public class CultivationOverlay {
 
     public static void render(GuiGraphics graphics, DeltaTracker delta) {
@@ -21,8 +21,8 @@ public class CultivationOverlay {
         int x = 5;
         int y = 5;
 
-        String rankText = getRankName(ClientDataCache.getRankLevel()) + "\u00b7" + getSubRankName(ClientDataCache.getSubRankIndex());
-        String aptText = " \u27e8" + ClientDataCache.getAptitudeName() + "\u27e9";
+        String rankText = getRankName(ClientDataCache.getRankLevel()) + "·" + getSubRankName(ClientDataCache.getSubRankIndex());
+        String aptText = " ‹" + ClientDataCache.getAptitudeName() + "›";
         graphics.drawString(font, rankText + aptText, x, y, 0xFFFFFF);
 
         y += 12;
@@ -32,28 +32,28 @@ public class CultivationOverlay {
         int essenceColor = ClientDataCache.getEssenceColor();
         graphics.fill(x, y, x + barWidth, y + barHeight, 0x88000000);
         graphics.fill(x, y, x + (int) (barWidth * essenceRatio), y + barHeight, 0xFF000000 | essenceColor);
-        String essenceText = (int) ClientDataCache.getCurrentEssence() + "/" + (int) ClientDataCache.getMaxEssence() + " \u771f\u5143";
+        String essenceText = (int) ClientDataCache.getCurrentEssence() + "/" + (int) ClientDataCache.getMaxEssence() + " Primeval Essence";
         graphics.drawString(font, essenceText, x + barWidth + 4, y, essenceColor);
 
         y += 12;
         float thoughtsRatio = ClientDataCache.getThoughts() / Math.max(ClientDataCache.getMaxThoughts(), 1);
         graphics.fill(x, y, x + barWidth, y + barHeight, 0x88000000);
         graphics.fill(x, y, x + (int) (barWidth * thoughtsRatio), y + barHeight, 0xFF66CCFF);
-        String thoughtsText = (int) ClientDataCache.getThoughts() + "/" + (int) ClientDataCache.getMaxThoughts() + " \u5ff5\u5934";
+        String thoughtsText = (int) ClientDataCache.getThoughts() + "/" + (int) ClientDataCache.getMaxThoughts() + " Thoughts";
         graphics.drawString(font, thoughtsText, x + barWidth + 4, y, 0x66CCFF);
 
         y += 12;
         renderDaoMarks(graphics, font, x, y, barWidth, barHeight);
 
         y += 12;
-        graphics.drawString(font, "\u86ca:" + ClientDataCache.getGuCount() + "  \u6740\u62db:" + ClientDataCache.getEquippedMoveCount(), x, y, 0xAAAAAA);
+        graphics.drawString(font, "Gu:" + ClientDataCache.getGuCount() + "  Killer Moves:" + ClientDataCache.getEquippedMoveCount(), x, y, 0xAAAAAA);
 
         String fName = ClientDataCache.getFactionName();
         if (fName != null && !fName.isEmpty()) {
             String tierName = ClientDataCache.getFactionTierName();
             int fColor = ClientDataCache.getFactionColor();
-            int factionLabelX = x + font.width("\u86ca:" + ClientDataCache.getGuCount() + "  \u6740\u62db:" + ClientDataCache.getEquippedMoveCount()) + 8;
-            graphics.drawString(font, fName + "\u00b7" + tierName, factionLabelX, y, fColor);
+            int factionLabelX = x + font.width("Gu:" + ClientDataCache.getGuCount() + "  Killer Moves:" + ClientDataCache.getEquippedMoveCount()) + 8;
+            graphics.drawString(font, fName + "·" + tierName, factionLabelX, y, fColor);
         }
 
         float luck = ClientDataCache.getLuck();
@@ -115,7 +115,7 @@ public class CultivationOverlay {
         String itemKey = "item.reverend_insanity." + stripped + "_gu";
         String translated = Component.translatable(itemKey).getString();
         if (!translated.equals(itemKey)) {
-            if (translated.endsWith("\u86ca")) {
+            if (translated.endsWith("Gu")) {
                 return translated.substring(0, translated.length() - 1);
             }
             return translated;
@@ -173,7 +173,7 @@ public class CultivationOverlay {
 
         graphics.fill(x, y, x + barWidth, y + barHeight, 0x88000000);
         graphics.fill(x, y, x + (int) (barWidth * Math.min(ratio, 1.0f)), y + barHeight, 0xFF000000 | color);
-        String markText = pathName + " \u9053\u75d5:" + marks + "/" + nextThreshold;
+        String markText = pathName + " Dao Marks:" + marks + "/" + nextThreshold;
         graphics.drawString(font, markText, x + barWidth + 4, y, color);
     }
 
@@ -202,23 +202,23 @@ public class CultivationOverlay {
         int color;
 
         if (luck > 1.2f) {
-            luckText = "\u9e3f\u8fd0";
+            luckText = "Luck";
             color = 0xFFAA00;
         } else if (luck > 1.0f) {
-            luckText = "\u597d\u8fd0";
+            luckText = "Good Luck";
             color = 0x55FF55;
         } else if (luck >= 0.7f) {
-            luckText = "\u5384\u8fd0";
+            luckText = "Bad Luck";
             color = 0xFF5555;
         } else if (luck >= 0.5f) {
-            luckText = "\u5927\u51f6";
+            luckText = "Great Misfortune";
             color = 0xAA0000;
             long time = System.currentTimeMillis();
             if ((time / 500) % 2 == 0) {
                 color = 0x550000;
             }
         } else {
-            luckText = "\u5927\u51f6";
+            luckText = "Great Misfortune";
             color = 0xAA0000;
             long time = System.currentTimeMillis();
             if ((time / 300) % 2 == 0) {
@@ -226,31 +226,31 @@ public class CultivationOverlay {
             }
         }
 
-        graphics.drawString(font, "\u6c14\u8fd0:" + luckText, x, y, color);
+        graphics.drawString(font, "Luck:" + luckText, x, y, color);
     }
 
     private static String getRankName(int level) {
         return switch (level) {
-            case 1 -> "\u4e00\u8f6c";
-            case 2 -> "\u4e8c\u8f6c";
-            case 3 -> "\u4e09\u8f6c";
-            case 4 -> "\u56db\u8f6c";
-            case 5 -> "\u4e94\u8f6c";
-            case 6 -> "\u516d\u8f6c";
-            case 7 -> "\u4e03\u8f6c";
-            case 8 -> "\u516b\u8f6c";
-            case 9 -> "\u4e5d\u8f6c";
-            default -> "\u672a\u77e5";
+            case 1 -> "Rank 1";
+            case 2 -> "Rank 2";
+            case 3 -> "Rank 3";
+            case 4 -> "Rank 4";
+            case 5 -> "Rank 5";
+            case 6 -> "Rank 6";
+            case 7 -> "Rank 7";
+            case 8 -> "Rank 8";
+            case 9 -> "Rank 9";
+            default -> "Unknown";
         };
     }
 
     private static String getSubRankName(int index) {
         return switch (index) {
-            case 0 -> "\u521d\u9636";
-            case 1 -> "\u4e2d\u9636";
-            case 2 -> "\u4e0a\u9636";
-            case 3 -> "\u5dc5\u5cf0";
-            default -> "\u521d\u9636";
+            case 0 -> "Initial";
+            case 1 -> "Middle";
+            case 2 -> "Upper";
+            case 3 -> "Peak";
+            default -> "Initial";
         };
     }
 
@@ -263,7 +263,7 @@ public class CultivationOverlay {
         long time = System.currentTimeMillis();
         int textCol = (time / 500) % 2 == 0 ? 0xFFDD88 : 0xFFCC66;
 
-        graphics.drawString(font, "\u63a8\u6f14", x, y, textCol);
+        graphics.drawString(font, "Deduction", x, y, textCol);
         graphics.fill(x + 30, y + 1, x + 30 + barW, y + 1 + barH, 0x88000000);
         if (filled > 0) {
             graphics.fill(x + 30, y + 1, x + 30 + filled, y + 1 + barH, 0xFF6688FF);
@@ -291,7 +291,7 @@ public class CultivationOverlay {
 
         graphics.fill(x, y, x + barWidth, y + barHeight, 0x88000000);
         graphics.fill(x, y, x + (int)(barWidth * ratio), y + barHeight, 0xFF000000 | color);
-        String lifespanText = lifespan + "/" + maxLifespan + " \u5bff\u5143";
+        String lifespanText = lifespan + "/" + maxLifespan + " Lifespan";
         graphics.drawString(font, lifespanText, x + barWidth + 4, y, color);
     }
 
@@ -303,11 +303,11 @@ public class CultivationOverlay {
 
         String warning;
         if (heavenWill >= 90) {
-            warning = "\u2620 \u5929\u610f\u964d\u7f5a \u2620";
+            warning = "☠ Divine Punishment ☠";
         } else if (heavenWill >= 75) {
-            warning = "\u26a0 \u5929\u610f\u538b\u5236";
+            warning = "⚠ Heavenly Suppression";
         } else {
-            warning = "\u26a0 \u5929\u610f\u5173\u6ce8";
+            warning = "⚠ Watched by Heaven's Will";
         }
 
         int warnX = screenWidth - font.width(warning) - 5;

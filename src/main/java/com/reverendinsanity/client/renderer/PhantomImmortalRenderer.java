@@ -5,7 +5,7 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 
-// 幻影蛊仙渲染器：纯粒子效果，不渲染实体模型
+// Phantom Gu Immortal Renderer: Particle-only effect, no entity model rendered.
 public class PhantomImmortalRenderer extends EntityRenderer<PhantomImmortalEntity> {
 
     public PhantomImmortalRenderer(EntityRendererProvider.Context context) {

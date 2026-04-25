@@ -2,10 +2,10 @@ package com.reverendinsanity.core.cultivation;
 
 // 蛊师境界内的小境界：初阶、中阶、上阶、巅峰
 public enum SubRank {
-    INITIAL("初阶", 0),
-    MIDDLE("中阶", 1),
-    UPPER("上阶", 2),
-    PEAK("巅峰", 3);
+    INITIAL("Initial", 0),
+    MIDDLE("Middle", 1),
+    UPPER("Upper", 2),
+    PEAK("Peak", 3);
 
     private final String displayName;
     private final int index;

@@ -64,7 +64,7 @@ public class LifeDeathGateManager {
         UUID uuid = player.getUUID();
         Integer cd = cooldowns.get(uuid);
         if (cd != null && cd > 0) {
-            player.displayClientMessage(Component.literal("生死门冷却中...").withStyle(ChatFormatting.GRAY), true);
+            player.displayClientMessage(Component.literal("Gate of Life and Death on cooldown...").withStyle(ChatFormatting.GRAY), true);
             return false;
         }
         if (sessions.containsKey(uuid)) return false;
@@ -82,14 +82,14 @@ public class LifeDeathGateManager {
         }
         if (!hasSoulPathGu) {
             player.displayClientMessage(
-                    Component.literal("需要至少一只魂道蛊虫才能踏入生死门").withStyle(ChatFormatting.RED), true);
+                    Component.literal("At least one Soul Path Gu is needed to step through the Gate of Life and Death.").withStyle(ChatFormatting.RED), true);
             return false;
         }
 
         float essenceCost = aperture.getMaxEssence() * (ESSENCE_COST_PERCENT / 100f);
         if (aperture.getCurrentEssence() < essenceCost) {
             player.displayClientMessage(
-                    Component.literal("真元不足，无法开启生死门").withStyle(ChatFormatting.RED), true);
+                    Component.literal("Insufficient Primeval Essence. Cannot open the Gate of Life and Death.").withStyle(ChatFormatting.RED), true);
             return false;
         }
         aperture.consumeEssence(essenceCost);
@@ -120,9 +120,9 @@ public class LifeDeathGateManager {
 
         player.displayClientMessage(
                 Component.literal("").append(
-                        Component.literal("【生死门开启】").withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.BOLD)
+                        Component.literal("【Gate of Life and Death opens.】").withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.BOLD)
                 ).append(
-                        Component.literal("你踏入了死路...忧患之气扑面而来").withStyle(ChatFormatting.GRAY)
+                        Component.literal("You have stepped onto the path of death... A miasma of misfortune rushes toward you.").withStyle(ChatFormatting.GRAY)
                 ), false);
 
         HeavenWillManager.addAttention(player, 8f);
@@ -154,7 +154,7 @@ public class LifeDeathGateManager {
                         removeAllModifiers(player);
                         sessions.remove(uuid);
                         player.displayClientMessage(
-                                Component.literal("生死门增益消散").withStyle(ChatFormatting.GRAY), true);
+                                Component.literal("Gate of Life and Death's blessing dissipates.").withStyle(ChatFormatting.GRAY), true);
                     }
                 } else {
                     sessions.remove(uuid);
@@ -199,8 +199,8 @@ public class LifeDeathGateManager {
             }
 
             player.displayClientMessage(
-                    Component.literal("【死路】第" + session.wavesCleared + "波魂兽消散...还剩"
-                            + (session.totalWaves - session.wavesCleared) + "波")
+                    Component.literal("【Path of Death】Wave" + session.wavesCleared + "of soul beasts dissepate... Remaining:"
+                            + (session.totalWaves - session.wavesCleared) + "wave")
                             .withStyle(ChatFormatting.DARK_PURPLE), false);
             level.playSound(null, player.getX(), player.getY(), player.getZ(),
                     SoundEvents.SKELETON_HURT, SoundSource.HOSTILE, 0.6f, 0.5f);
@@ -216,7 +216,7 @@ public class LifeDeathGateManager {
         int count = 3 + wave * 2;
 
         player.displayClientMessage(
-                Component.literal("【死路·第" + (wave + 1) + "波】" + count + "只魂兽从黑暗中涌出！")
+                Component.literal("【Path of Death · Wave " + (wave + 1) + "】" + count + "soul beasts surge forth from the darkness! ")
                         .withStyle(ChatFormatting.DARK_RED), false);
         level.playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.ENDER_DRAGON_GROWL, SoundSource.HOSTILE, 0.5f, 0.4f + wave * 0.15f);
@@ -283,21 +283,21 @@ public class LifeDeathGateManager {
 
         player.displayClientMessage(
                 Component.literal("").append(
-                        Component.literal("【公平之地】").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
+                        Component.literal("【Land of Fairness】").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
                 ).append(
-                        Component.literal("生死是世间最大的公平。").withStyle(ChatFormatting.YELLOW)
+                        Component.literal("Life and death are the greatest fairness in this world.").withStyle(ChatFormatting.YELLOW)
                 ), false);
         player.displayClientMessage(
                 Component.literal("").append(
-                        Component.literal("  蹲下").withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD)
+                        Component.literal("  Sneak").withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD)
                 ).append(
-                        Component.literal(" = 踏入生路（丰厚奖励，但仍有考验）").withStyle(ChatFormatting.GREEN)
+                        Component.literal(" Step onto the Path of Life (Rich rewards, but trials remain)").withStyle(ChatFormatting.GREEN)
                 ), false);
         player.displayClientMessage(
                 Component.literal("").append(
-                        Component.literal("  等待").withStyle(ChatFormatting.GRAY, ChatFormatting.BOLD)
+                        Component.literal("  Wait").withStyle(ChatFormatting.GRAY, ChatFormatting.BOLD)
                 ).append(
-                        Component.literal(" = 安全离开（少量奖励）").withStyle(ChatFormatting.GRAY)
+                        Component.literal(" = Leave Safely (Small reward)").withStyle(ChatFormatting.GRAY)
                 ), false);
     }
 
@@ -333,8 +333,8 @@ public class LifeDeathGateManager {
                 40, 2.0, 2.0, 2.0, 0.05);
 
         player.displayClientMessage(
-                Component.literal("【生路】").withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD)
-                        .append(Component.literal("你踏上了归途，生之力量涌入体内...").withStyle(ChatFormatting.GREEN)),
+                Component.literal("【Path of Life】").withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD)
+                        .append(Component.literal("You set foot on the path home. The power of life surges into your body...").withStyle(ChatFormatting.GREEN)),
                 false);
 
         applyLifePathBuff(player);
@@ -385,7 +385,7 @@ public class LifeDeathGateManager {
         boolean gotSpecialGu = player.getRandom().nextFloat() < 0.15f;
         String specialGuName = "";
         if (gotSpecialGu) {
-            specialGuName = player.getRandom().nextBoolean() ? "生蛊" : "死蛊";
+            specialGuName = player.getRandom().nextBoolean() ? "Life Gu" : "Death Gu";
         }
 
         level.playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -398,22 +398,22 @@ public class LifeDeathGateManager {
                 30, 2.0, 1.0, 2.0, 0.05);
 
         player.displayClientMessage(
-                Component.literal("【生死门通关】").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
-                        .append(Component.literal("你从生路归来！").withStyle(ChatFormatting.GREEN)),
+                Component.literal("【Gate of Life and Death cleared】").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
+                        .append(Component.literal("You have returned from the Path of Life!").withStyle(ChatFormatting.GREEN)),
                 false);
         player.displayClientMessage(
-                Component.literal("  真元/念头完全恢复").withStyle(ChatFormatting.GREEN), false);
+                Component.literal("  Primeval Essence / Thoughts fully restored.").withStyle(ChatFormatting.GREEN), false);
         player.displayClientMessage(
-                Component.literal("  " + soulReward.getDisplayName() + " 道痕+" + soulMarks
-                        + "，" + randomReward.getDisplayName() + " 道痕+" + randomMarks)
+                Component.literal("  " + soulReward.getDisplayName() + " Dao Marks +" + soulMarks
+                        + "，" + randomReward.getDisplayName() + " Dao Marks +" + randomMarks)
                         .withStyle(ChatFormatting.AQUA), false);
         if (gotSpecialGu) {
             player.displayClientMessage(
-                    Component.literal("  获得稀有蛊虫：" + specialGuName + "！")
+                    Component.literal("  Rare Gu acquired:" + specialGuName + "！")
                             .withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD), false);
         }
         player.displayClientMessage(
-                Component.literal("  50%攻击/30%速度增益持续20秒").withStyle(ChatFormatting.YELLOW), false);
+                Component.literal("  50% Attack / 30% Speed boost for 20 seconds.").withStyle(ChatFormatting.YELLOW), false);
 
         removeDeathPathDebuff(player);
 
@@ -465,11 +465,11 @@ public class LifeDeathGateManager {
         removeDeathPathDebuff(player);
 
         player.displayClientMessage(
-                Component.literal("【安全离开】").withStyle(ChatFormatting.GRAY, ChatFormatting.BOLD)
-                        .append(Component.literal("你选择了安全...").withStyle(ChatFormatting.GRAY)),
+                Component.literal("【Leave Safely】").withStyle(ChatFormatting.GRAY, ChatFormatting.BOLD)
+                        .append(Component.literal("You chose safety...").withStyle(ChatFormatting.GRAY)),
                 false);
         player.displayClientMessage(
-                Component.literal("  真元恢复30%，" + reward.getDisplayName() + " 道痕+" + marks)
+                Component.literal("  Primeval Essence restored by 30%，" + reward.getDisplayName() + " Dao Marks +" + marks)
                         .withStyle(ChatFormatting.AQUA), false);
     }
 
@@ -491,11 +491,11 @@ public class LifeDeathGateManager {
         removeAllModifiers(player);
 
         player.displayClientMessage(
-                Component.literal("【生死门失败】").withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD)
+                Component.literal("【Gate of Life and Death Failed】").withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD)
                         .append(Component.literal(reason).withStyle(ChatFormatting.RED)),
                 false);
         player.displayClientMessage(
-                Component.literal("  损失30%真元，寿元-50").withStyle(ChatFormatting.RED), false);
+                Component.literal("  Lost 30% Primeval Essence. Lifespan -50").withStyle(ChatFormatting.RED), false);
 
         ServerLevel level = player.serverLevel();
         level.playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -542,7 +542,7 @@ public class LifeDeathGateManager {
     public static void onPlayerDeath(ServerPlayer player) {
         GateSession session = sessions.get(player.getUUID());
         if (session != null && (session.phase == GatePhase.DEATH_PATH || session.phase == GatePhase.FAIRNESS_GROUND || session.phase == GatePhase.LIFE_PATH)) {
-            failGate(player, "你在生死门中陨落...");
+            failGate(player, "You perished in the Gate of Life and Death...");
             return;
         }
         removeAllModifiers(player);

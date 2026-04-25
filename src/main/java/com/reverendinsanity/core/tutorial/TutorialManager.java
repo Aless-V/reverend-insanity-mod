@@ -16,58 +16,58 @@ public class TutorialManager {
 
     private static final String[][] TUTORIAL_STEPS = {
         {
-            "欢迎来到蛊真人世界！",
-            "你是一名初出茅庐的蛊师，需要开窍、炼蛊、修炼杀招。",
-            "按住 [~] 键打开转轮菜单，这是你的主要操作界面。"
+            "Welcome to the world of Reverend Insanity!",
+            "You are a fledgling Gu Master. You must open your aperture, refine Gu, and cultivate Killer Moves.",
+            "Hold [~] to open the radial menu — your main interaction interface."
         },
         {
-            "[第一步：开窍]",
-            "寻找并获取「希望蛊」(Hope Gu)，右键使用即可开窍。",
-            "开窍后你将获得资质等级和真元，正式成为蛊师。"
+            "[Step 1: Open Aperture]",
+            "Find and obtain the 'Hope Gu' (Hope Gu). Right-click to open your aperture.",
+            "Once opened, you will receive an aptitude grade and Primeval Essence, officially becoming a Gu Master."
         },
         {
-            "[第二步：获取蛊虫]",
-            "蛊虫是你的力量之源。获取方式：",
-            "  1. 击杀怪物掉落蛊虫",
-            "  2. 捕获野蛊 (自然生成的WildGu实体)",
-            "  3. 与蛊商人交易",
-            "  4. 在炼蛊炉中升炼高转蛊虫"
+            "[Step 2: Obtain Gu Insects]",
+            "Gu insects are the source of your power. Ways to obtain them:",
+            "  1. Defeat monsters — they may drop Gu insects",
+            "  2. Capture wild Gu (naturally spawning Wild Gu entities)",
+            "  3. Trade with Gu merchants",
+            "  4. Refine higher-rank Gu in the Gu Refining Furnace"
         },
         {
-            "[第三步：催动技能]",
-            "蛊虫放入空窍后自动获得对应技能。",
-            "按 R/F/V/C 催动技能栏1-4。",
-            "每种蛊虫有不同道路属性，影响战斗效果。"
+            "[Step 3: Activate Skills]",
+            "Once a Gu insect is placed in your aperture, its corresponding skill is automatically unlocked.",
+            "Press R / F / V / C to activate skills in slots 1-4.",
+            "Each Gu insect has a different Path attribute, affecting combat effectiveness."
         },
         {
-            "[第四步：杀招]",
-            "杀招是多只蛊虫协同的强力组合技。",
-            "按 [~] 打开菜单 -> 空窍管理 -> 装备杀招 (最多2个)",
-            "按 Z/X 施展杀招。威力远超单只蛊虫技能。"
+            "[Step 4: Killer Moves]",
+            "Killer Moves are powerful combination techniques using multiple Gu insects together.",
+            "Press [~] to open the menu → Aperture Management → Equip Killer Moves (max 2).",
+            "Press Z / X to unleash Killer Moves. Their power far exceeds single Gu skills."
         },
         {
-            "[第五步：境界突破]",
-            "修炼积累真元和念头，小境界冥想突破。",
-            "大境界需要「突破石」，高境界还会触发天劫。",
-            "境界越高，可使用的蛊虫转数越高。"
+            "[Step 5: Rank Breakthrough]",
+            "Cultivate to accumulate Primeval Essence and Thoughts. Break through minor sub-ranks through meditation.",
+            "Major rank breakthroughs require 'Breakthrough Stones'. Higher ranks also trigger tribulations.",
+            "The higher your rank, the higher-rank Gu insects you can use."
         },
         {
-            "[第六步：高级系统]",
-            "推演 (J键): 研究新杀招组合",
-            "分身/闭关/毒誓/变身: 通过转轮菜单 [~] 激活",
-            "仙窍 (H键): 4转以上开辟个人空间",
-            "蛊虫图鉴 (K键): 记录发现的蛊虫"
+            "[Step 6: Advanced Systems]",
+            "Deduction (J key): Research new Killer Move combinations.",
+            "Avatar / Seclusion / Poison Oath / Transformation: Activate via the radial menu [~].",
+            "Immortal Aperture (H key): Open your personal space at Rank 4+.",
+            "Gu Insect Codex (K key): Record discovered Gu insects."
         },
         {
-            "[第七步：诊断系统]",
-            "管理员可使用 /gu diagnose 检测全部系统状态。",
-            "/gu diagnose <模块名> 检测单个模块。",
-            "这是开发测试的核心工具。"
+            "[Step 7: Diagnostic System]",
+            "Admins can use /gu diagnose to check all system statuses.",
+            "/gu diagnose <module> checks a single module.",
+            "This is a core tool for development and testing."
         },
         {
-            "教程完成！祝你成为一代蛊仙！",
-            "温馨提示：天意系统会关注你的行为，小心行事。",
-            "使用 /gu tutorial 可随时重新查看教程。"
+            "Tutorial complete! May you become a great Gu Immortal!",
+            "Friendly reminder: The Heaven's Will system is watching your actions. Be careful.",
+            "Use /gu tutorial to view this tutorial again at any time."
         }
     };
 
@@ -107,7 +107,7 @@ public class TutorialManager {
         playerStep.put(player.getUUID(), 0);
         cooldownTicks.put(player.getUUID(), 40);
         player.sendSystemMessage(
-            Component.literal("教程已重置，即将重新开始引导。").withStyle(ChatFormatting.GREEN));
+            Component.literal("Tutorial has been reset. The guidance will now restart.").withStyle(ChatFormatting.GREEN));
     }
 
     private static void showStep(ServerPlayer player, int step) {

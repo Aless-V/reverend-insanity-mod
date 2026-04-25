@@ -8,7 +8,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
-// 彩晶钟乳石，洞穴中自然形成的发光装饰方块
+// Rainbow Stalactite: A naturally forming glowing decorative block found in caves.
 public class RainbowStalactiteBlock extends Block {
 
     public static final MapCodec<RainbowStalactiteBlock> CODEC = simpleCodec(RainbowStalactiteBlock::new);

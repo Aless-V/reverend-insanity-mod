@@ -127,15 +127,15 @@ public class HeavenWillManager {
 
         if (newAttention >= 25f && current < 25f) {
             player.displayClientMessage(
-                    Component.literal("隐约感到天地间有一股意志在注视着你...")
+                    Component.literal("You vaguely sense a will between heaven and earth watching you...")
                             .withStyle(ChatFormatting.GRAY), true);
         } else if (newAttention >= 50f && current < 50f) {
             player.displayClientMessage(
-                    Component.literal("天意关注加剧，真元不稳...")
+                    Component.literal("Heaven's Will attention intensifies. Primeval Essence grows unstable...")
                             .withStyle(ChatFormatting.YELLOW), false);
         } else if (newAttention >= 75f && current < 75f) {
             player.displayClientMessage(
-                    Component.literal("【天意降临】大地震颤，天雷将至！")
+                    Component.literal("【Heaven's Will Descends】The earth trembles. Heavenly thunder approaches!")
                             .withStyle(ChatFormatting.RED), false);
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                     SoundEvents.WARDEN_SONIC_BOOM, SoundSource.HOSTILE, 0.4f, 0.5f);
@@ -156,7 +156,7 @@ public class HeavenWillManager {
         if (attention >= 75f && roll < 0.20f) {
             applySuppression(player);
             player.displayClientMessage(
-                    Component.literal("天意压制降临，行动受阻！")
+                    Component.literal("Heaven's Will suppression descends. Your movements are hindered!")
                             .withStyle(ChatFormatting.RED), true);
             return;
         }
@@ -169,7 +169,7 @@ public class HeavenWillManager {
                 bolt.setVisualOnly(false);
                 level.addFreshEntity(bolt);
                 player.displayClientMessage(
-                        Component.literal("天雷降下！").withStyle(ChatFormatting.YELLOW), true);
+                        Component.literal("Heavenly thunder descends!").withStyle(ChatFormatting.YELLOW), true);
             }
             return;
         }
@@ -178,7 +178,7 @@ public class HeavenWillManager {
             float drain = aperture.getMaxEssence() * 0.05f;
             aperture.consumeEssence(drain);
             player.displayClientMessage(
-                    Component.literal("真元受天意干扰，流失 " + (int) drain)
+                    Component.literal("Primeval Essence disrupted by Heaven's Will. Draining away." + (int) drain)
                             .withStyle(ChatFormatting.GRAY), true);
         }
     }
@@ -187,7 +187,7 @@ public class HeavenWillManager {
         ServerLevel level = player.serverLevel();
 
         player.displayClientMessage(
-                Component.literal("【天意降罚】逆天之蛊师，受死！")
+                Component.literal("【Heaven's Punishment】Gu Master who defies heaven, perish!")
                         .withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD), false);
 
         level.playSound(null, player.getX(), player.getY(), player.getZ(),

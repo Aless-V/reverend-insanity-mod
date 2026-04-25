@@ -31,7 +31,7 @@ public class GuCodexItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
-        tooltipComponents.add(Component.literal("右键打开蛊虫图鉴").withStyle(ChatFormatting.YELLOW));
-        tooltipComponents.add(Component.literal("记录所有炼化过的蛊虫").withStyle(ChatFormatting.GRAY));
+        tooltipComponents.add(Component.literal("Right-click to open the Gu Insect Codex.").withStyle(ChatFormatting.YELLOW));
+        tooltipComponents.add(Component.literal("Records all Gu insects that have been refined.").withStyle(ChatFormatting.GRAY));
     }
 }

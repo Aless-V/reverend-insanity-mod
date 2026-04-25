@@ -28,7 +28,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
-// 自动化走查测试：逐步执行+暂停确认+最终报告
+// Automated Walkthrough Test: Step-by-step execution + confirmation pause + final report.
 public class WalkthroughTestRunner {
 
     private static final Map<UUID, TestSession> sessions = new ConcurrentHashMap<>();

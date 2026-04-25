@@ -41,7 +41,7 @@ public class HopeGuItem extends Item {
             Aperture aperture = data.getAperture();
 
             if (aperture.isOpened()) {
-                player.displayClientMessage(Component.literal("你已经开过窍了"), true);
+                player.displayClientMessage(Component.literal("You have already opened your aperture."), true);
                 return InteractionResultHolder.fail(stack);
             }
 
@@ -73,7 +73,7 @@ public class HopeGuItem extends Item {
             ServerLevel serverLevel = (ServerLevel) level;
 
             player.displayClientMessage(
-                Component.literal("希望蛊缓缓飞入体内...").withStyle(ChatFormatting.LIGHT_PURPLE), false);
+                Component.literal("Hope Gu slowly flies into your body...").withStyle(ChatFormatting.LIGHT_PURPLE), false);
 
             spawnCeremonyEffects(serverLevel, player);
 
@@ -89,7 +89,7 @@ public class HopeGuItem extends Item {
             }
 
             player.displayClientMessage(
-                Component.literal("空窍开启！资质：" + aptitude.getDisplayName())
+                Component.literal("Aperture opened! Aptitude: " + aptitude.getDisplayName())
                     .withStyle(getAptitudeColor(aptitude)),
                 false
             );
@@ -102,13 +102,13 @@ public class HopeGuItem extends Item {
 
             if (inFlowerField) {
                 player.displayClientMessage(
-                    Component.literal("月兰花海的灵气助你提升了资质！")
+                    Component.literal("The spiritual energy of the Moon Orchid Sea has enhanced your aptitude!")
                         .withStyle(ChatFormatting.AQUA, ChatFormatting.ITALIC),
                     false
                 );
             } else if (orchidCount > 0) {
                 player.displayClientMessage(
-                    Component.literal("附近的月兰花微微助力了开窍仪式")
+                    Component.literal("The nearby moon orchids gently assist the aperture-opening ritual.")
                         .withStyle(ChatFormatting.GREEN, ChatFormatting.ITALIC),
                     false
                 );
@@ -181,19 +181,19 @@ public class HopeGuItem extends Item {
 
     private String getAptitudeFlavorText(Aptitude aptitude) {
         return switch (aptitude) {
-            case D -> "丁等资质...路途艰辛，但并非没有希望。";
-            case C -> "丙等资质，尚算中庸，勤能补拙。";
-            case B -> "乙等资质，天赋不凡，前途可期。";
-            case A -> "甲等资质！百年难遇之材！";
-            case EXTREME -> "十绝体！千古罕见之资质！";
+            case D -> "D Grade talent... The path is arduous, but hope remains.";
+            case C -> "C Grade talent — average, but diligence can make up for it.";
+            case B -> "B Grade talent — exceptional aptitude. Your future is promising.";
+            case A -> "A Grade talent! A once-in-a-century prodigy!";
+            case EXTREME -> "Ten Absolute Physique! An unprecedented and legendary talent!";
             default -> "";
         };
     }
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
-        tooltipComponents.add(Component.literal("右键使用进行开窍仪式").withStyle(ChatFormatting.YELLOW));
-        tooltipComponents.add(Component.literal("资质随机，不可逆转").withStyle(ChatFormatting.RED));
-        tooltipComponents.add(Component.literal("月兰花附近使用可提升资质").withStyle(ChatFormatting.AQUA));
+        tooltipComponents.add(Component.literal("Right-click to perform the aperture-opening ritual").withStyle(ChatFormatting.YELLOW));
+        tooltipComponents.add(Component.literal("Talent is randomized and permanent").withStyle(ChatFormatting.RED));
+        tooltipComponents.add(Component.literal("Using near moon orchids may improve talent").withStyle(ChatFormatting.AQUA));
     }
 }

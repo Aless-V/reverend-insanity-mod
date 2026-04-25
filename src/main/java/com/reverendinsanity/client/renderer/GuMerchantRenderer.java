@@ -7,7 +7,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.HumanoidMobRenderer;
 import net.minecraft.resources.ResourceLocation;
 
-// 蛊商人渲染器：使用标准玩家模型渲染人形蛊商人
+// Gu Merchant Renderer: Renders humanoid Gu merchants using the standard player model.
 public class GuMerchantRenderer extends HumanoidMobRenderer<GuMerchantEntity, PlayerModel<GuMerchantEntity>> {
 
     private static final ResourceLocation TEXTURE =

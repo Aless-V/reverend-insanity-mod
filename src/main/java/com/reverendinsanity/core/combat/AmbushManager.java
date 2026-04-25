@@ -29,7 +29,7 @@ public class AmbushManager {
 
             if (current == 60) {
                 player.displayClientMessage(
-                        Component.literal("潜行就绪...下一击将造成偷袭伤害")
+                        Component.literal("Hidden in shadows... Next strike will be a sneak attack.")
                                 .withStyle(ChatFormatting.DARK_GRAY), true);
             }
         } else {
@@ -59,7 +59,7 @@ public class AmbushManager {
         float ambushDamage = baseDamage * multiplier;
 
         attacker.displayClientMessage(
-                Component.literal("偷袭！" + String.format("%.0f", ambushDamage) + " 伤害 (x" + String.format("%.1f", multiplier) + ")")
+                Component.literal("Sneak Attack! " + String.format("%.0f", ambushDamage) + " damage (x" + String.format("%.1f", multiplier) + ")")
                         .withStyle(ChatFormatting.DARK_RED), true);
 
         if (attacker.level() instanceof ServerLevel level) {

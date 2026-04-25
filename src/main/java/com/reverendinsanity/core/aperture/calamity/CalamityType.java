@@ -2,15 +2,15 @@ package com.reverendinsanity.core.aperture.calamity;
 
 import com.reverendinsanity.core.aperture.BlessedLandGrade;
 
-// 灾劫类型：天劫(稀有强力)和地灾(常见弱力)
+// Tribulation Types: Heavenly Tribulation (rare, powerful) and Earthly Tribulation (common, weaker).
 public enum CalamityType {
-    EARTH_CRACK("地裂", Category.EARTH_DISASTER, 10, 5.0f),
-    BEAST_TIDE("兽潮", Category.EARTH_DISASTER, 15, 8.0f),
-    FIRE_SPREAD("火灾", Category.EARTH_DISASTER, 8, 3.0f),
-    VOID_EROSION("虚空侵蚀", Category.EARTH_DISASTER, 20, 12.0f),
-    THUNDER_TRIBULATION("雷劫", Category.HEAVENLY_TRIBULATION, 30, 20.0f),
-    SILVER_SERPENT("银角青鳞蟒", Category.HEAVENLY_TRIBULATION, 50, 35.0f),
-    CHAOS_STORM("混沌风暴", Category.HEAVENLY_TRIBULATION, 40, 25.0f);
+    EARTH_CRACK("Earth Split", Category.EARTH_DISASTER, 10, 5.0f),
+    BEAST_TIDE("Beast Tide", Category.EARTH_DISASTER, 15, 8.0f),
+    FIRE_SPREAD("Fire Disaster", Category.EARTH_DISASTER, 8, 3.0f),
+    VOID_EROSION("Void Erosion", Category.EARTH_DISASTER, 20, 12.0f),
+    THUNDER_TRIBULATION("Lightning Tribulation", Category.HEAVENLY_TRIBULATION, 30, 20.0f),
+    SILVER_SERPENT("Silver-Horned Green-Scaled Python", Category.HEAVENLY_TRIBULATION, 50, 35.0f),
+    CHAOS_STORM("Chaos Storm", Category.HEAVENLY_TRIBULATION, 40, 25.0f);
 
     private final String displayName;
     private final Category category;
@@ -42,8 +42,8 @@ public enum CalamityType {
     public float getBaseDamage() { return baseDamage; }
 
     public enum Category {
-        EARTH_DISASTER("地灾"),
-        HEAVENLY_TRIBULATION("天劫");
+        EARTH_DISASTER("Earthly Tribulation"),
+        HEAVENLY_TRIBULATION("Heavenly Tribulation");
 
         private final String displayName;
 

@@ -5,7 +5,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.neoforged.neoforge.client.settings.KeyConflictContext;
 
-// 蛊虫技能和杀招快捷键
+// Gu Insect Skill and Killer Move Hotkeys
 public class ModKeybindings {
 
     public static final String CATEGORY = "key.categories." + ReverendInsanity.MODID;

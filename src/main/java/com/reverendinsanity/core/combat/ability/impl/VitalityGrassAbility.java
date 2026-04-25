@@ -25,7 +25,7 @@ public class VitalityGrassAbility extends GuAbility {
         GuMasterData data = player.getData(ModAttachments.GU_MASTER_DATA.get());
         data.getBuffManager().applyBuff(player, new VitalityGrassBuff());
 
-        player.displayClientMessage(Component.literal("九叶生机草催动，生机涌动"), true);
+        player.displayClientMessage(Component.literal("Nine-Leaf Vitality Grass activated. Life force surges."), true);
 
         VfxHelper.spawn(player, VfxType.HEAL_SPIRAL,
             player.getX(), player.getY(), player.getZ(),

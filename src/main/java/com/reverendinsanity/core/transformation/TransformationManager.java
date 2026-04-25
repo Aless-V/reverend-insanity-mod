@@ -67,7 +67,7 @@ public class TransformationManager {
         applyModifiers(player, form);
 
         player.displayClientMessage(
-                Component.literal("变身——" + form.displayName + "！")
+                Component.literal("Transformation —" + form.displayName + "！")
                         .withStyle(net.minecraft.ChatFormatting.GOLD),
                 true
         );
@@ -90,7 +90,7 @@ public class TransformationManager {
             if (!aperture.consumeEssence(ESSENCE_PER_SECOND)) {
                 cancelTransform(player);
                 player.displayClientMessage(
-                        Component.literal("真元耗尽，变身解除！").withStyle(net.minecraft.ChatFormatting.RED), true);
+                        Component.literal("Primeval Essence exhausted. Transformation dispelled!").withStyle(net.minecraft.ChatFormatting.RED), true);
                 return;
             }
         }
@@ -98,7 +98,7 @@ public class TransformationManager {
         if (state.remainingTicks <= 0) {
             cancelTransform(player);
             player.displayClientMessage(
-                    Component.literal("变身时间结束。").withStyle(net.minecraft.ChatFormatting.YELLOW), true);
+                    Component.literal("Transformation time has ended.").withStyle(net.minecraft.ChatFormatting.YELLOW), true);
             return;
         }
 
@@ -213,9 +213,9 @@ public class TransformationManager {
     }
 
     public enum TransformForm {
-        WOLF("狼形", 600, 0xAAAA00),
-        BEAR("熊形", 600, 0x884422),
-        SHRINK("缩地", 400, 0x88CCFF);
+        WOLF("Wolf Form", 600, 0xAAAA00),
+        BEAR("Bear Form", 600, 0x884422),
+        SHRINK("Earth Shrink", 400, 0x88CCFF);
 
         final String displayName;
         final int durationTicks;

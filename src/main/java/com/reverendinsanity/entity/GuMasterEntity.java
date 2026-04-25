@@ -278,7 +278,7 @@ public class GuMasterEntity extends Monster {
 
     private void initBossEvent() {
         DaoPath path = getPrimaryDaoPath();
-        String pathName = path != null ? path.getDisplayName() : "\u65e0\u540d";
+        String pathName = path != null ? path.getDisplayName() : "Nameless";
         Faction faction = getFaction();
         BossEvent.BossBarColor barColor = switch (faction) {
             case RIGHTEOUS -> BossEvent.BossBarColor.BLUE;
@@ -286,7 +286,7 @@ public class GuMasterEntity extends Monster {
             case INDEPENDENT -> BossEvent.BossBarColor.YELLOW;
         };
         bossEvent = new ServerBossEvent(
-            Component.literal("[" + faction.getDisplayName() + "] \u86ca\u5e08\u00b7" + pathName),
+            Component.literal("[" + faction.getDisplayName() + "] Gu Master · " + pathName),
             barColor, BossEvent.BossBarOverlay.PROGRESS
         );
         bossEvent.setVisible(true);
@@ -1143,9 +1143,9 @@ public class GuMasterEntity extends Monster {
         Faction faction = getFaction();
         Component factionTag = Component.literal("[" + faction.getDisplayName() + "] ").withColor(faction.getColor());
         if (getGuRank() >= 3) {
-            return factionTag.copy().append(Component.literal("\u86ca\u5e08\u00b7???"));
+            return factionTag.copy().append(Component.literal("Gu Master · ???"));
         }
-        return factionTag.copy().append(Component.literal("\u86ca\u5e08"));
+        return factionTag.copy().append(Component.literal("Gu Master"));
     }
 
     @Override

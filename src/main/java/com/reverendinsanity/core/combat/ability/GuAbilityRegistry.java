@@ -203,6 +203,6 @@ public class GuAbilityRegistry {
         register(new QuietStepAbility());
         register(new ScentLockAbility());
         register(new LoveSeparationAbility());
-        ReverendInsanity.LOGGER.info("蛊虫技能注册完成: {} 种", REGISTRY.size());
+        ReverendInsanity.LOGGER.info("Gu insect skills registered: {} total.", REGISTRY.size());
     }
 }

@@ -55,12 +55,12 @@ public class FeedingEvents {
             GuType type = hungriest.getType();
             String name = type != null ? type.displayName() : hungriest.getTypeId().getPath();
             player.displayClientMessage(
-                Component.literal(name + " 已喂养，饥饿度: " + String.format("%.0f", hungriest.getHunger()) + "%"),
+                Component.literal(name + " fed. Hunger level:  " + String.format("%.0f", hungriest.getHunger()) + "%"),
                 true
             );
         } else {
             player.displayClientMessage(
-                Component.literal("蛊虫饱食，无需喂养"),
+                Component.literal("Gu insect is full. No need to feed."),
                 true
             );
         }

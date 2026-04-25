@@ -16,7 +16,7 @@ import net.minecraft.network.chat.Component;
 import net.neoforged.neoforge.network.PacketDistributor;
 import java.util.List;
 
-// 仙窍管理界面：查看福地状态、资源、道痕、灾劫，执行修复/提取
+// Immortal Aperture Management Interface: View Blessed Land status, resources, Dao Marks, and tribulations; perform repair/extraction.
 public class ImmortalApertureScreen extends Screen {
 
     private static final int PANEL_W = 400;
@@ -43,7 +43,7 @@ public class ImmortalApertureScreen extends Screen {
     private int resourceScrollOffset = 0;
 
     public ImmortalApertureScreen() {
-        super(Component.literal("仙窍管理"));
+        super(Component.literal("Immortal Aperture Management"));
     }
 
     @Override
@@ -81,17 +81,17 @@ public class ImmortalApertureScreen extends Screen {
     }
 
     private void renderNotFormed(GuiGraphics g, int px, int py) {
-        String title = "仙 窍 未 开";
+        String title = "Immortal Aperture Not Yet Opened";
         int tw = this.font.width(title);
         g.drawString(this.font, title, px + (PANEL_W - tw) / 2, py + PANEL_H / 2 - 20, TITLE_COLOR);
 
-        String hint = "需达到六转蛊仙境界方可开辟仙窍";
+        String hint = "Must reach Rank 6 Gu Immortal realm to open the Immortal Aperture.";
         int hw = this.font.width(hint);
         g.drawString(this.font, hint, px + (PANEL_W - hw) / 2, py + PANEL_H / 2 + 5, DIM_TEXT);
     }
 
     private void renderTitle(GuiGraphics g, int px, int py) {
-        String title = "仙窍 · " + ClientDataCache.getImmortalGradeName();
+        String title = "Immortal Aperture · " + ClientDataCache.getImmortalGradeName();
         int tw = this.font.width(title);
         g.fill(px, py, px + PANEL_W, py + 20, 0xCC1A0A2E);
         g.drawString(this.font, title, px + (PANEL_W - tw) / 2, py + 6, TITLE_COLOR);
@@ -102,53 +102,53 @@ public class ImmortalApertureScreen extends Screen {
         int sy = py + 28;
         int halfW = PANEL_W / 2 - 15;
 
-        g.drawString(this.font, "[ 状态概览 ]", sx, sy, HEADER_COLOR);
+        g.drawString(this.font, "[ Status Summary ]", sx, sy, HEADER_COLOR);
         sy += 14;
 
         float integrity = ClientDataCache.getImmortalIntegrity();
-        g.drawString(this.font, "完整度", sx, sy, TEXT_COLOR);
+        g.drawString(this.font, "Integrity", sx, sy, TEXT_COLOR);
         renderBar(g, sx + 50, sy, halfW - 55, integrity, 100, integrity > 30 ? BAR_INTEGRITY : BAR_INTEGRITY_LOW);
         g.drawString(this.font, String.format("%.1f%%", integrity), sx + halfW - 2, sy, integrity > 30 ? 0xFF88FF88 : 0xFFFF8888);
         sy += 14;
 
         float hqi = ClientDataCache.getImmortalHeavenQi();
         float maxQi = ClientDataCache.getImmortalMaxQi();
-        g.drawString(this.font, "天气", sx, sy, TEXT_COLOR);
+        g.drawString(this.font, "Heaven Qi", sx, sy, TEXT_COLOR);
         renderBar(g, sx + 50, sy, halfW - 55, hqi, maxQi, BAR_HEAVEN);
         g.drawString(this.font, String.format("%.0f", hqi), sx + halfW - 2, sy, 0xFF88AAFF);
         sy += 14;
 
         float eqi = ClientDataCache.getImmortalEarthQi();
-        g.drawString(this.font, "地气", sx, sy, TEXT_COLOR);
+        g.drawString(this.font, "Earth Qi", sx, sy, TEXT_COLOR);
         renderBar(g, sx + 50, sy, halfW - 55, eqi, maxQi, BAR_EARTH);
         g.drawString(this.font, String.format("%.0f", eqi), sx + halfW - 2, sy, 0xFFCCAA66);
         sy += 14;
 
-        g.drawString(this.font, "仙元石: " + ClientDataCache.getImmortalEssenceStones(), sx, sy, 0xFFAADDFF);
+        g.drawString(this.font, "Immortal Essence Stones: " + ClientDataCache.getImmortalEssenceStones(), sx, sy, 0xFFAADDFF);
         sy += 14;
 
         int tfr = ClientDataCache.getImmortalTimeFlowRate();
-        g.drawString(this.font, "光阴支流: 1:" + tfr, sx, sy, 0xFFDDCCAA);
+        g.drawString(this.font, "Time Flow Rate: 1:" + tfr, sx, sy, 0xFFDDCCAA);
         sy += 14;
 
         float devLevel = ClientDataCache.getImmortalDevelopmentLevel();
-        g.drawString(this.font, "发展度", sx, sy, TEXT_COLOR);
+        g.drawString(this.font, "Development Level", sx, sy, TEXT_COLOR);
         int devBarW = halfW - 55;
         renderBar(g, sx + 50, sy, devBarW, devLevel, 100, 0xFF44AACC);
         g.drawString(this.font, String.format("%.0f%%", devLevel), sx + halfW - 2, sy, 0xFF88DDFF);
         sy += 14;
 
         int breachCount = ClientDataCache.getImmortalBreachCount();
-        g.drawString(this.font, "漏洞: ", sx, sy, TEXT_COLOR);
+        g.drawString(this.font, "Breaches: ", sx, sy, TEXT_COLOR);
         if (breachCount > 0) {
-            g.drawString(this.font, breachCount + "处", sx + 40, sy, 0xFFFF4444);
+            g.drawString(this.font, breachCount + "Manage", sx + 40, sy, 0xFFFF4444);
         } else {
-            g.drawString(this.font, "无", sx + 40, sy, 0xFF88FF88);
+            g.drawString(this.font, "None", sx + 40, sy, 0xFF88FF88);
         }
         sy += 14;
 
         int survived = ClientDataCache.getImmortalTotalCalamitiesSurvived();
-        g.drawString(this.font, "存活灾劫: " + survived + "次", sx, sy, 0xFFCCCCDD);
+        g.drawString(this.font, "Active Tribulations: " + survived, sx, sy, 0xFFCCCCDD);
     }
 
     private void renderBar(GuiGraphics g, int x, int y, int w, float value, float max, int color) {
@@ -165,7 +165,7 @@ public class ImmortalApertureScreen extends Screen {
         int sy = py + 28;
         int halfW = PANEL_W / 2 - 15;
 
-        g.drawString(this.font, "[ 资源储备 ]", sx, sy, HEADER_COLOR);
+        g.drawString(this.font, "[ Resource Reserves ]", sx, sy, HEADER_COLOR);
         sy += 14;
 
         List<SyncImmortalAperturePayload.ResourceEntry> resources = ClientDataCache.getImmortalResources();
@@ -185,13 +185,13 @@ public class ImmortalApertureScreen extends Screen {
             if (hovered && res.amount() > 0) {
                 int btnX = sx + halfW - cw - 30;
                 g.fill(btnX, sy - 1, btnX + 26, sy + 10, BUTTON_HOVER);
-                g.drawString(this.font, "提取", btnX + 2, sy, BUTTON_TEXT);
+                g.drawString(this.font, "Extract", btnX + 2, sy, BUTTON_TEXT);
             }
             sy += 13;
         }
 
         if (resources.size() > maxVisible) {
-            g.drawString(this.font, "... (" + resources.size() + "种)", sx, sy, DIM_TEXT);
+            g.drawString(this.font, "... (" + resources.size() + "Seeds)", sx, sy, DIM_TEXT);
         }
     }
 
@@ -199,12 +199,12 @@ public class ImmortalApertureScreen extends Screen {
         int sx = px + 10;
         int sy = py + 130;
 
-        g.drawString(this.font, "[ 仙窍道痕 ]", sx, sy, HEADER_COLOR);
+        g.drawString(this.font, "[ Immortal Aperture Dao Marks ]", sx, sy, HEADER_COLOR);
         sy += 14;
 
         List<SyncImmortalAperturePayload.DaoMarkEntry> marks = ClientDataCache.getImmortalTopDaoMarks();
         if (marks.isEmpty()) {
-            g.drawString(this.font, "暂无道痕", sx, sy, DIM_TEXT);
+            g.drawString(this.font, "No Dao Marks", sx, sy, DIM_TEXT);
         } else {
             for (int i = 0; i < Math.min(marks.size(), 6); i++) {
                 SyncImmortalAperturePayload.DaoMarkEntry mark = marks.get(i);
@@ -232,41 +232,41 @@ public class ImmortalApertureScreen extends Screen {
         int sx = px + PANEL_W / 2 + 5;
         int sy = py + 130;
 
-        g.drawString(this.font, "[ 灾劫 ]", sx, sy, HEADER_COLOR);
+        g.drawString(this.font, "[ Tribulations ]", sx, sy, HEADER_COLOR);
         sy += 14;
 
         if (ClientDataCache.isImmortalCalamityActive()) {
-            g.drawString(this.font, "灾劫进行中!", sx, sy, CALAMITY_COLOR);
+            g.drawString(this.font, "Tribulation in progress!", sx, sy, CALAMITY_COLOR);
             sy += 13;
             g.drawString(this.font, ClientDataCache.getImmortalCalamityTypeName(), sx, sy, 0xFFFF8844);
             sy += 13;
             float progress = ClientDataCache.getImmortalCalamityProgress();
-            g.drawString(this.font, "进度", sx, sy, TEXT_COLOR);
+            g.drawString(this.font, "Progress", sx, sy, TEXT_COLOR);
             renderBar(g, sx + 35, sy, 120, progress, 1.0f, 0xFFFF4444);
             g.drawString(this.font, String.format("%.0f%%", progress * 100), sx + 160, sy, CALAMITY_COLOR);
         } else {
-            g.drawString(this.font, "当前平安", sx, sy, 0xFF88FF88);
+            g.drawString(this.font, "Currently Peaceful", sx, sy, 0xFF88FF88);
             sy += 13;
             int days = ClientDataCache.getImmortalDaysSinceCalamity();
-            g.drawString(this.font, "距上次灾劫: " + days + "天", sx, sy, DIM_TEXT);
+            g.drawString(this.font, "Time Since Last Tribulation: " + days + "Days", sx, sy, DIM_TEXT);
         }
     }
 
     private void renderButtons(GuiGraphics g, int mouseX, int mouseY, int px, int py) {
         int by = py + PANEL_H - 30;
 
-        renderButton(g, "修复仙窍", px + 10, by, 80, mouseX, mouseY);
-        renderButton(g, "全部提取", px + 100, by, 80, mouseX, mouseY);
+        renderButton(g, "Repair Immortal Aperture", px + 10, by, 80, mouseX, mouseY);
+        renderButton(g, "Extract All", px + 100, by, 80, mouseX, mouseY);
         if (ClientDataCache.isImmortalCalamityActive()) {
-            renderButton(g, "抵抗灾劫", px + 190, by, 80, mouseX, mouseY);
+            renderButton(g, "Resist Tribulation", px + 190, by, 80, mouseX, mouseY);
         }
         if (ClientDataCache.getImmortalBreachCount() > 0) {
-            renderButton(g, "修复漏洞", px + 280, by, 80, mouseX, mouseY);
+            renderButton(g, "Repair Flaws", px + 280, by, 80, mouseX, mouseY);
         }
 
         boolean inAperture = Minecraft.getInstance().level != null &&
             Minecraft.getInstance().level.dimension().equals(ModDimensions.APERTURE_DIM);
-        String apText = inAperture ? "离开仙窍" : "进入仙窍";
+        String apText = inAperture ? "Leave Immortal Aperture" : "Enter Immortal Aperture";
         int apColor = inAperture ? 0xFF445544 : 0xFF334466;
         int apBtnX = px + PANEL_W - 150;
         boolean apHover = mouseX >= apBtnX && mouseX <= apBtnX + 80 && mouseY >= by && mouseY <= by + 16;
@@ -276,7 +276,7 @@ public class ImmortalApertureScreen extends Screen {
         int atw = this.font.width(apText);
         g.drawString(this.font, apText, apBtnX + (80 - atw) / 2, by + 4, apHover ? 0xFFFFFFFF : 0xFFAADDFF);
 
-        renderButton(g, "关闭", px + PANEL_W - 60, by, 50, mouseX, mouseY);
+        renderButton(g, "Close", px + PANEL_W - 60, by, 50, mouseX, mouseY);
     }
 
     private void renderButton(GuiGraphics g, String text, int x, int y, int w, int mouseX, int mouseY) {

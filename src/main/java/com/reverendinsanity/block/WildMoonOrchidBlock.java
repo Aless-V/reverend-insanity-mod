@@ -18,7 +18,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 import java.util.List;
 
-// 野月兰花丛，洞穴中自然生成的发光植物，剪刀可完整采集
+// Wild Moon Orchid Block: A naturally occurring glowing plant found in caves. Shears can harvest it intact.
 public class WildMoonOrchidBlock extends BushBlock {
 
     public static final MapCodec<WildMoonOrchidBlock> CODEC = simpleCodec(WildMoonOrchidBlock::new);

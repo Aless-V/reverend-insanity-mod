@@ -14,7 +14,7 @@ import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
-// 野蛊模型：简单的立方体，带上下浮动动画
+// Wild Gu Model: Simple cube with up-and-down floating animation.
 public class WildGuModel extends HierarchicalModel<WildGuEntity> {
 
     public static final ModelLayerLocation LAYER_LOCATION =

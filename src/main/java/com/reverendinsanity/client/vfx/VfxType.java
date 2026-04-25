@@ -1,6 +1,6 @@
 package com.reverendinsanity.client.vfx;
 
-// VFX效果类型枚举
+// VFX Effect Type Enumeration
 public enum VfxType {
     SLASH_ARC,
     ENERGY_BEAM,

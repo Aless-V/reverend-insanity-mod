@@ -7,7 +7,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;
 
-// 玉眼石猴渲染器
+// Jade-Eyed Stone Monkey Renderer
 public class JadeEyeMonkeyRenderer extends MobRenderer<JadeEyeMonkeyEntity, SilverfishModel<JadeEyeMonkeyEntity>> {
 
     private static final ResourceLocation TEXTURE =

@@ -3,17 +3,17 @@ package com.reverendinsanity.core.aperture;
 import net.minecraft.nbt.CompoundTag;
 import java.util.*;
 
-// 仙窍资源管理：自动产出蛊虫喂食材料、仙元、灵药
+// Immortal Aperture Resource Management: Automatically produces Gu feeding materials, Immortal Essence, and spiritual medicines.
 public class ApertureResourceManager {
 
     public enum ResourceType {
-        PRIMEVAL_STONE("元石", 1.0f),
-        MOON_PETAL("月桂花瓣", 0.3f),
-        BEAST_BONE("兽骨", 0.5f),
-        BITTER_WINE("苦酒", 0.2f),
-        SPIDER_SILK("蛛丝", 0.4f),
-        JADE_BEAD("玉眼石珠", 0.15f),
-        IMMORTAL_ESSENCE("仙元石", 0.1f);
+        PRIMEVAL_STONE("Primeval Stone", 1.0f),
+        MOON_PETAL("Moon Petal", 0.3f),
+        BEAST_BONE("Beast Bone", 0.5f),
+        BITTER_WINE("Bitter Wine", 0.2f),
+        SPIDER_SILK("Spider Silk", 0.4f),
+        JADE_BEAD("Jade Bread", 0.15f),
+        IMMORTAL_ESSENCE("Immortal Essence", 0.1f);
 
         private final String name;
         private final float baseRate;

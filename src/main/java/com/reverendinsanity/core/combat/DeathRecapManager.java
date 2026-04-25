@@ -30,13 +30,13 @@ public class DeathRecapManager {
         DamageRecord lastHit = list.get(list.size() - 1);
 
         StringBuilder msg = new StringBuilder();
-        msg.append("\u00a7c[\u6b7b\u4ea1\u56de\u653e] ");
-        msg.append("\u00a7f\u88ab \u00a7e").append(lastHit.source).append(" \u00a7f\u51fb\u6740");
-        msg.append(" | \u81f4\u547d\u4e00\u51fb: \u00a7c").append(String.format("%.1f", lastHit.damage));
+        msg.append("§c[Death Recap] ");
+        msg.append("§fKilled by §e").append(lastHit.source).append(" §fKilled");
+        msg.append(" | Lethal Strike: §c").append(String.format("%.1f", lastHit.damage));
         if (lastHit.moveId != null && !lastHit.moveId.isEmpty()) {
             KillerMove move = KillerMoveRegistry.get(net.minecraft.resources.ResourceLocation.parse(lastHit.moveId));
             String moveName = move != null ? move.displayName() : lastHit.moveId;
-            msg.append("\u00a7f | \u6740\u62db: \u00a7b").append(moveName);
+            msg.append("§f | Killer Move: §b").append(moveName);
         }
 
         player.sendSystemMessage(Component.literal(msg.toString()));
@@ -46,7 +46,7 @@ public class DeathRecapManager {
             totalDamage += record.damage;
         }
         player.sendSystemMessage(Component.literal(
-            "\u00a77  \u6700\u8fd1" + list.size() + "\u6b21\u4f24\u5bb3\u603b\u8ba1: \u00a7c" + String.format("%.1f", totalDamage)
+            "§7 Last" + list.size() + "damage total: §c" + String.format("%.1f", totalDamage)
         ));
 
         Map<String, Float> damageBySource = new LinkedHashMap<>();
@@ -57,7 +57,7 @@ public class DeathRecapManager {
             .sorted(Map.Entry.<String, Float>comparingByValue().reversed())
             .limit(3)
             .forEach(entry -> player.sendSystemMessage(Component.literal(
-                "\u00a77  - \u00a7e" + entry.getKey() + "\u00a77: \u00a7c" + String.format("%.1f", entry.getValue())
+                "§7 - §e" + entry.getKey() + "§7: §c" + String.format("%.1f", entry.getValue())
             )));
 
         records.remove(player.getUUID());

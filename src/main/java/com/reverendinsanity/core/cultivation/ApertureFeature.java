@@ -2,12 +2,12 @@ package com.reverendinsanity.core.cultivation;
 
 // 空窍特性：投资真元发展不同方面，创造构建多样性
 public enum ApertureFeature {
-    SPIRIT_SPRING("灵泉", "真元恢复 +10%/级"),
-    THOUGHT_POOL("念池", "念头恢复 +10%/级"),
-    GU_GARDEN("蛊园", "蛊虫饥饿 -8%/级"),
-    ESSENCE_VAULT("真元储", "真元上限 +8%/级"),
-    THOUGHT_VAULT("念力储", "念头上限 +8%/级"),
-    DAO_RESONANCE("道痕共鸣", "道痕积累 +10%/级");
+    SPIRIT_SPRING("Spirit Spring", "Primeval Essence Recovery +10% / level"),
+    THOUGHT_POOL("Thought Pool", "Thought Recovery +10% / level"),
+    GU_GARDEN("Gu Garden", "Gu Hunger -8% / level"),
+    ESSENCE_VAULT("Essence Vault", "Primeval Essence Cap +8% / level"),
+    THOUGHT_VAULT("Thought Vault", "Thought Cap +8% / level"),
+    DAO_RESONANCE("Dao Resonance", "Dao Mark Accumulation +10% / level");
 
     public static final int MAX_LEVEL = 5;
 

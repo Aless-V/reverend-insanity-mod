@@ -26,7 +26,7 @@ import net.minecraft.world.phys.BlockHitResult;
 
 import java.util.List;
 
-// 阵法石，右键使用阵道蛊虫布阵，红石激活恢复真元
+// Formation Stone: Right-click to set up a formation using Formation Path Gu insects. Redstone activation restores Primeval Essence.
 public class FormationStoneBlock extends Block {
 
     public static final MapCodec<FormationStoneBlock> CODEC = simpleCodec(FormationStoneBlock::new);

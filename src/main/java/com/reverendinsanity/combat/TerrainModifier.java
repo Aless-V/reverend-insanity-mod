@@ -10,7 +10,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-// 地形改造工具类
+// Terrain Modification Utility Class
 public final class TerrainModifier {
 
     private TerrainModifier() {

@@ -2,13 +2,13 @@ package com.reverendinsanity.core.path;
 
 // 流派境界
 public enum PathRealm {
-    ORDINARY("普通", 0),
-    MASTER("大师", 1),
-    GRANDMASTER("宗师", 2),
-    GREAT_GRANDMASTER("大宗师", 3),
-    QUASI_SUPREME("准无上大宗师", 4),
-    SUPREME("无上大宗师", 5),
-    DAO_LORD("道主", 6);
+    ORDINARY("Ordinary", 0),
+    MASTER("Master", 1),
+    GRANDMASTER("Grandmaster", 2),
+    GREAT_GRANDMASTER("Great Grandmaster", 3),
+    QUASI_SUPREME("Quasi Supreme Grandmaster", 4),
+    SUPREME("Supreme Grandmaster", 5),
+    DAO_LORD("Dao Lord", 6);
 
     private final String displayName;
     private final int tier;

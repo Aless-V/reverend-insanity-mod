@@ -13,7 +13,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import java.util.List;
 
-// 灼光蛊技能：灼光爆发——10格AOE光爆伤害（二转）
+// Scorching Light Gu Skill: Scorching Light Burst — 10-block AOE light explosion damage (Rank 2).
 public class BlazingLightAbility extends GuAbility {
 
     public BlazingLightAbility() {

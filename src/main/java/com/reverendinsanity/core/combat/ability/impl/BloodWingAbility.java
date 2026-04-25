@@ -12,7 +12,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 
-// 血翼蛊技能：消耗HP获得飞行能力
+// Blood Wing Gu Skill: Consumes HP to gain flight ability.
 public class BloodWingAbility extends GuAbility {
 
     public BloodWingAbility() {

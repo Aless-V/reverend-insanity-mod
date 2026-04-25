@@ -19,7 +19,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
-// 管理命令：/gu 系列
+// Management Command: /gu series
 public class GuCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -104,18 +104,18 @@ public class GuCommand {
         ResourceLocation id = ResourceLocation.parse(guId.contains(":") ? guId : "reverend_insanity:" + guId);
         GuType type = GuRegistry.get(id);
         if (type == null) {
-            source.sendFailure(Component.literal("未知蛊虫: " + guId));
+            source.sendFailure(Component.literal("Unknown Gu Insect: " + guId));
             return 0;
         }
 
         Item item = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(id);
         if (item == net.minecraft.world.item.Items.AIR) {
-            source.sendFailure(Component.literal("找不到对应物品: " + guId));
+            source.sendFailure(Component.literal("Corresponding item not found: " + guId));
             return 0;
         }
 
         player.getInventory().add(new ItemStack(item));
-        source.sendSuccess(() -> Component.literal("已给予 " + player.getName().getString() + " " + type.displayName()), true);
+        source.sendSuccess(() -> Component.literal("Given " + player.getName().getString() + " " + type.displayName()), true);
         return 1;
     }
 
@@ -123,13 +123,13 @@ public class GuCommand {
         GuMasterData data = player.getData(ModAttachments.GU_MASTER_DATA.get());
         Aperture aperture = data.getAperture();
         if (!aperture.isOpened()) {
-            source.sendFailure(Component.literal("该玩家空窍未开"));
+            source.sendFailure(Component.literal("This player's aperture has not been opened."));
             return 0;
         }
         Rank targetRank = Rank.values()[rank - 1];
         aperture.setRank(targetRank);
         aperture.setSubRank(SubRank.INITIAL);
-        source.sendSuccess(() -> Component.literal("已将 " + player.getName().getString() + " 设为 " + rank + "转·初阶"), true);
+        source.sendSuccess(() -> Component.literal("Set " + player.getName().getString() + " to Rank " + rank + "Initial Stage"), true);
         return 1;
     }
 
@@ -137,11 +137,11 @@ public class GuCommand {
         GuMasterData data = player.getData(ModAttachments.GU_MASTER_DATA.get());
         Aperture aperture = data.getAperture();
         if (!aperture.isOpened()) {
-            source.sendSuccess(() -> Component.literal(player.getName().getString() + ": 空窍未开"), false);
+            source.sendSuccess(() -> Component.literal(player.getName().getString() + ": Aperture not opened"), false);
             return 1;
         }
         CombatState combatState = data.getCombatState();
-        String info = String.format("%s: %d转·%s <%s> 真元:%.0f/%.0f 念头:%.0f/%.0f 蛊虫:%d 杀招:%d",
+        String info = String.format("%s: Rank %d·%s <%s> Primeval Essence:%.0f/%.0f Thoughts:%.0f/%.0f Gu:%d Killer Moves:%d",
             player.getName().getString(),
             aperture.getRank().getLevel(),
             aperture.getSubRank().getDisplayName(),
@@ -159,7 +159,7 @@ public class GuCommand {
         GuMasterData data = player.getData(ModAttachments.GU_MASTER_DATA.get());
         Aperture aperture = data.getAperture();
         if (aperture.isOpened()) {
-            source.sendFailure(Component.literal("空窍已开"));
+            source.sendFailure(Component.literal("Aperture opened"));
             return 0;
         }
         Aptitude apt;
@@ -170,12 +170,12 @@ public class GuCommand {
             case "A" -> apt = Aptitude.A;
             case "EXTREME" -> apt = Aptitude.EXTREME;
             default -> {
-                source.sendFailure(Component.literal("无效资质，可选: D, C, B, A, EXTREME"));
+                source.sendFailure(Component.literal("Invalid talent, Available: D, C, B, A, EXTREME"));
                 return 0;
             }
         }
         aperture.open(apt);
-        source.sendSuccess(() -> Component.literal("已为 " + player.getName().getString() + " 开窍，资质: " + apt.getDisplayName()), true);
+        source.sendSuccess(() -> Component.literal("Opened aperture for " + player.getName().getString() + " , Talent: " + apt.getDisplayName()), true);
         return 1;
     }
 
@@ -185,11 +185,11 @@ public class GuCommand {
         ResourceLocation moveId = ResourceLocation.parse(moveIdStr.contains(":") ? moveIdStr : "reverend_insanity:" + moveIdStr);
         var move = KillerMoveRegistry.get(moveId);
         if (move == null) {
-            source.sendFailure(Component.literal("未知杀招: " + moveIdStr));
+            source.sendFailure(Component.literal("Unknown Killer Move: " + moveIdStr));
             return 0;
         }
         combatState.equipMove(moveId);
-        source.sendSuccess(() -> Component.literal("已为 " + player.getName().getString() + " 装备杀招: " + move.displayName()), true);
+        source.sendSuccess(() -> Component.literal("Equipped Killer Move for " + player.getName().getString() + " : " + move.displayName()), true);
         return 1;
     }
 
@@ -197,7 +197,7 @@ public class GuCommand {
         GuMasterData data = player.getData(ModAttachments.GU_MASTER_DATA.get());
         Aperture aperture = data.getAperture();
         aperture.reset();
-        source.sendSuccess(() -> Component.literal("已重置 " + player.getName().getString() + " 的修炼数据"), true);
+        source.sendSuccess(() -> Component.literal("Reset cultivation data for " + player.getName().getString()), true);
         return 1;
     }
 
@@ -205,11 +205,11 @@ public class GuCommand {
         GuMasterData data = player.getData(ModAttachments.GU_MASTER_DATA.get());
         Aperture aperture = data.getAperture();
         if (!aperture.isOpened()) {
-            source.sendFailure(Component.literal("空窍未开"));
+            source.sendFailure(Component.literal("Aperture not opened"));
             return 0;
         }
         aperture.setCurrentEssence(amount);
-        source.sendSuccess(() -> Component.literal("已将 " + player.getName().getString() + " 真元设为 " + (int) amount), true);
+        source.sendSuccess(() -> Component.literal("Set " + player.getName().getString() + "'s Primeval Essence to " + (int) amount), true);
         return 1;
     }
 
@@ -217,14 +217,14 @@ public class GuCommand {
         GuMasterData data = player.getData(ModAttachments.GU_MASTER_DATA.get());
         float luck = data.getLuck();
         String status;
-        if (luck > 1.2f) status = "鸿运当头";
-        else if (luck > 1.0f) status = "好运";
-        else if (luck == 1.0f) status = "正常";
-        else if (luck >= 0.7f) status = "运气不佳";
-        else if (luck >= 0.5f) status = "厄运缠身";
-        else status = "大凶之兆";
+        if (luck > 1.2f) status = "Extreme Fortune";
+        else if (luck > 1.0f) status = "Good Fortune";
+        else if (luck == 1.0f) status = "Normal";
+        else if (luck >= 0.7f) status = "Poor Fortune";
+        else if (luck >= 0.5f) status = "Cursed with Bad Fortune";
+        else status = "Omen of Great Calamity";
         source.sendSuccess(() -> Component.literal(
-            player.getName().getString() + " 气运: " + String.format("%.2f", luck) + " (" + status + ")"
+            player.getName().getString() + " Fortune: " + String.format("%.2f", luck) + " (" + status + ")"
         ), false);
         return 1;
     }
@@ -233,7 +233,7 @@ public class GuCommand {
         GuMasterData data = player.getData(ModAttachments.GU_MASTER_DATA.get());
         data.setLuck(amount);
         source.sendSuccess(() -> Component.literal(
-            "已将 " + player.getName().getString() + " 气运设为 " + String.format("%.2f", amount)
+            "Set " + player.getName().getString() + "'s Luck to " + String.format("%.2f", amount)
         ), true);
         return 1;
     }

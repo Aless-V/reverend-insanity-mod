@@ -47,7 +47,7 @@ public class SignalGuAbility extends GuAbility {
 
         AABB broadcastArea = new AABB(px - 64, py - 64, pz - 64, px + 64, py + 64, pz + 64);
         List<Player> nearbyPlayers = player.level().getEntitiesOfClass(Player.class, broadcastArea);
-        String coordMsg = String.format("方位信号！[%s] X:%d Y:%d Z:%d",
+        String coordMsg = String.format("Direction Signal![%s] X:%d Y:%d Z:%d",
             player.getName().getString(), (int) px, (int) py, (int) pz);
         for (Player nearby : nearbyPlayers) {
             nearby.sendSystemMessage(Component.literal(coordMsg));

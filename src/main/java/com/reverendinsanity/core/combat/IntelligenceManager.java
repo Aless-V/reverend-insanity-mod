@@ -100,30 +100,30 @@ public class IntelligenceManager {
         IntelLevel level = getIntelLevel(player, master);
         String faction = master.getFaction().getDisplayName();
         return switch (level) {
-            case UNKNOWN -> "[" + faction + "] \u86ca\u5e08";
+            case UNKNOWN -> "[" + faction + "] Gu Master";
             case OBSERVED -> {
                 int rank = master.getGuRank();
-                String rankRange = rank <= 1 ? "\u4e00\u8f6c~\u4e8c\u8f6c" : rank == 2 ? "\u4e8c\u8f6c~\u4e09\u8f6c" : "\u4e09\u8f6c+";
-                yield "[" + faction + "] \u86ca\u5e08 (" + rankRange + ")";
+                String rankRange = rank <= 1 ? "Rank 1 ~ Rank 2" : rank == 2 ? "Rank 2 ~ Rank 3" : "Rank 3+";
+                yield "[" + faction + "] Gu Master (" + rankRange + ")";
             }
             case SCANNED -> {
                 int rank = master.getGuRank();
                 DaoPath path = master.getPrimaryDaoPath();
-                String pathName = path != null ? path.getDisplayName() : "\u672a\u77e5";
-                yield "[" + faction + "] " + getRankName(rank) + "\u86ca\u5e08\u00b7" + pathName;
+                String pathName = path != null ? path.getDisplayName() : "Unknown";
+                yield "[" + faction + "] " + getRankName(rank) + "Gu Master·" + pathName;
             }
             case FULL -> {
                 int rank = master.getGuRank();
                 DaoPath primary = master.getPrimaryDaoPath();
                 DaoPath secondary = master.getSecondaryDaoPath();
-                String pathName = primary != null ? primary.getDisplayName() : "\u672a\u77e5";
+                String pathName = primary != null ? primary.getDisplayName() : "Unknown";
                 StringBuilder sb = new StringBuilder();
-                sb.append("[").append(faction).append("] ").append(getRankName(rank)).append("\u86ca\u5e08\u00b7").append(pathName);
+                sb.append("[").append(faction).append("] ").append(getRankName(rank)).append("Gu Master·").append(pathName);
                 if (secondary != null) {
                     sb.append("/").append(secondary.getDisplayName());
                 }
-                sb.append(" \u86ca:").append(master.getEquippedGu().size());
-                sb.append(" \u62db:").append(master.getAvailableMoves().size());
+                sb.append(" Gu:").append(master.getEquippedGu().size());
+                sb.append(" Move:").append(master.getAvailableMoves().size());
                 yield sb.toString();
             }
         };
@@ -131,12 +131,12 @@ public class IntelligenceManager {
 
     private static String getRankName(int rank) {
         return switch (rank) {
-            case 1 -> "\u4e00\u8f6c";
-            case 2 -> "\u4e8c\u8f6c";
-            case 3 -> "\u4e09\u8f6c";
-            case 4 -> "\u56db\u8f6c";
-            case 5 -> "\u4e94\u8f6c";
-            default -> rank + "\u8f6c";
+            case 1 -> "Rank 1";
+            case 2 -> "Rank 2";
+            case 3 -> "Rank 3";
+            case 4 -> "Rank 4";
+            case 5 -> "Rank 5";
+            default -> rank + "Rank";
         };
     }
 

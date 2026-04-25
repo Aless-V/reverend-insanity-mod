@@ -42,7 +42,7 @@ import java.util.List;
 public class AncientGuImmortalEntity extends Monster {
 
     private final ServerBossEvent bossEvent = new ServerBossEvent(
-        Component.literal("\u8fdc\u53e4\u86ca\u4ed9\u6b8b\u9b42"), BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS);
+        Component.literal("Ancient Gu Immortal Remnant Soul"), BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS);
 
     private int abilityCooldown = 60;
     private boolean hasHealed = false;

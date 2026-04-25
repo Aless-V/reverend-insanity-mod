@@ -74,9 +74,9 @@ public class DaoInsightManager {
         insightTicks.put(uuid, INSIGHT_DURATION);
         cooldowns.put(uuid, COOLDOWN);
 
-        String pathName = primary != null ? primary.getDisplayName() : "未知";
+        String pathName = primary != null ? primary.getDisplayName() : "Unknown";
         player.displayClientMessage(
-                Component.literal("【顿悟】" + pathName + "之道真意涌现！道痕 +" + markBonus)
+                Component.literal("【Epiphany】 The true meaning of the " + pathName + " Path surges forth! Dao Marks + " + markBonus)
                         .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD), false);
 
         if (player.level() instanceof ServerLevel level) {
@@ -104,7 +104,7 @@ public class DaoInsightManager {
             removeModifiers(player);
             insightTicks.remove(uuid);
             player.displayClientMessage(
-                    Component.literal("顿悟结束，真意消散").withStyle(ChatFormatting.GRAY), true);
+                    Component.literal("Epiphany ends. The true meaning fades.").withStyle(ChatFormatting.GRAY), true);
             return;
         }
 

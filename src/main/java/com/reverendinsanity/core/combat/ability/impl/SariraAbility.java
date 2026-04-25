@@ -29,11 +29,11 @@ public class SariraAbility extends GuAbility {
     @Override
     protected void onActivate(ServerPlayer player, Aperture aperture) {
         if (aperture.getRank() != requiredRank) {
-            player.sendSystemMessage(Component.literal("§c当前境界无法使用此舍利蛊"));
+            player.sendSystemMessage(Component.literal("§cYour current cultivation rank cannot use this Relic Gu."));
             return;
         }
         if (aperture.getSubRank() == SubRank.PEAK) {
-            player.sendSystemMessage(Component.literal("§e已达巅峰，需使用突破石晋升大境界"));
+            player.sendSystemMessage(Component.literal("§eYou have reached the peak. Use a Breakthrough Stone to advance to the next major realm."));
             return;
         }
 
@@ -42,7 +42,7 @@ public class SariraAbility extends GuAbility {
 
         boolean advanced = aperture.tryAdvanceSubRank();
         if (advanced) {
-            player.sendSystemMessage(Component.literal("§6舍利灌顶！境界提升至" + aperture.getRank().getDisplayName() + aperture.getSubRank().getDisplayName()));
+            player.sendSystemMessage(Component.literal("§6Relic Empowerment! Cultivation elevated to " + aperture.getRank().getDisplayName() + aperture.getSubRank().getDisplayName()));
             ServerLevel serverLevel = (ServerLevel) player.level();
             serverLevel.sendParticles(ParticleTypes.TOTEM_OF_UNDYING,
                 player.getX(), player.getY() + 1, player.getZ(),

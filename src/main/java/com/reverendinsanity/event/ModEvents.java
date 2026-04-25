@@ -127,7 +127,7 @@ public class ModEvents {
         if (event.getEntity() instanceof com.reverendinsanity.entity.AncientGuImmortalEntity) {
             rep.addReputation(Faction.RIGHTEOUS, 50);
             killer.displayClientMessage(
-                Component.literal("\u6b63\u9053\u58f0\u671b +50").withStyle(net.minecraft.ChatFormatting.BLUE), true);
+                Component.literal("Righteous Path Reputation +50").withStyle(net.minecraft.ChatFormatting.BLUE), true);
         } else if (event.getEntity() instanceof com.reverendinsanity.entity.GuMasterEntity guMaster) {
             Faction masterFaction = guMaster.getFaction();
             switch (masterFaction) {
@@ -135,18 +135,18 @@ public class ModEvents {
                     rep.addReputation(Faction.DEMONIC, 20);
                     rep.addReputation(Faction.RIGHTEOUS, -30);
                     killer.displayClientMessage(
-                        Component.literal("\u9b54\u9053\u58f0\u671b +20, \u6b63\u9053\u58f0\u671b -30").withStyle(net.minecraft.ChatFormatting.RED), true);
+                        Component.literal("Demonic Path Reputation +20, Righteous Path Reputation -30").withStyle(net.minecraft.ChatFormatting.RED), true);
                 }
                 case DEMONIC -> {
                     rep.addReputation(Faction.RIGHTEOUS, 20);
                     rep.addReputation(Faction.DEMONIC, -15);
                     killer.displayClientMessage(
-                        Component.literal("\u6b63\u9053\u58f0\u671b +20, \u9b54\u9053\u58f0\u671b -15").withStyle(net.minecraft.ChatFormatting.BLUE), true);
+                        Component.literal("Righteous Path Reputation +20, Demonic Path Reputation -15").withStyle(net.minecraft.ChatFormatting.BLUE), true);
                 }
                 case INDEPENDENT -> {
                     rep.addReputation(Faction.INDEPENDENT, -10);
                     killer.displayClientMessage(
-                        Component.literal("\u6563\u4fee\u58f0\u671b -10").withStyle(net.minecraft.ChatFormatting.YELLOW), true);
+                        Component.literal("Independent Cultivator Reputation -10").withStyle(net.minecraft.ChatFormatting.YELLOW), true);
                 }
             }
         }
@@ -198,7 +198,7 @@ public class ModEvents {
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.TOTEM_USE, SoundSource.PLAYERS, 1.0f, 1.0f);
             player.displayClientMessage(
-                Component.literal("春秋蝉碎裂，时光倒流——重生！").withStyle(net.minecraft.ChatFormatting.GOLD),
+                Component.literal("Spring Autumn Cicada crumbles. The river of time reverses — You are reborn!").withStyle(net.minecraft.ChatFormatting.GOLD),
                 false
             );
             return;
@@ -233,7 +233,7 @@ public class ModEvents {
             combatState.unequipMove(moveId);
         }
 
-        player.displayClientMessage(Component.literal("蛊虫散落，修为受损..."), false);
+        player.displayClientMessage(Component.literal("Gu insects scatter. Your cultivation is damaged..."), false);
     }
 
     @SubscribeEvent
@@ -260,7 +260,7 @@ public class ModEvents {
             if (TribulationManager.isInTribulation(player)) {
                 event.setCanceled(true);
                 player.displayClientMessage(
-                    Component.literal("天劫期间无法使用末影珍珠！")
+                    Component.literal("Cannot use Ender Pearls during a heavenly tribulation!")
                         .withStyle(net.minecraft.ChatFormatting.RED), true);
             }
         }

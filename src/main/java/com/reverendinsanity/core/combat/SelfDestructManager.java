@@ -31,7 +31,7 @@ public class SelfDestructManager {
         UUID uuid = player.getUUID();
         Integer cd = cooldowns.get(uuid);
         if (cd != null && cd > 0) {
-            player.displayClientMessage(Component.literal("自爆冷却中...").withStyle(ChatFormatting.GRAY), true);
+            player.displayClientMessage(Component.literal("Self-Destruct on cooldown...").withStyle(ChatFormatting.GRAY), true);
             return false;
         }
 
@@ -96,7 +96,7 @@ public class SelfDestructManager {
         cooldowns.put(uuid, COOLDOWN);
 
         player.displayClientMessage(
-                Component.literal("蛊虫自爆！" + guId.getPath() + " 永久销毁，造成 " + (int) damage + " 范围伤害")
+                Component.literal("Gu self-destruct! " + guId.getPath() + " permanently destroyed, dealing " + (int) damage + " area damage")
                         .withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD), false);
 
         return true;

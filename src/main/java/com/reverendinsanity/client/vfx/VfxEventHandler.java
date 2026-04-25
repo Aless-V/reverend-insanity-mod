@@ -7,7 +7,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 
-// VFX事件处理器，订阅游戏事件总线触发VFX更新和渲染
+// VFX Event Handler: Subscribes to game event bus to trigger VFX updates and rendering.
 @EventBusSubscriber(modid = ReverendInsanity.MODID, value = Dist.CLIENT)
 public class VfxEventHandler {
 

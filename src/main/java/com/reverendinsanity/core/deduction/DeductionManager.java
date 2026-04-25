@@ -82,7 +82,7 @@ public class DeductionManager {
 
         if (player.tickCount % 10 == 0) {
             PacketDistributor.sendToPlayer(player, new SyncDeductionPayload(
-                true, session.getProgress(), session.getSuccessRate(), "推演中..."
+                true, session.getProgress(), session.getSuccessRate(), "Deducing..."
             ));
         }
 

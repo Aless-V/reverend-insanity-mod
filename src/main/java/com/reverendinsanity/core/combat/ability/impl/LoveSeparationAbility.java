@@ -45,9 +45,9 @@ public class LoveSeparationAbility extends GuAbility {
                 0f, 1f, 0f,
                 0xFF660066, 2.5f, 20);
 
-            player.displayClientMessage(Component.literal("爱别离——二转第一毒！"), true);
+            player.displayClientMessage(Component.literal("Separation of Love — The Number One Rank 2 Poison!"), true);
         } else {
-            player.displayClientMessage(Component.literal("附近无目标"), true);
+            player.displayClientMessage(Component.literal("No targets nearby."), true);
             aperture.regenerateEssence(15f);
         }
 

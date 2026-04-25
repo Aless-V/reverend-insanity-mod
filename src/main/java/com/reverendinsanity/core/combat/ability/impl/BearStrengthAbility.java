@@ -12,7 +12,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 
-// 熊力蛊技能：Attribute增强攻击力+击退
+// Bear Strength Gu Skill: Attribute enhancement — increases attack damage + knockback.
 public class BearStrengthAbility extends GuAbility {
 
     public BearStrengthAbility() {

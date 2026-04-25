@@ -8,7 +8,7 @@ import com.reverendinsanity.core.gu.GuRegistry;
 import com.reverendinsanity.registry.ModAttachments;
 import net.minecraft.server.level.ServerPlayer;
 
-// 兽皮蛊技能：力道1转最便宜防御，+3护甲+1击退抗性
+// Beast Skin Gu Skill: The cheapest Rank 1 Strength Path defense. +3 Armor +1 Knockback Resistance.
 public class BeastSkinAbility extends GuAbility {
 
     public BeastSkinAbility() {

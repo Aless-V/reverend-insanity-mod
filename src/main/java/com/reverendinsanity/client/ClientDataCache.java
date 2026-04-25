@@ -8,7 +8,7 @@ import com.reverendinsanity.network.SyncImmortalAperturePayload;
 import java.util.ArrayList;
 import java.util.List;
 
-// 客户端修炼数据缓存，存储从服务端同步来的蛊师状态
+// Client Cultivation Data Cache: Stores Gu Master state synced from the server.
 public class ClientDataCache {
 
     private static boolean opened = false;
@@ -102,16 +102,16 @@ public class ClientDataCache {
         }
 
         switch (dominantFaction) {
-            case "RIGHTEOUS" -> { factionName = "正道"; factionColor = 0x44AAFF; }
-            case "DEMONIC" -> { factionName = "魔道"; factionColor = 0xCC2222; }
-            default -> { factionName = "散修"; factionColor = 0xCCCC44; }
+            case "RIGHTEOUS" -> { factionName = "Righteous Path"; factionColor = 0x44AAFF; }
+            case "DEMONIC" -> { factionName = "Demonic Path"; factionColor = 0xCC2222; }
+            default -> { factionName = "Independent Cultivator"; factionColor = 0xCCCC44; }
         }
 
-        if (dominantValue <= -500) factionTierName = "敌对";
-        else if (dominantValue <= -100) factionTierName = "不友好";
-        else if (dominantValue < 100) factionTierName = "中立";
-        else if (dominantValue < 500) factionTierName = "友好";
-        else factionTierName = "崇敬";
+        if (dominantValue <= -500) factionTierName = "Hostile";
+        else if (dominantValue <= -100) factionTierName = "Unfriendly";
+        else if (dominantValue < 100) factionTierName = "Neutral";
+        else if (dominantValue < 500) factionTierName = "Friendly";
+        else factionTierName = "Venerated";
     }
 
     public static void updateContents(SyncApertureContentsPayload payload) {

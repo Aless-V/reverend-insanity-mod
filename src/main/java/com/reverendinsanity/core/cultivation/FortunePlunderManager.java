@@ -55,7 +55,7 @@ public class FortunePlunderManager {
         if (plunder > 0) {
             data.setLuck(data.getLuck() + plunder);
             player.displayClientMessage(
-                    Component.literal("夺取 " + victimName + " 气运 +" + String.format("%.1f%%", plunder * 100))
+                    Component.literal("Draining " + victimName + " 's luck +" + String.format("%.1f%%", plunder * 100))
                             .withStyle(ChatFormatting.GOLD), true);
         }
     }

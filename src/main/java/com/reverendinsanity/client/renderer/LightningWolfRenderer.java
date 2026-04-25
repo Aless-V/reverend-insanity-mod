@@ -7,7 +7,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;
 
-// 电狼渲染器
+// Lightning Wolf Renderer
 public class LightningWolfRenderer extends MobRenderer<LightningWolfEntity, QuadrupedModel<LightningWolfEntity>> {
 
     private static final ResourceLocation TEXTURE =

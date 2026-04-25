@@ -1,12 +1,12 @@
 package com.reverendinsanity.client.gui;
 
-// 转轮菜单动作定义
+// Wheel Menu Action Definition
 public enum RadialMenuAction {
-    APERTURE("空窍管理", 0xFF4488FF),
-    IMMORTAL_APERTURE("仙窍管理", 0xFFFFAA00),
-    CODEX("蛊虫图鉴", 0xFF66DD66),
-    DEDUCTION("推演界面", 0xFFDD66DD),
-    SECLUSION("闭关修炼", 0xFF88CCEE);
+    APERTURE("Aperture Management", 0xFF4488FF),
+    IMMORTAL_APERTURE("Immortal Aperture Management", 0xFFFFAA00),
+    CODEX("Gu Codex", 0xFF66DD66),
+    DEDUCTION("Killer Move Deduction", 0xFFDD66DD),
+    SECLUSION("Closed-Door Cultivation", 0xFF88CCEE);
 
     public final String displayName;
     public final int color;

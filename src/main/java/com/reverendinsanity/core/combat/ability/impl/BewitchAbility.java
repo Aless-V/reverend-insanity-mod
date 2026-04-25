@@ -11,7 +11,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 
-// 妖媚蛊技能：施展魅惑屏障，敌人难以锁定
+// Bewitching Gu Skill: Deploys a charm barrier, making enemies difficult to lock onto.
 public class BewitchAbility extends GuAbility {
 
     public BewitchAbility() {

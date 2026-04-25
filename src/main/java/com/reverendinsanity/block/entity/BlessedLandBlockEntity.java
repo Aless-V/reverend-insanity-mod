@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-// 福地方块实体，存储拥有者并管理福地区域效果
+// Blessed Land block entity, stores the owner and manages the Blessed Land area effects.
 public class BlessedLandBlockEntity extends BlockEntity {
 
     public static final int RADIUS = 16;

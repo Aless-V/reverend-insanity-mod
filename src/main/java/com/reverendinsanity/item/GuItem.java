@@ -38,7 +38,7 @@ public class GuItem extends Item {
             Aperture aperture = data.getAperture();
 
             if (!aperture.isOpened()) {
-                player.displayClientMessage(Component.literal("空窍未开，无法炼化蛊虫"), true);
+                player.displayClientMessage(Component.literal("Aperture not opened. Cannot refine Gu insects."), true);
                 return InteractionResultHolder.fail(stack);
             }
 
@@ -48,18 +48,18 @@ public class GuItem extends Item {
             }
 
             if (!type.canBeUsedBy(aperture.getRank())) {
-                player.displayClientMessage(Component.literal("境界不足，无法炼化此蛊"), true);
+                player.displayClientMessage(Component.literal("Insufficient cultivation rank. Cannot refine this Gu insect."), true);
                 return InteractionResultHolder.fail(stack);
             }
 
             if (!aperture.hasGuCapacity()) {
-                player.displayClientMessage(Component.literal("窍穴容量已满（" + aperture.getMaxGuCapacity() + "/" + aperture.getMaxGuCapacity() + "），需提升境界扩容"), true);
+                player.displayClientMessage(Component.literal("Aperture capacity full (" + aperture.getMaxGuCapacity() + "/" + aperture.getMaxGuCapacity() + "). Need to cultivate to a higher rank to expand capacity."), true);
                 return InteractionResultHolder.fail(stack);
             }
 
             float refineCost = type.essenceCost() * 2;
             if (!aperture.consumeEssence(refineCost)) {
-                player.displayClientMessage(Component.literal("真元不足，无法炼化"), true);
+                player.displayClientMessage(Component.literal("Insufficient Primeval Essence. Cannot refine."), true);
                 return InteractionResultHolder.fail(stack);
             }
 
@@ -69,7 +69,7 @@ public class GuItem extends Item {
             data.discoverGu(guTypeId);
 
             stack.shrink(1);
-            player.displayClientMessage(Component.literal("成功炼化 " + type.displayName()), true);
+            player.displayClientMessage(Component.literal("Successfully refined " + type.displayName()), true);
 
             if (player instanceof ServerPlayer sp) {
                 AdvancementHelper.grant(sp, "first_gu");
@@ -92,15 +92,15 @@ public class GuItem extends Item {
         GuType type = GuRegistry.get(guTypeId);
         if (type != null) {
             ChatFormatting rankColor = getRankColor(type.rank());
-            tooltipComponents.add(Component.literal(type.rank() + "转 " + type.path().getDisplayName()).withStyle(rankColor));
-            tooltipComponents.add(Component.literal(type.category().getDisplayName() + "蛊").withStyle(ChatFormatting.DARK_PURPLE));
+            tooltipComponents.add(Component.literal(type.rank() + "Rank " + type.path().getDisplayName()).withStyle(rankColor));
+            tooltipComponents.add(Component.literal(type.category().getDisplayName() + "Gu").withStyle(ChatFormatting.DARK_PURPLE));
             if (type.essenceCost() > 0) {
-                tooltipComponents.add(Component.literal("催动: " + (int) type.essenceCost() + " 真元").withStyle(ChatFormatting.BLUE));
-                tooltipComponents.add(Component.literal("炼化: " + (int) (type.essenceCost() * 2) + " 真元").withStyle(ChatFormatting.DARK_AQUA));
+                tooltipComponents.add(Component.literal("Activation Cost: " + (int) type.essenceCost() + " PE").withStyle(ChatFormatting.BLUE));
+                tooltipComponents.add(Component.literal("Refinement Cost: " + (int) (type.essenceCost() * 2) + " PE").withStyle(ChatFormatting.DARK_AQUA));
             }
             if (type.feedItem() != null && !type.feedItem().isEmpty()) {
                 String feedName = type.feedItem().contains(":") ? type.feedItem().split(":")[1].replace("_", " ") : type.feedItem();
-                tooltipComponents.add(Component.literal("喂养: " + feedName).withStyle(ChatFormatting.GREEN));
+                tooltipComponents.add(Component.literal("Feed: " + feedName).withStyle(ChatFormatting.GREEN));
             }
         }
     }

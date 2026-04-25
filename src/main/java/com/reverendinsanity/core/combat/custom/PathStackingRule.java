@@ -80,86 +80,86 @@ public class PathStackingRule {
     }
 
     static {
-        reg(DaoPath.STRENGTH, 2, StackEffect.ENHANCED_SHIELD, 2.0f, "发甲");
-        reg(DaoPath.STRENGTH, 3, StackEffect.BEAST_PHANTOM, 1.8f, "兽影");
+        reg(DaoPath.STRENGTH, 2, StackEffect.ENHANCED_SHIELD, 2.0f, "Hair Armor");
+        reg(DaoPath.STRENGTH, 3, StackEffect.BEAST_PHANTOM, 1.8f, "Beast Phantom");
 
-        reg(DaoPath.ICE, 2, StackEffect.ICE_DOMAIN, 2.0f, "冰域");
+        reg(DaoPath.ICE, 2, StackEffect.ICE_DOMAIN, 2.0f, "Ice Domain");
 
-        reg(DaoPath.FIRE, 2, StackEffect.FIRE_DOMAIN, 2.0f, "火海");
+        reg(DaoPath.FIRE, 2, StackEffect.FIRE_DOMAIN, 2.0f, "Fire Domain");
 
-        reg(DaoPath.BLOOD, 2, StackEffect.BLOOD_FRENZY, 2.0f, "血暴");
+        reg(DaoPath.BLOOD, 2, StackEffect.BLOOD_FRENZY, 2.0f, "Blood Frenzy");
 
-        reg(DaoPath.SOUL, 2, StackEffect.SOUL_SHATTER, 2.0f, "魂爆");
+        reg(DaoPath.SOUL, 2, StackEffect.SOUL_SHATTER, 2.0f, "Soul Shatter");
 
-        reg(DaoPath.BONE, 2, StackEffect.BONE_CONSTRUCT, 2.0f, "骨甲");
-        reg(DaoPath.BONE, 3, StackEffect.BONE_CONSTRUCT, 3.0f, "白骨战车");
+        reg(DaoPath.BONE, 2, StackEffect.BONE_CONSTRUCT, 2.0f, "Bone Armor");
+        reg(DaoPath.BONE, 3, StackEffect.BONE_CONSTRUCT, 3.0f, "White Bone War Chariot");
 
-        reg(DaoPath.STEAL, 2, StackEffect.STEAL_POWER, 1.5f, "偷天");
+        reg(DaoPath.STEAL, 2, StackEffect.STEAL_POWER, 1.5f, "Steal Heaven");
 
-        reg(DaoPath.DARK, 2, StackEffect.DARK_DOMAIN, 2.0f, "暗蚀");
+        reg(DaoPath.DARK, 2, StackEffect.DARK_DOMAIN, 2.0f, "Dark Domain");
 
-        reg(DaoPath.LIGHTNING, 2, StackEffect.LIGHTNING_STORM, 2.0f, "雷暴");
+        reg(DaoPath.LIGHTNING, 2, StackEffect.LIGHTNING_STORM, 2.0f, "Lightning Storm");
 
-        reg(DaoPath.WIND, 2, StackEffect.WIND_STORM, 2.0f, "风暴");
+        reg(DaoPath.WIND, 2, StackEffect.WIND_STORM, 2.0f, "Wind Storm");
 
-        reg(DaoPath.SWORD, 2, StackEffect.SWORD_RAIN, 2.0f, "万剑");
+        reg(DaoPath.SWORD, 2, StackEffect.SWORD_RAIN, 2.0f, "Sword Rain");
 
-        reg(DaoPath.POISON, 2, StackEffect.POISON_MIASMA, 2.0f, "瘴气");
+        reg(DaoPath.POISON, 2, StackEffect.POISON_MIASMA, 2.0f, "Poison Miasma");
 
-        reg(DaoPath.DREAM, 2, StackEffect.DREAM_REALM, 2.0f, "梦境");
+        reg(DaoPath.DREAM, 2, StackEffect.DREAM_REALM, 2.0f, "Dream Realm");
 
-        reg(DaoPath.STAR, 2, StackEffect.STAR_PHANTOM, 2.0f, "六幻星身");
+        reg(DaoPath.STAR, 2, StackEffect.STAR_PHANTOM, 2.0f, "Star Phantom");
 
-        reg(DaoPath.EARTH, 2, StackEffect.EARTH_FORTRESS, 2.0f, "大地根");
+        reg(DaoPath.EARTH, 2, StackEffect.EARTH_FORTRESS, 2.0f, "Earth Fortress");
 
-        reg(DaoPath.WATER, 2, StackEffect.TIDAL_SURGE, 2.0f, "潮汐");
+        reg(DaoPath.WATER, 2, StackEffect.TIDAL_SURGE, 2.0f, "Tidal Surge");
 
-        reg(DaoPath.LIGHT, 2, StackEffect.LIGHT_JUDGMENT, 2.0f, "圣光裁决");
+        reg(DaoPath.LIGHT, 2, StackEffect.LIGHT_JUDGMENT, 2.0f, "Light Judgment");
 
-        reg(DaoPath.SOUND, 2, StackEffect.SOUND_SUPPRESS, 2.0f, "天地寂静");
+        reg(DaoPath.SOUND, 2, StackEffect.SOUND_SUPPRESS, 2.0f, "Sound Suppression");
 
-        reg(DaoPath.TRANSFORMATION, 2, StackEffect.TRANSFORMATION_EVOLVE, 2.0f, "变化质变");
+        reg(DaoPath.TRANSFORMATION, 2, StackEffect.TRANSFORMATION_EVOLVE, 2.0f, "Transformation Evolve");
 
-        reg(DaoPath.RULE, 2, StackEffect.NULLIFY, 2.0f, "净空");
+        reg(DaoPath.RULE, 2, StackEffect.NULLIFY, 2.0f, "Purify Void");
 
-        reg(DaoPath.WISDOM, 2, StackEffect.MIND_SCATTER, 2.0f, "心意散");
+        reg(DaoPath.WISDOM, 2, StackEffect.MIND_SCATTER, 2.0f, "Mind Scatter");
 
-        reg(DaoPath.CLOUD, 2, StackEffect.CLOUD_RING, 2.0f, "九云环");
+        reg(DaoPath.CLOUD, 2, StackEffect.CLOUD_RING, 2.0f, "Cloud Ring");
 
-        reg(DaoPath.METAL, 2, StackEffect.METAL_CRUSH, 2.0f, "碎城锤");
+        reg(DaoPath.METAL, 2, StackEffect.METAL_CRUSH, 2.0f, "Metal Crush");
 
-        reg(DaoPath.RESTRICTION, 2, StackEffect.SEAL_POWER, 2.0f, "封禁");
+        reg(DaoPath.RESTRICTION, 2, StackEffect.SEAL_POWER, 2.0f, "Seal");
 
-        reg(DaoPath.BLADE, 2, StackEffect.BLADE_STORM, 2.0f, "万刀");
+        reg(DaoPath.BLADE, 2, StackEffect.BLADE_STORM, 2.0f, "Blade Storm");
 
-        reg(DaoPath.QI, 2, StackEffect.QI_SURGE, 2.0f, "无量气海");
+        reg(DaoPath.QI, 2, StackEffect.QI_SURGE, 2.0f, "Qi Surge");
 
-        reg(DaoPath.HUMAN, 2, StackEffect.PEOPLES_WILL, 2.0f, "众望所归");
+        reg(DaoPath.HUMAN, 2, StackEffect.PEOPLES_WILL, 2.0f, "Peoples Will");
 
-        reg(DaoPath.KILL, 2, StackEffect.KILL_DOMAIN, 2.0f, "杀域");
+        reg(DaoPath.KILL, 2, StackEffect.KILL_DOMAIN, 2.0f, "Kill Domain");
 
-        reg(DaoPath.SHADOW, 2, StackEffect.SHADOW_DOMAIN, 2.0f, "影域");
+        reg(DaoPath.SHADOW, 2, StackEffect.SHADOW_DOMAIN, 2.0f, "Shadow Domain");
 
-        reg(DaoPath.YIN_YANG, 2, StackEffect.YIN_YANG_REVERSAL, 2.0f, "阴阳逆转");
+        reg(DaoPath.YIN_YANG, 2, StackEffect.YIN_YANG_REVERSAL, 2.0f, "Yin-Yang Reversal");
 
-        reg(DaoPath.MOON, 2, StackEffect.MOON_DOMAIN, 2.0f, "月域");
+        reg(DaoPath.MOON, 2, StackEffect.MOON_DOMAIN, 2.0f, "Moon Domain");
 
-        reg(DaoPath.VOID, 2, StackEffect.VOID_PHASE, 2.0f, "虚化");
+        reg(DaoPath.VOID, 2, StackEffect.VOID_PHASE, 2.0f, "Void Phase");
 
-        reg(DaoPath.CHARM, 2, StackEffect.CHARM_AURA, 2.0f, "魅域");
+        reg(DaoPath.CHARM, 2, StackEffect.CHARM_AURA, 2.0f, "Charm Aura");
 
-        reg(DaoPath.SOLDIER, 2, StackEffect.WAR_SPIRIT, 2.0f, "兵魂");
+        reg(DaoPath.SOLDIER, 2, StackEffect.WAR_SPIRIT, 2.0f, "War Spirit");
 
-        reg(DaoPath.FLIGHT, 2, StackEffect.SKY_SOVEREIGNTY, 2.0f, "御空领域");
+        reg(DaoPath.FLIGHT, 2, StackEffect.SKY_SOVEREIGNTY, 2.0f, "Sky Sovereignty");
 
-        reg(DaoPath.ILLUSION, 2, StackEffect.ILLUSION_REALM, 2.0f, "幻域");
+        reg(DaoPath.ILLUSION, 2, StackEffect.ILLUSION_REALM, 2.0f, "Illusion Realm");
 
-        reg(DaoPath.SPACE, 2, StackEffect.SPACE_WARP, 2.0f, "空间扭曲");
+        reg(DaoPath.SPACE, 2, StackEffect.SPACE_WARP, 2.0f, "Space Warp");
 
-        reg(DaoPath.ENSLAVE, 2, StackEffect.PUPPET_ARMY, 2.0f, "傀儡军");
+        reg(DaoPath.ENSLAVE, 2, StackEffect.PUPPET_ARMY, 2.0f, "Puppet Army");
 
-        reg(DaoPath.HEAVEN, 2, StackEffect.HEAVEN_WRATH, 2.0f, "天怒");
+        reg(DaoPath.HEAVEN, 2, StackEffect.HEAVEN_WRATH, 2.0f, "Heavenly Wrath");
 
-        reg(DaoPath.LUCK, 2, StackEffect.FORTUNE_SHIFT, 2.0f, "运转");
+        reg(DaoPath.LUCK, 2, StackEffect.FORTUNE_SHIFT, 2.0f, "Fortune Shift");
     }
 }

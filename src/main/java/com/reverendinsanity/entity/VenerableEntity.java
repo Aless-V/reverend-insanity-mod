@@ -217,7 +217,7 @@ public class VenerableEntity extends Monster {
     }
 
     private final ServerBossEvent bossEvent = new ServerBossEvent(
-        Component.literal("尊者"), BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS
+        Component.literal("Venerable"), BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS
     );
 
     private final Map<String, Integer> moveCooldownTicks = new HashMap<>();

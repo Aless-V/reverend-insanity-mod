@@ -5,7 +5,7 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.RenderStateShard;
 
-// 自定义RenderType，用于VFX着色器渲染
+// Custom RenderType, used for VFX shader rendering.
 public class ModRenderTypes extends RenderType {
 
     public ModRenderTypes(String n, VertexFormat f, VertexFormat.Mode m, int b, boolean a, boolean s, Runnable su, Runnable cu) {

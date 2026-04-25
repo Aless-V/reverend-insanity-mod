@@ -29,7 +29,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-// 炼蛊炉方块，用于将低阶蛊虫升炼为高阶蛊虫
+// Gu Refining Furnace Block: Used to refine low-rank Gu into higher-rank Gu.
 public class RefinementCauldronBlock extends BaseEntityBlock {
 
     public static final MapCodec<RefinementCauldronBlock> CODEC = simpleCodec(RefinementCauldronBlock::new);
@@ -76,7 +76,7 @@ public class RefinementCauldronBlock extends BaseEntityBlock {
             level.playSound(null, pos, SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS, 0.5f, 1.0f);
             return ItemInteractionResult.SUCCESS;
         }
-        player.displayClientMessage(Component.literal("\u70bc\u86ca\u7089\u5df2\u6ee1"), true);
+        player.displayClientMessage(Component.literal("Gu Refining Furnace is full."), true);
         return ItemInteractionResult.FAIL;
     }
 
@@ -101,7 +101,7 @@ public class RefinementCauldronBlock extends BaseEntityBlock {
 
         List<ItemStack> stored = cauldron.getItems();
         if (stored.isEmpty()) {
-            player.displayClientMessage(Component.literal("\u70bc\u86ca\u7089\u4e2d\u7a7a\u65e0\u4e00\u7269"), true);
+            player.displayClientMessage(Component.literal("Gu Refining Furnace is empty."), true);
             return InteractionResult.CONSUME;
         }
 
@@ -118,14 +118,14 @@ public class RefinementCauldronBlock extends BaseEntityBlock {
                     pos.getZ() + 0.5 + level.random.nextGaussian() * 0.3,
                     0, 0.1, 0);
             }
-            player.displayClientMessage(Component.literal("\u70bc\u86ca\u6210\u529f\uff01\u83b7\u5f97 " + recipe.getDisplayName()), true);
+            player.displayClientMessage(Component.literal("Gu refinement successful! Obtained: " + recipe.getDisplayName()), true);
             if (player instanceof ServerPlayer sp) {
                 AdvancementHelper.grant(sp, "refinement");
             }
             return InteractionResult.SUCCESS;
         }
 
-        StringBuilder sb = new StringBuilder("\u70bc\u86ca\u7089\u4e2d: ");
+        StringBuilder sb = new StringBuilder("Gu Refining Furnace contents: ");
         for (int i = 0; i < stored.size(); i++) {
             if (i > 0) sb.append(", ");
             ItemStack s = stored.get(i);

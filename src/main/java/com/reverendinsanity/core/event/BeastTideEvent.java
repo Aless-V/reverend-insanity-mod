@@ -43,7 +43,7 @@ public class BeastTideEvent {
         for (ServerPlayer player : level.players()) {
             level.playSound(null, player.blockPosition(), SoundEvents.RAID_HORN.value(), SoundSource.HOSTILE, 1.5f, 0.8f);
             player.displayClientMessage(
-                Component.literal("兽潮第" + currentWave + "波来袭！").withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD),
+                Component.literal("Beast Tide Wave " + currentWave + " incoming!").withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD),
                 false);
             spawnWave(level, player);
         }
@@ -64,7 +64,7 @@ public class BeastTideEvent {
         int boarCount = 1 + level.random.nextInt(2);
 
         player.displayClientMessage(
-            Component.literal("第" + currentWave + "波兽潮来袭！").withStyle(ChatFormatting.RED),
+            Component.literal("Wave " + currentWave + " of the Beast Tide approaches!").withStyle(ChatFormatting.RED),
             true);
 
         for (int i = 0; i < wolfCount; i++) {
@@ -108,7 +108,7 @@ public class BeastTideEvent {
                 boss.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, level.random.nextFloat() * 360, 0);
                 level.addFreshEntity(boss);
                 player.displayClientMessage(
-                    Component.literal("雷冠头狼降临！").withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD),
+                    Component.literal("The Thunder Crown Alpha Wolf descends!").withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD),
                     false);
             }
 
@@ -129,7 +129,7 @@ public class BeastTideEvent {
             beastKing.getAttribute(Attributes.ATTACK_DAMAGE).getBaseValue() * 2);
         beastKing.refreshDimensions();
 
-        beastKing.setCustomName(Component.literal("\u00a7c百兽王").withStyle(ChatFormatting.BOLD));
+        beastKing.setCustomName(Component.literal("§cBeast King").withStyle(ChatFormatting.BOLD));
         beastKing.setGlowingTag(true);
 
         beastKing.getPersistentData().putBoolean("BeastKing", true);
@@ -137,7 +137,7 @@ public class BeastTideEvent {
         level.addFreshEntity(beastKing);
 
         player.displayClientMessage(
-            Component.literal("百兽王降临！").withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD),
+            Component.literal("The Beast King descends!").withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD),
             false);
     }
 
@@ -151,7 +151,7 @@ public class BeastTideEvent {
             mob.getAttribute(Attributes.MOVEMENT_SPEED).addTransientModifier(
                 new AttributeModifier(ELITE_SPEED_MOD, mob.getAttribute(Attributes.MOVEMENT_SPEED).getBaseValue() * 0.3, AttributeModifier.Operation.ADD_VALUE));
         }
-        mob.setCustomName(Component.literal("\u00a7c精锐 ").append(mob.getType().getDescription()));
+        mob.setCustomName(Component.literal("§cElite").append(mob.getType().getDescription()));
         mob.getPersistentData().putBoolean("BeastTideElite", true);
     }
 
