@@ -1,163 +1,177 @@
-# 蛊真人 (Reverend Insanity) — Minecraft Mod
+This is a fork of the [reverend-insanity-mod](https://github.com/dkjsiogu/reverend-insanity-mod) mod but then fully transalted into english, the original had support for english but almost all of the language was hard coded in mandarin, so the english language file didn't change much. Besides fully translating, I am also going to change a lot of things concerning game logic to make it follow the novel more and make changes to block and entity textures. Suggestions and/or issues are welcomed!
 
-> 一个完全由 AI 自动开发的 Minecraft 模组，基于小说《蛊真人》世界观。
+### (below is the original readme but translated into english)
+
+---
+
+# Reverend Insanity — Minecraft Mod
+
+> A Minecraft mod fully developed by AI, based on the world of the novel *Reverend Insanity*.
 
 **Minecraft NeoForge 1.21.1 | Java 21**
 
 ---
 
-## 这个模组是怎么来的
+## How This Mod Was Made
 
-这个模组没有一行代码是人类写的。
+Not a single line of human-written code.
 
-整个项目由 **Claude Code** (Anthropic Claude Opus) 全自动完成——从世界观研究、机制设计、像素贴图绘制到 Java 编码、编译调试、代码审查，全部由 AI 独立执行。人类只负责提出方向和最终确认。
+The entire project was completed fully autonomously by **Claude Code** (Anthropic Claude Opus) — from world research and mechanics design to pixel art generation, Java coding, compilation, debugging, and code review. Humans were only responsible for providing direction and final approval.
 
-### 开发流程
+### Development Workflow
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  Phase 1: 原著研究 + 概念设计                         │
-│  ├─ 搜索《蛊真人》原著文本，提取设定/蛊虫/杀招描述        │
-│  ├─ 设计游戏机制（必须忠于原著，禁止简化为药水buff）       │
-│  ├─ Python + Pillow 生成像素贴图（物品/实体/方块）       │
-│  └─ AI 识图验证贴图质量，不满意则重新生成                 │
+│  Phase 1: Original Novel Research + Concept Design  │
+│  ├─ Research Reverend Insanity lore, Gu insects,    │
+│  │  and Killer Move descriptions                    │
+│  ├─ Design game mechanics (faithful to the novel,   │
+│  │  no potion-effect shortcuts)                     │
+│  ├─ Generate pixel art textures using Python+Pillow │
+│  └─ AI verifies texture quality, regenerates if     │
+│     unsatisfactory                                  │
 ├─────────────────────────────────────────────────────┤
-│  Phase 2: Agent Team 并行编码                         │
-│  ├─ 拆分任务，创建 3-4 个 AI Agent 并行开发             │
-│  ├─ 各 Agent 负责独立模块（物品/战斗/视觉/网络）         │
-│  └─ 集成后统一编译验证                                  │
+│  Phase 2: Parallel Coding with an Agent Team        │
+│  ├─ Split tasks, create 3-4 AI agents for parallel  │
+│  │  development                                     │
+│  ├─ Each agent works on independent modules         │
+│  │  (items/combat/visuals/network)                  │
+│  └─ Integrate and compile                           │
 ├─────────────────────────────────────────────────────┤
-│  Phase 3: Agent Team 代码审查                         │
-│  ├─ 创建独立审查 Agent Team                            │
-│  ├─ 审查代码质量、性能、原著忠实度、安全性                 │
-│  └─ 修复所有发现的问题，重新编译                         │
+│  Phase 3: Agent Team Code Review                    │
+│  ├─ Create an independent review agent team         │
+│  ├─ Review code quality, performance, faithfulness  │
+│  │  to the novel, and security                      │
+│  └─ Fix all identified issues and recompile         │
 ├─────────────────────────────────────────────────────┤
-│  Phase 4: 循环 → 回到 Phase 1，开发下一个内容           │
+│  Phase 4: Loop → Return to Phase 1 to develop next  │
+│  content                                            │
 └─────────────────────────────────────────────────────┘
 ```
 
-### 技术细节
+### Technical Details
 
-- **代码量**: 73,000+ 行 Java 代码，1,300+ 个文件
-- **贴图**: 全部由 Python 脚本程序化生成，像素画风格
-- **AI 编码原则**: 禁止用 MobEffect（药水效果）偷懒，所有机制必须通过 Attribute 修改、事件拦截、自定义伤害计算、投射物系统等真实实现
-- **并行开发**: 多个 AI Agent 同时编码不同模块，由主 Agent 协调集成
-- **质量保证**: 每次改动必须通过 `./gradlew build` 编译验证，不通过不进入下一阶段
-
----
-
-## 模组玩法
-
-你将扮演一名蛊师，在这个弱肉强食的世界中修炼、收集蛊虫、组合杀招、对抗强敌。
-
-### 修炼体系
-
-- **开窍**: 消耗希望蛊开启空窍，决定你能装备多少蛊虫
-- **五大境界**: 初境 → 中境 → 上境 → 极境 → 蛊仙，每个境界有独立突破条件
-- **小境界冥想突破，大境界消耗突破石**
-- **真元 + 念力**: 双资源系统，夜间恢复加速，资质影响效率
-- **寿元系统**: 境界决定寿命上限，突破延寿，耗尽即死
-
-### 蛊虫系统
-
-- **177 种蛊虫**，覆盖全部 **48 条道路**（月道、力道、剑道、魂道……）
-- 每种蛊虫都有独特技能，不是简单的 buff/debuff
-- **1-5 转**品阶系统，高转蛊虫效果更强
-- **蛊虫喂养**: 不喂食蛊虫会饿死
-- **蛊虫炼化**: 在炼蛊炉中升阶蛊虫
-- **蛊虫损伤**: 战斗中蛊虫可能受损，效果减半，需要真元修复
-- **蛊虫吞噬**: 牺牲低转蛊虫强化同道路高转蛊虫
-- **野蛊捕获**: 野外自然生成的蛊虫实体，靠近捕获
-
-### 杀招系统
-
-- **61 种预设杀招**: 多蛊虫组合释放的强力招式
-- **自创杀招**: 自由组合最多 5 只辅助蛊，推演研发新杀招
-- **道组合引擎**:
-  - **道反应** — 不同道路蛊虫组合产生融合效果（冰+风→冰风龙卷）
-  - **道叠加** — 同道路蛊虫堆叠触发质变效果（力×3→兽影）
-  - 玩家不需要知道配方，自由组合就能自然涌现原著中的杀招效果
-
-### 战斗内容
-
-**Boss:**
-- **十大尊者** — 每位尊者拥有独立 AI、专属杀招序列、3 阶段战斗:
-  - 方源（偷道+炼道）、星宿仙尊（星道+运道）、巨阳仙尊（运道+血道）
-  - 红莲魔尊（炎道+火道·前有古人召唤历史蛊仙幻影）
-  - 仙庭地灵（土道+天道）、幽魂魔尊（魂道+影道）、盗天仙尊（偷道+宙道）
-  - 元始仙尊（气道+阴阳道）、无极魔尊（律道+禁道）、刀斩仙尊（刀道+杀道）
-- **远古蛊仙残魂** — 5 种攻击模式 + Boss 血条
-- **NPC 蛊师** — 5 种战斗原型（近战/远程/控制/辅助/突进），按道路分配技能
-- **无形之手** — 5 指独立攻击的追踪实体
-
-**怪物:**
-- 电狼、雷冠头狼、野山猪、玉眼石猴、草人傀儡、山地蜘蛛（可骑乘）
-
-### 世界内容
-
-**结构生成:**
-- 蛊窟（地下蛊虫巢穴）
-- 家族聚居地（NPC 蛊师村落）
-- 传承之地（波次战斗试炼 → 道痕奖励）
-- 酒旅人墓（隐藏地下遗迹）
-- 月兰洞（稀有资源洞穴）
-
-**方块:**
-- 元石矿 / 深层元石矿、灵泉、月兰花丛、彩晶钟乳石
-- 炼蛊炉（升炼配方）、蛊虫架（展示）、酒坛、阵法石
-- 福地核心（开辟个人维度）
-
-### 特色系统
-
-| 系统 | 说明 |
-|------|------|
-| **仙窍维度** | 个人口袋维度，道路主题地形/生物/粒子，可被入侵 |
-| **天意系统** | 修炼越强天意关注越高，触发落雷/压制/降罚 |
-| **气运系统** | 击杀夺运，影响炼蛊成功率和掉落 |
-| **血脉系统** | 开窍时随机获得6种血脉之一（龙威最稀有） |
-| **梦境探索** | 入梦获取道痕/配方/真元，5种梦境事件 |
-| **变身系统** | 狼形/熊形/缩地3种形态变换 |
-| **蛊阵系统** | 十字布阵，困阵/盾阵/天地大阵 |
-| **毒誓系统** | 短期增益 + 违背惩罚，影响气运/寿元 |
-| **生死门** | 50% 概率赌博，气运影响结果 |
-| **分身系统** | 虚影分身，20% 闪避 + 40% 额外伤害 |
-| **推演系统** | 研究新杀招，消耗时间和资源 |
-| **灾劫系统** | 地灾4类 + 天劫3类，仙窍防御 |
-| **势力声望** | 家族阵营，声望影响交易折扣 |
-
-### 快捷键
-
-| 键 | 功能 |
-|----|------|
-| **G** | 打开空窍管理界面 |
-| **H** | 打开仙窍维度界面 |
-| **J** | 打开推演界面 |
-| **K** | 打开蛊虫图鉴 |
+- **Codebase**: 73,000+ lines of Java code, 1,300+ files
+- **Textures**: All procedurally generated via Python scripts in pixel art style
+- **AI Coding Principle**: No MobEffect shortcuts — all mechanics must be implemented through attribute modifiers, event interception, custom damage calculations, projectile systems, etc.
+- **Parallel Development**: Multiple AI agents code different modules simultaneously, coordinated by a main agent
+- **Quality Assurance**: Every change must pass `./gradlew build` — no compilation, no next phase
 
 ---
 
-## 安装
+## Gameplay
 
-1. 安装 [Minecraft 1.21.1](https://www.minecraft.net/)
-2. 安装 [NeoForge 1.21.1](https://neoforged.net/)
-3. 将模组 jar 文件放入 `.minecraft/mods/` 目录
-4. 启动游戏
+You play as a Gu Master, cultivating, collecting Gu insects, combining Killer Moves, and battling enemies in a ruthless world of survival of the fittest.
 
-## 构建
+### Cultivation System
+
+- **Opening the Aperture**: Consume Hope Gu to open your aperture, determining how many Gu insects you can equip
+- **Five Ranks**: Rank 1 → 2 → 3 → 4 → 5 (Gu Immortal), each with its own breakthrough requirements
+- **Breakthroughs**: Meditate for minor sub-rank breakthroughs; consume Breakthrough Stones for major rank advancements
+- **Primeval Essence + Thought Power**: Dual-resource system; recovery accelerates at night; talent affects efficiency
+- **Lifespan System**: Cultivation rank determines maximum lifespan; breakthroughs extend it; death when exhausted
+
+### Gu Insect System
+
+- **177 Gu insects**, covering all **48 Paths** (Moon Path, Strength Path, Sword Path, Soul Path, etc.)
+- Each Gu insect has unique skills — no simple buffs/debuffs
+- **Rank 1–5 tier system**; higher-rank Gu insects are more powerful
+- **Feeding**: Gu insects starve and die if not fed
+- **Refining**: Upgrade Gu insects in the Gu Refining Furnace
+- **Damage**: Gu insects can be damaged in combat — effectiveness halved, requires Primeval Essence to repair
+- **Devouring**: Sacrifice lower-rank Gu insects to empower higher-rank Gu of the same Path
+- **Wild Gu Capture**: Naturally spawning Wild Gu entities can be captured nearby
+
+### Killer Move System
+
+- **61 Preset Killer Moves**: Powerful techniques combining multiple Gu insects
+- **Create Your Own**: Freely combine up to 5 auxiliary Gu insects, then deduce new Killer Moves
+- **Path Combination Engine**:
+  - **Path Reactions** — Combining Gu insects from different Paths produces fusion effects (e.g., Ice + Wind → Ice Wind Tornado)
+  - **Path Stacking** — Stacking Gu insects from the same Path triggers qualitative transformations (e.g., Strength × 3 → Beast Shadow)
+  - No recipes required — players can freely experiment, and canonical Killer Move effects emerge naturally
+
+### Combat Content
+
+**Bosses:**
+- **Ten Venerables** — Each Venerable has a unique AI, signature Killer Move sequences, and 3-phase battles:
+  - Fang Yuan (Thieving Path + Refining Path), Star Constellation Venerable (Star Path + Luck Path), Giant Sun Venerable (Luck Path + Blood Path)
+  - Red Lotus Venerable (Flame Path + Fire Path, summons historical Gu Immortal phantoms from the river of time)
+  - Heavenly Court Earth Spirit (Earth Path + Heaven Path), Spectral Soul Venerable (Soul Path + Shadow Path)
+  - Thieving Heaven Venerable (Thieving Path + Time Path), Primordial Venerable (Qi Path + Yin-Yang Path)
+  - Limitless Demon Venerable (Law Path + Forbidden Path), Sword Slayer Venerable (Sword Path + Killing Path)
+- **Ancient Gu Immortal Remnant Souls** — 5 attack patterns + Boss health bar
+- **NPC Gu Masters** — 5 combat archetypes (melee/ranged/control/support/assassin), skills assigned by Path
+- **The Faceless Hand** — A tracking entity with 5 independently attacking fingers
+
+**Mobs:**
+- Electric Wolf, Thunder Crown Alpha Wolf, Wild Boar, Jade-Eyed Stone Monkey, Scarecrow Puppet, Mountain Spider (rideable)
+
+### World Content
+
+**Generated Structures:**
+- Gu Caverns (underground Gu insect nests)
+- Clan Settlements (NPC Gu Master villages)
+- Inheritance Sites (wave-based combat trials → Dao Mark rewards)
+- Wine Traveler's Tomb (hidden underground ruins)
+- Moon Orchid Caves (rare resource caverns)
+
+**Blocks:**
+- Essence Stone Ore / Deepslate Essence Stone Ore, Spirit Spring, Moon Orchid Clusters, Crystal Stalactites
+- Gu Refining Furnace (refining recipes), Gu Rack (display), Wine Jar, Formation Stone
+- Blessed Land Core (creates a personal dimension)
+
+### Feature Systems
+
+| System | Description |
+|--------|-------------|
+| **Immortal Aperture** | Personal pocket dimension; terrain/biomes/particles match Path affinity; can be invaded |
+| **Heaven's Will** | Higher cultivation draws more attention, triggering lightning strikes, suppression, or divine punishment |
+| **Luck System** | Defeating enemies steals luck; influences Gu refining success rate and loot drops |
+| **Bloodline System** | Randomly assigned one of 6 bloodlines upon aperture opening — Dragon's Might is the rarest |
+| **Dream Exploration** | Enter dreams to gain Dao Marks, recipes, or Primeval Essence; 5 types of dream events |
+| **Transformation System** | 3 forms: Wolf Form, Bear Form, and Earth Shrink |
+| **Formation System** | Cross-shaped placement; Trapping Formation, Shield Formation, Heaven and Earth Grand Formation |
+| **Poison Oath System** | Short-term buffs + penalties for breaking oaths; affects luck and lifespan |
+| **Gate of Life and Death** | 50% gamble; luck influences the outcome |
+| **Avatar System** | Phantom avatar grants 20% dodge chance + 40% bonus damage |
+| **Deduction System** | Research new Killer Moves; consumes time and resources |
+| **Tribulation System** | 4 types of Earthly Tribulations + 3 types of Heavenly Tribulations; defend your Immortal Aperture |
+| **Faction Reputation** | Family/faction reputation affects trade discounts |
+
+### Keybinds
+
+| Key | Function |
+|-----|----------|
+| **G** | Open Aperture Management |
+| **H** | Open Immortal Aperture interface |
+| **J** | Open Deduction interface |
+| **K** | Open Gu Insect Codex |
+
+---
+
+## Installation
+
+1. Install [Minecraft 1.21.1](https://www.minecraft.net/)
+2. Install [NeoForge 1.21.1](https://neoforged.net/)
+3. Place the mod jar file in `.minecraft/mods/`
+4. Launch the game
+
+## Build
 
 ```bash
-# 需要 Java 21
+# Requires Java 21
 ./gradlew build
 ```
 
-构建产物位于 `build/libs/`。
+Build output is located in `build/libs/`.
 
 ---
 
-## 致谢
+## Acknowledgments
 
-- 《蛊真人》—— 蛊真人 by 蛊真人
-- 本项目为同人二创，仅供学习交流
+- *Reverend Insanity* — Gu Zhen Ren
+- This project is a fan-made derivative work for learning and archival purposes only.
 
 ## License
 
