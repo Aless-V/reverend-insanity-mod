@@ -91,7 +91,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.minecraft.world.entity.monster.Monster;
 
 // Mod Bus 事件（加载阶段）
-@EventBusSubscriber(modid = ReverendInsanity.MODID, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = ReverendInsanity.MODID)
 public class ModBusEvents {
 
     @SubscribeEvent
@@ -104,7 +104,8 @@ public class ModBusEvents {
             GuAbilityRegistry.registerDefaults();
             RefinementRecipe.registerDefaults();
             ReverendInsanity.LOGGER.info("Gu insects registered: {} total.", GuRegistry.getAll().size());
-            ReverendInsanity.LOGGER.info("Gu refining recipes registered: {} total.", RefinementRecipe.getAllRecipes().size());
+            ReverendInsanity.LOGGER.info("Gu refining recipes registered: {} total.",
+                    RefinementRecipe.getAllRecipes().size());
         });
     }
 
@@ -128,183 +129,154 @@ public class ModBusEvents {
     @SubscribeEvent
     public static void onRegisterSpawnPlacements(RegisterSpawnPlacementsEvent event) {
         event.register(ModEntities.WILD_GU.get(),
-            SpawnPlacementTypes.ON_GROUND,
-            Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-            WildGuEntity::checkSpawnRules,
-            RegisterSpawnPlacementsEvent.Operation.OR);
+                SpawnPlacementTypes.ON_GROUND,
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                WildGuEntity::checkSpawnRules,
+                RegisterSpawnPlacementsEvent.Operation.OR);
         event.register(ModEntities.LIGHTNING_WOLF.get(),
-            SpawnPlacementTypes.ON_GROUND,
-            Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-            Monster::checkMonsterSpawnRules,
-            RegisterSpawnPlacementsEvent.Operation.OR);
+                SpawnPlacementTypes.ON_GROUND,
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                Monster::checkMonsterSpawnRules,
+                RegisterSpawnPlacementsEvent.Operation.OR);
         event.register(ModEntities.MOUNTAIN_BOAR.get(),
-            SpawnPlacementTypes.ON_GROUND,
-            Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-            Monster::checkMonsterSpawnRules,
-            RegisterSpawnPlacementsEvent.Operation.OR);
+                SpawnPlacementTypes.ON_GROUND,
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                Monster::checkMonsterSpawnRules,
+                RegisterSpawnPlacementsEvent.Operation.OR);
         event.register(ModEntities.JADE_EYE_MONKEY.get(),
-            SpawnPlacementTypes.ON_GROUND,
-            Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-            Monster::checkMonsterSpawnRules,
-            RegisterSpawnPlacementsEvent.Operation.OR);
+                SpawnPlacementTypes.ON_GROUND,
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                Monster::checkMonsterSpawnRules,
+                RegisterSpawnPlacementsEvent.Operation.OR);
         event.register(ModEntities.MOUNTAIN_SPIDER.get(),
-            SpawnPlacementTypes.ON_GROUND,
-            Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-            net.minecraft.world.entity.animal.Animal::checkAnimalSpawnRules,
-            RegisterSpawnPlacementsEvent.Operation.OR);
+                SpawnPlacementTypes.ON_GROUND,
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                net.minecraft.world.entity.animal.Animal::checkAnimalSpawnRules,
+                RegisterSpawnPlacementsEvent.Operation.OR);
     }
 
     @SubscribeEvent
     public static void onRegisterPayloadHandlers(RegisterPayloadHandlersEvent event) {
         final PayloadRegistrar registrar = event.registrar(ReverendInsanity.MODID);
         registrar.playToServer(
-            ActivateAbilityPayload.TYPE,
-            ActivateAbilityPayload.STREAM_CODEC,
-            ServerPayloadHandler::handleActivateAbility
-        );
+                ActivateAbilityPayload.TYPE,
+                ActivateAbilityPayload.STREAM_CODEC,
+                ServerPayloadHandler::handleActivateAbility);
         registrar.playToServer(
-            UseKillerMovePayload.TYPE,
-            UseKillerMovePayload.STREAM_CODEC,
-            ServerPayloadHandler::handleUseKillerMove
-        );
+                UseKillerMovePayload.TYPE,
+                UseKillerMovePayload.STREAM_CODEC,
+                ServerPayloadHandler::handleUseKillerMove);
         registrar.playToServer(
-            OpenAperturePayload.TYPE,
-            OpenAperturePayload.STREAM_CODEC,
-            ServerPayloadHandler::handleOpenAperture
-        );
+                OpenAperturePayload.TYPE,
+                OpenAperturePayload.STREAM_CODEC,
+                ServerPayloadHandler::handleOpenAperture);
         registrar.playToServer(
-            EquipMovePayload.TYPE,
-            EquipMovePayload.STREAM_CODEC,
-            ServerPayloadHandler::handleEquipMove
-        );
+                EquipMovePayload.TYPE,
+                EquipMovePayload.STREAM_CODEC,
+                ServerPayloadHandler::handleEquipMove);
         registrar.playToServer(
-            FeedGuPayload.TYPE,
-            FeedGuPayload.STREAM_CODEC,
-            ServerPayloadHandler::handleFeedGu
-        );
+                FeedGuPayload.TYPE,
+                FeedGuPayload.STREAM_CODEC,
+                ServerPayloadHandler::handleFeedGu);
         registrar.playToServer(
-            DiscardGuPayload.TYPE,
-            DiscardGuPayload.STREAM_CODEC,
-            ServerPayloadHandler::handleDiscardGu
-        );
+                DiscardGuPayload.TYPE,
+                DiscardGuPayload.STREAM_CODEC,
+                ServerPayloadHandler::handleDiscardGu);
         registrar.playToClient(
-            SyncGuMasterDataPayload.TYPE,
-            SyncGuMasterDataPayload.STREAM_CODEC,
-            ClientPayloadHandler::handleSyncGuMasterData
-        );
+                SyncGuMasterDataPayload.TYPE,
+                SyncGuMasterDataPayload.STREAM_CODEC,
+                ClientPayloadHandler::handleSyncGuMasterData);
         registrar.playToClient(
-            SyncApertureContentsPayload.TYPE,
-            SyncApertureContentsPayload.STREAM_CODEC,
-            ClientPayloadHandler::handleSyncApertureContents
-        );
+                SyncApertureContentsPayload.TYPE,
+                SyncApertureContentsPayload.STREAM_CODEC,
+                ClientPayloadHandler::handleSyncApertureContents);
         registrar.playToClient(
-            SpawnVfxPayload.TYPE,
-            SpawnVfxPayload.STREAM_CODEC,
-            ClientPayloadHandler::handleSpawnVfx
-        );
+                SpawnVfxPayload.TYPE,
+                SpawnVfxPayload.STREAM_CODEC,
+                ClientPayloadHandler::handleSpawnVfx);
         registrar.playToServer(
-            OpenCodexPayload.TYPE,
-            OpenCodexPayload.STREAM_CODEC,
-            ServerPayloadHandler::handleOpenCodex
-        );
+                OpenCodexPayload.TYPE,
+                OpenCodexPayload.STREAM_CODEC,
+                ServerPayloadHandler::handleOpenCodex);
         registrar.playToClient(
-            SyncCodexPayload.TYPE,
-            SyncCodexPayload.STREAM_CODEC,
-            ClientPayloadHandler::handleSyncCodex
-        );
+                SyncCodexPayload.TYPE,
+                SyncCodexPayload.STREAM_CODEC,
+                ClientPayloadHandler::handleSyncCodex);
         registrar.playToServer(
-            StartDeductionPayload.TYPE,
-            StartDeductionPayload.STREAM_CODEC,
-            ServerPayloadHandler::handleStartDeduction
-        );
+                StartDeductionPayload.TYPE,
+                StartDeductionPayload.STREAM_CODEC,
+                ServerPayloadHandler::handleStartDeduction);
         registrar.playToServer(
-            CancelDeductionPayload.TYPE,
-            CancelDeductionPayload.STREAM_CODEC,
-            ServerPayloadHandler::handleCancelDeduction
-        );
+                CancelDeductionPayload.TYPE,
+                CancelDeductionPayload.STREAM_CODEC,
+                ServerPayloadHandler::handleCancelDeduction);
         registrar.playToClient(
-            SyncDeductionPayload.TYPE,
-            SyncDeductionPayload.STREAM_CODEC,
-            ClientPayloadHandler::handleSyncDeduction
-        );
+                SyncDeductionPayload.TYPE,
+                SyncDeductionPayload.STREAM_CODEC,
+                ClientPayloadHandler::handleSyncDeduction);
         registrar.playToClient(
-            DeductionResultPayload.TYPE,
-            DeductionResultPayload.STREAM_CODEC,
-            ClientPayloadHandler::handleDeductionResult
-        );
+                DeductionResultPayload.TYPE,
+                DeductionResultPayload.STREAM_CODEC,
+                ClientPayloadHandler::handleDeductionResult);
         registrar.playToServer(
-            EnterAperturePayload.TYPE,
-            EnterAperturePayload.STREAM_CODEC,
-            ServerPayloadHandler::handleEnterAperture
-        );
+                EnterAperturePayload.TYPE,
+                EnterAperturePayload.STREAM_CODEC,
+                ServerPayloadHandler::handleEnterAperture);
         registrar.playToServer(
-            ExitAperturePayload.TYPE,
-            ExitAperturePayload.STREAM_CODEC,
-            ServerPayloadHandler::handleExitAperture
-        );
+                ExitAperturePayload.TYPE,
+                ExitAperturePayload.STREAM_CODEC,
+                ServerPayloadHandler::handleExitAperture);
         registrar.playToServer(
-            ResistCalamityPayload.TYPE,
-            ResistCalamityPayload.STREAM_CODEC,
-            ServerPayloadHandler::handleResistCalamity
-        );
+                ResistCalamityPayload.TYPE,
+                ResistCalamityPayload.STREAM_CODEC,
+                ServerPayloadHandler::handleResistCalamity);
         registrar.playToServer(
-            OpenImmortalAperturePayload.TYPE,
-            OpenImmortalAperturePayload.STREAM_CODEC,
-            ServerPayloadHandler::handleOpenImmortalAperture
-        );
+                OpenImmortalAperturePayload.TYPE,
+                OpenImmortalAperturePayload.STREAM_CODEC,
+                ServerPayloadHandler::handleOpenImmortalAperture);
         registrar.playToServer(
-            ExtractResourcePayload.TYPE,
-            ExtractResourcePayload.STREAM_CODEC,
-            ServerPayloadHandler::handleExtractResource
-        );
+                ExtractResourcePayload.TYPE,
+                ExtractResourcePayload.STREAM_CODEC,
+                ServerPayloadHandler::handleExtractResource);
         registrar.playToServer(
-            RepairAperturePayload.TYPE,
-            RepairAperturePayload.STREAM_CODEC,
-            ServerPayloadHandler::handleRepairAperture
-        );
+                RepairAperturePayload.TYPE,
+                RepairAperturePayload.STREAM_CODEC,
+                ServerPayloadHandler::handleRepairAperture);
         registrar.playToServer(
-            RepairBreachPayload.TYPE,
-            RepairBreachPayload.STREAM_CODEC,
-            ServerPayloadHandler::handleRepairBreach
-        );
+                RepairBreachPayload.TYPE,
+                RepairBreachPayload.STREAM_CODEC,
+                ServerPayloadHandler::handleRepairBreach);
         registrar.playToClient(
-            SyncImmortalAperturePayload.TYPE,
-            SyncImmortalAperturePayload.STREAM_CODEC,
-            ClientPayloadHandler::handleSyncImmortalAperture
-        );
+                SyncImmortalAperturePayload.TYPE,
+                SyncImmortalAperturePayload.STREAM_CODEC,
+                ClientPayloadHandler::handleSyncImmortalAperture);
         registrar.playToServer(
-            OpenDeductionScreenPayload.TYPE,
-            OpenDeductionScreenPayload.STREAM_CODEC,
-            ServerPayloadHandler::handleOpenDeductionScreen
-        );
+                OpenDeductionScreenPayload.TYPE,
+                OpenDeductionScreenPayload.STREAM_CODEC,
+                ServerPayloadHandler::handleOpenDeductionScreen);
         registrar.playToClient(
-            SyncDeductionScreenPayload.TYPE,
-            SyncDeductionScreenPayload.STREAM_CODEC,
-            ClientPayloadHandler::handleSyncDeductionScreen
-        );
+                SyncDeductionScreenPayload.TYPE,
+                SyncDeductionScreenPayload.STREAM_CODEC,
+                ClientPayloadHandler::handleSyncDeductionScreen);
         registrar.playToServer(
-            RadialMenuPayload.TYPE,
-            RadialMenuPayload.STREAM_CODEC,
-            ServerPayloadHandler::handleRadialMenu
-        );
+                RadialMenuPayload.TYPE,
+                RadialMenuPayload.STREAM_CODEC,
+                ServerPayloadHandler::handleRadialMenu);
         registrar.playToClient(
-            IntelSyncPayload.TYPE,
-            IntelSyncPayload.STREAM_CODEC,
-            ClientPayloadHandler::handleIntelSync
-        );
+                IntelSyncPayload.TYPE,
+                IntelSyncPayload.STREAM_CODEC,
+                ClientPayloadHandler::handleIntelSync);
         registrar.playToClient(
-            DamageNumberPayload.TYPE,
-            DamageNumberPayload.STREAM_CODEC,
-            ClientPayloadHandler::handleDamageNumber
-        );
+                DamageNumberPayload.TYPE,
+                DamageNumberPayload.STREAM_CODEC,
+                ClientPayloadHandler::handleDamageNumber);
         registrar.playToServer(
-            DefenseActionPayload.TYPE,
-            DefenseActionPayload.STREAM_CODEC,
-            ServerPayloadHandler::handleDefenseAction
-        );
+                DefenseActionPayload.TYPE,
+                DefenseActionPayload.STREAM_CODEC,
+                ServerPayloadHandler::handleDefenseAction);
     }
 
-    @EventBusSubscriber(modid = ReverendInsanity.MODID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+    @EventBusSubscriber(modid = ReverendInsanity.MODID, value = Dist.CLIENT)
     public static class ClientModBusEvents {
 
         @SubscribeEvent
@@ -355,9 +327,8 @@ public class ModBusEvents {
         @SubscribeEvent
         public static void onRegisterGuiLayers(RegisterGuiLayersEvent event) {
             event.registerAboveAll(
-                ResourceLocation.fromNamespaceAndPath(ReverendInsanity.MODID, "cultivation_overlay"),
-                CultivationOverlay::render
-            );
+                    ResourceLocation.fromNamespaceAndPath(ReverendInsanity.MODID, "cultivation_overlay"),
+                    CultivationOverlay::render);
         }
     }
 }
