@@ -19,6 +19,8 @@ gradlew.bat
 *.iml
 *.ipr
 *.iws
+.vscode/
+*.json
 
 # Runtime
 runs/
